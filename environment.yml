@@ -1,0 +1,15 @@
+name: sig
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - rdkit
+  - numpy
+  - pandas
+  - sympy
+  - matplotlib
+  - IPython
+  - ipython  # DEBUG
+  - pip
+  - pip:
+      - diophantine

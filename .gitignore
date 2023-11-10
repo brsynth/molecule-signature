@@ -1,0 +1,12 @@
+# ignore compiled file
+__pycache__/
+*.pyc
+
+# ignore egg-info
+*.egg-info
+
+# ignore macos file
+.DS_Store
+
+# VScode
+.vscode/*
