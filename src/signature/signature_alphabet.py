@@ -252,7 +252,7 @@ def SignatureFromSmiles(smiles, Alphabet, string=True, verbose=False):
     #            the molecule and the corresponding smiles
 
 
-    from library.signature import SanitizeMolecule, GetMoleculeSignature
+    from .signature import SanitizeMolecule, GetMoleculeSignature
 
     S = smiles.split('.') if Alphabet.splitcomponent else [smiles]
     signature, temp, molecule, smiles = '', [], [], ''
