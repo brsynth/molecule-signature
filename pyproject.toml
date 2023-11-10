@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "signature"
+version = "0.1.0"
+description = "Signature based molecule enumeration from morgan fingerprints"
+readme = "README.md"
+license = {text = "MIT"}
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "$version"
+version_type = "semver"
+version_provider = "pep621"
