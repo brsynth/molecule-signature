@@ -1,12 +1,12 @@
 # signature
 
-Signature based molecule enumeration from morgan fingerprints.
+Signature-based enumeration of molecules from morgan fingerprints.
 
 ## Install
 
 ```sh
 conda env create -f environment.yml
-conda activate chemigen
+conda activate sig
 pip install -e .
 ```
 
