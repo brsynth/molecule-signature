@@ -12,7 +12,7 @@ pip install -e .
 
 ## Use
 
-Buid signature from SMILES, includes 2048-width morgan fingerprints (radius 2) and atomic neighborhood:
+Build signature from SMILES, includes 2048-width morgan fingerprints (radius 2) and atomic neighborhood:
 
 ```python
 from signature.signature_alphabet import SignatureAlphabet, SignatureFromSmiles
