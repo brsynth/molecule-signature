@@ -80,6 +80,24 @@ time: {(time.time()-start_time)}')
                     Dict.add(s)
         self.Dict = VectorToDic(list(Dict))
 
+    def fill_from_signatures(self, signatures, verbose=False):
+        # Fill signature dictionary
+        # signatures: an array of signatures
+        from library.utils import VectorToDic, DicToVector
+        if self.Dict != {}:
+            Dict = DicToVector(self.Dict)
+        else:
+            Dict = set()
+        start_time = time.time()
+        for i, signature in enumerate(signatures):
+            if i % 10000 == 0:
+                print(f'... processing alphabet iteration: {i:,} size: {len(Dict):,} time: {(time.time()-start_time):.2f}')  # noqa: E501
+                start_time = time.time()
+            for sig in signature.split(' . '):  # separate molecules
+                for s in sig.split(' '):  # separate atom signatures
+                    Dict.add(s)
+        self.Dict = VectorToDic(list(Dict))
+
     def save(self, filename):
         filename = filename+'.npz' if filename.find('.npz') == -1 else filename
         np.savez_compressed(filename, 
