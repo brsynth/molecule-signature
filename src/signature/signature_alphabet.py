@@ -55,8 +55,11 @@ class SignatureAlphabet:
     def fill(self, Smiles, verbose=False):
         # Fill signature dictionary
         # Smiles: an array of Smiles
-        from library.utils import VectorToDic
-        Dict = set()
+        from library.utils import VectorToDic, DicToVector
+        if self.Dict != {}:  # there's already signatures in the alphabet
+            Dict = DicToVector(self.Dict)  # return a set
+        else:
+            Dict = set()
         start_time = time.time()
         for i in range(len(Smiles)):  
             

@@ -91,6 +91,8 @@ def VectorToDic(V):
         D[V[i]] = i
     return D
 
+def DicToVector(D):
+    return {key for key in D.keys()}  # return a set
 
 def PrintMatrix(A):
     for i in range(A.shape[0]):
