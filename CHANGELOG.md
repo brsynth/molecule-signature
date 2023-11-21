@@ -1,3 +1,10 @@
+## Unreleased
+
+### Feat
+
+- **signature_alphabet**: enable fill from signature
+- **signature_alphabet**: enable fill for existing alphabet
+
 ## 0.1.2 (2023-11-14)
 
 ### Fix
