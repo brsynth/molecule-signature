@@ -18,6 +18,9 @@ __pycache__/
 # pytest_cache
 **/.pytest_cache/
 
+# pytest coverage
+.coverage
+
 # datasets
 /datasets/MetaNetX.tsv
 /datasets/MetaNetX_weight_500.csv
