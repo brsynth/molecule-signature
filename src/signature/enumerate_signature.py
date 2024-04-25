@@ -17,8 +17,16 @@ import numpy as np
 from rdkit import Chem
 from sympy import Matrix
 
-from src.signature.enumerate_utils import get_constraint_matrices, update_constraint_matrices
-from src.signature.signature import atomic_num_charge, sanitize_molecule, signature_bond_type, signature_neighbor
+from src.signature.enumerate_utils import (
+    get_constraint_matrices,
+    update_constraint_matrices,
+)
+from src.signature.signature import (
+    atomic_num_charge,
+    sanitize_molecule,
+    signature_bond_type,
+    signature_neighbor,
+)
 from src.signature.signature_alphabet import (
     signature_alphabet_from_morgan_bit,
     signature_from_smiles,
@@ -376,11 +384,18 @@ def correction_nitrogen(mol):
     mols = [mol]
     list_N = []
     for atom in mol.GetAtoms():
-        if atom.GetSymbol() == "N" and atom.GetIsAromatic() and atom.GetTotalDegree() != 3:
+        if (
+            atom.GetSymbol() == "N"
+            and atom.GetIsAromatic()
+            and atom.GetTotalDegree() != 3
+        ):
             list_N.append(atom.GetIdx())
     if len(list_N) > 0:
         lists_atoms_N_to_incr = [
-            list(l) for l in chain.from_iterable(combinations(list_N, r + 1) for r in range(len(list_N)))
+            list(l)
+            for l in chain.from_iterable(
+                combinations(list_N, r + 1) for r in range(len(list_N))
+            )
         ]
         for atoms_N in lists_atoms_N_to_incr:
             new_mol = copy.deepcopy(mol)
@@ -401,7 +416,9 @@ def correction_nitrogen(mol):
     return smis
 
 
-def enumeration(MG, index, enum_graph, enum_graph_dict, node_previous, j_current, verbose=False):
+def enumeration(
+    MG, index, enum_graph, enum_graph_dict, node_previous, j_current, verbose=False
+):
     """
     Local function that build a requested number of molecules (in MG.max_nbr_solution) matching the matrices in the
     molecular graph MG.
@@ -436,7 +453,11 @@ def enumeration(MG, index, enum_graph, enum_graph_dict, node_previous, j_current
     # check if the enumeration has already gone through this graph branch
     nodes_connected = [link[1] for link in enum_graph.edges(node_previous)]
     if j_current in [enum_graph_dict[node][0] for node in nodes_connected]:
-        node_current = int([node for node in nodes_connected if enum_graph_dict[node][0] == j_current][0])
+        node_current = int(
+            [node for node in nodes_connected if enum_graph_dict[node][0] == j_current][
+                0
+            ]
+        )
         if enum_graph_dict[node_current][1]:
             return set()
     else:
@@ -450,7 +471,9 @@ def enumeration(MG, index, enum_graph, enum_graph_dict, node_previous, j_current
     # search all bonds that can be attached to i
     J = MG.candidate_bond(index)
     if len(J) == 0:
-        Sol2 = enumeration(MG, index + 1, enum_graph, enum_graph_dict, node_current, -1, verbose)
+        Sol2 = enumeration(
+            MG, index + 1, enum_graph, enum_graph_dict, node_current, -1, verbose
+        )
         tmp = []
         for node in [link[1] for link in enum_graph.edges(node_current)]:
             tmp.append(enum_graph_dict[node][1])
@@ -461,7 +484,9 @@ def enumeration(MG, index, enum_graph, enum_graph_dict, node_previous, j_current
     sol = set()
     for j in J:
         MG.add_bond(index, j)
-        sol2 = enumeration(MG, index + 1, enum_graph, enum_graph_dict, node_current, j, verbose=verbose)
+        sol2 = enumeration(
+            MG, index + 1, enum_graph, enum_graph_dict, node_current, j, verbose=verbose
+        )
         sol = sol | sol2
         if MG.nbr_recursion > MG.max_nbr_recursion:
             MG.recursion_timeout = True
@@ -532,7 +557,9 @@ def enumerate_molecule_from_signature(
         if verbose:
             print(f"repeat {r}")
         # Get initial molecule
-        AS, NAS, Deg, A, B, C = get_constraint_matrices(sign, unique=False, verbose=verbose)
+        AS, NAS, Deg, A, B, C = get_constraint_matrices(
+            sign, unique=False, verbose=verbose
+        )
         MG = MolecularGraph(
             A,
             B,
@@ -564,7 +591,9 @@ def enumerate_molecule_from_signature(
             if sigsmi == sig:
                 SMIsig.add(smisig)
     if verbose:
-        print(f"retain solutions having a signature = provided sig {len(S)}, {len(SMIsig)}")
+        print(
+            f"retain solutions having a signature = provided sig {len(S)}, {len(SMIsig)}"
+        )
     return list(SMIsig), recursion_timeout
 
 
@@ -600,7 +629,9 @@ def signature_set(sig, occ):
     return S
 
 
-def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5), method="partitions", verbose=False):
+def enumerate_signature_from_morgan(
+    morgan, Alphabet, max_nbr_partition=int(1e5), method="partitions", verbose=False
+):
     """
     Compute all possible signatures having the same Morgan vector as the provided one.
 
@@ -652,7 +683,9 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
     MAX = np.asarray(list(MAX.values()))
     Deg = np.asarray([len(AS[i].split(".")) - 1 for i in range(AS.shape[0])])
     n1 = AS.shape[0]
-    AS, IDX, MIN, MAX, Deg, C = update_constraint_matrices(AS, IDX, MIN, MAX, Deg, verbose=verbose)
+    AS, IDX, MIN, MAX, Deg, C = update_constraint_matrices(
+        AS, IDX, MIN, MAX, Deg, verbose=verbose
+    )
     n2 = AS.shape[0]
     if verbose:
         print(f"AS reduction {n1}, {n2}")
@@ -675,12 +708,14 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
         print(f"A = {A}\nb = {b}")
     # Solve
     st = time.time()
-    if method == "diophantine": # diophantine
+    if method == "diophantine":  # diophantine
         A, b = Matrix(A.astype(int)), Matrix(b.astype(int))
         occ = np.asarray(list(diophantine.solve(A, b)))
         bool_timeout = False
     else:
-        occ, bool_timeout = solve_by_partitions(A, b, verbose=verbose, max_nbr_partition=max_nbr_partition)
+        occ, bool_timeout = solve_by_partitions(
+            A, b, verbose=verbose, max_nbr_partition=max_nbr_partition
+        )
     ct_solve = time.time() - st
     if occ.shape[0] == 0:
         return [], bool_timeout, ct_solve
