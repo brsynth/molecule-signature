@@ -303,4 +303,4 @@ def test_solve_by_partitions():
     S, bool_timeout = solve_by_partitions(A, b)
     expected_S = np.array([[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]])
     assert np.array_equal(S, expected_S)
-    assert bool_timeout == False
+    assert bool_timeout is False

@@ -376,10 +376,10 @@ def update_constraint_matrices(AS, IDX, MIN, MAX, deg, verbose=False):
     if verbose:
         print(f"UpdateConstraintMatrices AS {AS.shape} C {C.shape} BS {BS.shape}")
     if verbose == 2:
-        print(f"UpdateConstraintMatrices AS")
+        print("UpdateConstraintMatrices AS")
         for i in range(AS.shape[0]):
             print(f"{i} {AS[i]}")
-        print(f"UpdateConstraintMatrices BS")
+        print("UpdateConstraintMatrices BS")
         for i in range(BS.shape[0]):
             print(f"{i} {BS[i]}")
 

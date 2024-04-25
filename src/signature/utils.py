@@ -108,7 +108,7 @@ def write_csv(filename, H, D):
     with open(filename, "w", encoding="UTF8") as f:
         writer = csv.writer(f)
         # write the header
-        if H != None:
+        if H is not None:
             writer.writerow(H)
         # write the data
         for i in range(D.shape[0]):
@@ -159,7 +159,7 @@ def write_tsv(filename, H, D):
     with open(filename, "w", encoding="UTF8") as f:
         writer = csv.writer(f, delimiter="\t")
         # write the header
-        if H != None:
+        if H is not None:
             writer.writerow(H)
         # write the data
         for i in range(D.shape[0]):

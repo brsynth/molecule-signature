@@ -114,7 +114,7 @@ def atom_signature(
     signature = ""
     if atm is None:
         return signature
-    if allHsExplicit == False:  # one keep charged hydrogen
+    if allHsExplicit is False:  # one keep charged hydrogen
         if atm.GetAtomicNum() == 1 and atm.GetFormalCharge() == 0:
             return signature
     mol = atm.GetOwningMol()
@@ -166,7 +166,7 @@ def atom_signature(
         if verbose == 2:
             print(f"signature for {atm.GetIdx()}: {signature}")
 
-    except:
+    except Exception:
         if verbose:
             print(
                 f"WARNING cannot compute atom signature for: atom num: {atmidx} {atm.GetSymbol()} radius: {radius}"
@@ -217,40 +217,40 @@ def sanitize_molecule(
     verbose = False
     try:
         Chem.SanitizeMol(mol)
-    except:
+    except Exception:
         if verbose:
-            print(f"WARNING SANITIZATION: molecule cannot be sanitized")
+            print("WARNING SANITIZATION: molecule cannot be sanitized")
         return None, ""
     if kekuleSmiles:
         try:
             Chem.Kekulize(mol)
-        except:
+        except Exception:
             if verbose:
-                print(f"WARNING SANITIZATION: molecule cannot be kekularized")
+                print("WARNING SANITIZATION: molecule cannot be kekularized")
             return None, ""
     try:
         mol = Chem.RemoveHs(mol)
-    except:
+    except Exception:
         if verbose:
-            print(f"WARNING SANITIZATION: hydrogen cannot be removed)")
+            print("WARNING SANITIZATION: hydrogen cannot be removed)")
         return None, ""
     if allHsExplicit:
         try:
             mol = Chem.rdmolops.AddHs(mol)
-        except:
+        except Exception:
             if verbose:
-                print(f"WARNING SANITIZATION: hydrogen cannot be added)")
+                print("WARNING SANITIZATION: hydrogen cannot be added)")
             return None, ""
-    if isomericSmiles == False:
+    if isomericSmiles is False:
         try:
             Chem.RemoveStereochemistry(mol)
-        except:
+        except Exception:
             if verbose:
-                print(f"WARNING SANITIZATION: stereochemistry cannot be removed")
+                print("WARNING SANITIZATION: stereochemistry cannot be removed")
             return None, ""
-    if formalCharge == False:
+    if formalCharge is False:
         [a.SetFormalCharge(0) for a in mol.GetAtoms()]
-    if atomMapping == False:
+    if atomMapping is False:
         [a.SetAtomMapNum(0) for a in mol.GetAtoms()]
     smi = Chem.MolToSmiles(mol)
 
@@ -301,7 +301,7 @@ def get_atom_signature(
         allHsExplicit=allHsExplicit,
         verbose=verbose,
     )
-    if neighbor == False:
+    if neighbor is False:
         return signature
 
     # We compute atm signature at radius-1

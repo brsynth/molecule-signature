@@ -236,7 +236,7 @@ def signature_string_to_vector(signature, Dict, verbose=False):
             try:
                 index = Dict[s]
                 signatureV[index] += 1
-            except:
+            except Exception:
                 print(f"Error atom signature not found in Alphabet {s}")
                 continue  # !!!
                 sys.exit("Error")
@@ -328,7 +328,7 @@ def signature_sorted_array(sig, Alphabet=None, unique=False, verbose=False):
         An array of degrees of each atom signature.
     """
 
-    if Alphabet != None:
+    if Alphabet is not None:
         sig = signature_vector_to_string(sigV, Alphabet.Dict, verbose=verbose)
     LAS = sig.split(" ")
     LAS.sort()
@@ -401,7 +401,7 @@ def signature_from_smiles(smiles, Alphabet, neighbor=False, string=True, verbose
             atomMapping=Alphabet.atomMapping,
             verbose=verbose,
         )
-        if mol == None:
+        if mol is None:
             continue
         sig = get_molecule_signature(
             mol,
@@ -418,7 +418,7 @@ def signature_from_smiles(smiles, Alphabet, neighbor=False, string=True, verbose
             smiles = f"{smiles}.{smi}" if len(smiles) else smi
 
     if len(temp) < 1:
-        if string == False and Alphabet.Dict != {}:
+        if string is False and Alphabet.Dict != {}:
             return [], molecule, ""
         else:
             return "", molecule, ""
@@ -426,7 +426,7 @@ def signature_from_smiles(smiles, Alphabet, neighbor=False, string=True, verbose
     temp = sorted(temp)
     signature = " . ".join(sig for sig in temp)
 
-    if string == False and Alphabet.Dict != {}:
+    if string is False and Alphabet.Dict != {}:
         signature = signature_string_to_vector(
             signature, Alphabet.Dict, verbose=verbose
         )
@@ -513,7 +513,7 @@ def morgan_vector_from_signature(signature, Alphabet, verbose=False):
         mbit, sas = morgan_bit_from_signature(sa, verbose=verbose)
         if mbit < 0:
             if verbose:
-                print(f"Error signature does not include Morgan bits")
+                print("Error signature does not include Morgan bits")
             return MorganVector, signature
         lsas.append(sas)
         MorganVector[mbit] += 1
@@ -547,7 +547,7 @@ def signature_alphabet_from_morgan_bit(MorganBit, Alphabet, verbose=False):
     Signatures = []
     if Alphabet.Dict == {}:
         if verbose:
-            print(f"WARNING Empty Alphabet")
+            print("WARNING Empty Alphabet")
         return Signatures
     if MorganBit > Alphabet.nBits:
         if verbose:

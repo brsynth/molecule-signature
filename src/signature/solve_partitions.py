@@ -223,7 +223,7 @@ def equations_trivially_satisfied(C, N, tups, parity_indices, graph_index):
         if i == len(tups):
             if j == graph_index:
                 graph = prod % 2 == 0
-            elif (parity_indices[j] == False and prod != 0) or (
+            elif (parity_indices[j] is False and prod != 0) or (
                 parity_indices[j] and prod % 2 != 0
             ):
                 indices.append(j)
@@ -352,11 +352,11 @@ def solutions_per_line(
             print(f"\nLine {j}: \nThe partitions involved are {parts}")
         if parts in dict_sols_per_eq:
             if verbose:
-                print(f"These partitions have already been involved")
+                print("These partitions have already been involved")
             l = np.array(dict_sols_per_eq[parts])
         else:
             if verbose:
-                print(f"These partitions have not been involved")
+                print("These partitions have not been involved")
             l = []
             for i in range(len(tups)):
                 if i in parts:
@@ -374,7 +374,7 @@ def solutions_per_line(
         if verbose:
             print(f"Local solutions len: {l.shape[0]}")
         if verbose:
-            print(f"We restrict local solutions by the current line")
+            print("We restrict local solutions by the current line")
         if parity_indices[j]:
             indices_tmp = np.where(
                 blas.dgemm(alpha=1.0, a=l, b=np.transpose(C[j, :])) % 2 == 0
@@ -387,7 +387,7 @@ def solutions_per_line(
         if l.shape[0] == 0:
             return dict(), dict(), bool_timeout
         if verbose:
-            print(f"We clean partitions of dict_partitions by the local solutions")
+            print("We clean partitions of dict_partitions by the local solutions")
         for i in parts:
             l_proj = l[:, tups[i][0] : (tups[i][1])].tolist()
             l_proj.sort()
@@ -588,7 +588,7 @@ def groups_of_solutions(dict_sols_per_eq, parts_groups, verbose=False):
         while len(group_sorted) > 0:
             find_one = False
             j = 0
-            while find_one == False:
+            while find_one is False:
                 parts = group_sorted[j]
                 if (
                     group_involved == []
@@ -646,7 +646,7 @@ def solve_by_partitions(A, b, max_nbr_partition=int(1e5), verbose=False):
     C, P, N, parity_indices, graph_line, graph_index = extract_matrices_C_P(A, b)
     # We compute the partitions of each element of N wrt P
     if verbose:
-        print(f"We compute the partitions of each Ni")
+        print("We compute the partitions of each Ni")
     dict_partitions, tups, bool_timeout = partitions_P_N(
         P, N, max_nbr_partition, bool_timeout
     )
@@ -673,7 +673,7 @@ def solve_by_partitions(A, b, max_nbr_partition=int(1e5), verbose=False):
         l = [dict_partitions[i] for i in dict_partitions]
         l = [list(itertools.chain(*x)) for x in itertools.product(*l)]
         S = np.array(l)
-        if graph == False:
+        if graph is False:
             indices_tmp = np.where(np.dot(S, np.transpose(graph_line)) % 2 == 0)[0]
             S = S[indices_tmp, :]
         # return S, percent_parts_used
@@ -686,7 +686,7 @@ def solve_by_partitions(A, b, max_nbr_partition=int(1e5), verbose=False):
         print(f"The couple of partitions involved: {partitions_involved} \n")
     # We compute the solutions for each equation in C
     if verbose:
-        print(f"We compute the solutions of each equation")
+        print("We compute the solutions of each equation")
     dict_sols_per_eq, dict_partitions, bool_timeout = solutions_per_line(
         C,
         tups,
@@ -703,7 +703,7 @@ def solve_by_partitions(A, b, max_nbr_partition=int(1e5), verbose=False):
     # We clean local solutions
     if verbose:
         print(
-            f"\nWe clean each local sol with the partitions cleaned during the process"
+            "\nWe clean each local sol with the partitions cleaned during the process"
         )
     dict_sols_per_eq = clean_local_solutions(tups, dict_sols_per_eq, dict_partitions)
     # We add missing partitions
@@ -732,11 +732,11 @@ def solve_by_partitions(A, b, max_nbr_partition=int(1e5), verbose=False):
         print(f"The disjoint groups of partitions: {parts_groups}\n")
     # We compute the product of solutions in each group
     if verbose:
-        print(f"We compute solutions per group (compatibility + intersection)")
+        print("We compute solutions per group (compatibility + intersection)")
     S_groups = groups_of_solutions(dict_sols_per_eq, parts_groups, verbose)
     # We compute the product of solutions between groups
     if verbose:
-        print(f"\nWe compute sol between the distinct groups (intersection)")
+        print("\nWe compute sol between the distinct groups (intersection)")
     S = [[-1] * C.shape[1]]
     for S_group in S_groups:
         if verbose:
@@ -746,7 +746,7 @@ def solve_by_partitions(A, b, max_nbr_partition=int(1e5), verbose=False):
             print(f"after inter: {len(S)}")
     S = np.array(S)
     # We restrict by the graphicality if necessary
-    if S.shape[0] != 0 and graph == False:
+    if S.shape[0] != 0 and graph is False:
         indices_tmp = np.where(np.dot(S, np.transpose(graph_line)) % 2 == 0)[0]
         S = S[indices_tmp, :]
 

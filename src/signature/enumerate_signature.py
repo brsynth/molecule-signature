@@ -217,7 +217,7 @@ class MolecularGraph:
         else:
             Ad = np.diagonal(A)
             Ab = np.sum(A, axis=1) - Ad
-            if np.array_equal(Ad, Ab) == False:
+            if np.array_equal(Ad, Ab) is False:
                 valid = True  # not saturated
         self.remove_bond(i, j)
         return valid
@@ -342,15 +342,15 @@ class MolecularGraph:
         if self.nbr_recursion > self.max_nbr_recursion:
             self.recursion_timeout = True
             if verbose:
-                print(f"recursion exceeded for enumeration")
+                print("recursion exceeded for enumeration")
             return True, set()
         if i < self.imax:
             return False, set()
         # we are at the end all atoms must be saturated
         Ad = np.diagonal(self.A)
         Ab = np.sum(self.A, axis=1) - Ad
-        if np.array_equal(Ad, Ab) == False:
-            if verbose == True:
+        if np.array_equal(Ad, Ab) is False:
+            if verbose:
                 print(f"sol not saturated\nDiag: {Ad}\nBond: {Ab}")
             return True, set()
         if verbose == 2:
