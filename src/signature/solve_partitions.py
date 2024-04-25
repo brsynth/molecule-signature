@@ -39,7 +39,7 @@ def sized_partitions(n, k, m=None):
     list of int
         A partition of n into k parts.
     """
-    
+
     if k == 0:
         return
     if k == 1:
@@ -124,7 +124,10 @@ def extract_matrices_C_P(A, b):
     P = A[j1:, :j2]
     N = b[-P.shape[0] :]
     C = A[:j1, :]
-    parity_indices = [sum(C[i, j2:] == [0] * (A.shape[1] - j2)) != (A.shape[1] - j2) for i in range(C.shape[0])]
+    parity_indices = [
+        sum(C[i, j2:] == [0] * (A.shape[1] - j2)) != (A.shape[1] - j2)
+        for i in range(C.shape[0])
+    ]
     C = C[:, :j2]
     graph_line = C[-1:, :]
     graph_index = j1 - 1
@@ -168,11 +171,16 @@ def partitions_P_N(P, N, max_nbr_partition, bool_timeout):
             if nb_perm > max_nbr_partition:
                 bool_timeout = True
                 dict_partitions[i] = dict_partitions[i] + list(
-                    itertools.islice(multiset_permutations(x + [0] * (sum(P[i, :]) - len(x))), max_nbr_partition)
+                    itertools.islice(
+                        multiset_permutations(x + [0] * (sum(P[i, :]) - len(x))),
+                        max_nbr_partition,
+                    )
                 )
                 # nb_parts_loc += max_nbr_partition
             else:
-                dict_partitions[i] = dict_partitions[i] + list(multiset_permutations(x + [0] * (sum(P[i, :]) - len(x))))
+                dict_partitions[i] = dict_partitions[i] + list(
+                    multiset_permutations(x + [0] * (sum(P[i, :]) - len(x)))
+                )
                 # nb_parts_loc += nb_perm
             # nb_parts_tot += nb_perm
     # percent_parts_used = 100 * nb_parts_loc / nb_parts_tot
@@ -215,7 +223,9 @@ def equations_trivially_satisfied(C, N, tups, parity_indices, graph_index):
         if i == len(tups):
             if j == graph_index:
                 graph = prod % 2 == 0
-            elif (parity_indices[j] == False and prod != 0) or (parity_indices[j] and prod % 2 != 0):
+            elif (parity_indices[j] == False and prod != 0) or (
+                parity_indices[j] and prod % 2 != 0
+            ):
                 indices.append(j)
         else:
             indices.append(j)
@@ -247,9 +257,19 @@ def sort_C_wrt_partitions_involved(C, tups, parity_indices):
 
     partitions_involved = []
     for j in range(C.shape[0]):
-        partitions_involved.append(tuple([i for i in range(len(tups)) if set(C[j, tups[i][0] : tups[i][1]]) != {0}]))
+        partitions_involved.append(
+            tuple(
+                [
+                    i
+                    for i in range(len(tups))
+                    if set(C[j, tups[i][0] : tups[i][1]]) != {0}
+                ]
+            )
+        )
     # We sort the lines of C following the number of partitions involved
-    indices_tmp = sorted(range(len(partitions_involved)), key=lambda k: len(partitions_involved[k]))
+    indices_tmp = sorted(
+        range(len(partitions_involved)), key=lambda k: len(partitions_involved[k])
+    )
     C_tmp = C.copy()
     for i in range(C.shape[0]):
         C_tmp[i,] = C[indices_tmp[i],]
@@ -276,12 +296,22 @@ def intersection_of_lists_of_lists(S1, S2):
         Intersection of the two input lists of lists.
     """
 
-    S_inter = [list(x) for x in set(tuple(x) for x in S1).intersection(set(tuple(x) for x in S2))]
+    S_inter = [
+        list(x)
+        for x in set(tuple(x) for x in S1).intersection(set(tuple(x) for x in S2))
+    ]
     return S_inter
 
 
 def solutions_per_line(
-    C, tups, parity_indices, dict_partitions, partitions_involved, max_nbr_partition, bool_timeout, verbose=False
+    C,
+    tups,
+    parity_indices,
+    dict_partitions,
+    partitions_involved,
+    max_nbr_partition,
+    bool_timeout,
+    verbose=False,
 ):
     """
     Compute the solutions for each line.
@@ -346,9 +376,13 @@ def solutions_per_line(
         if verbose:
             print(f"We restrict local solutions by the current line")
         if parity_indices[j]:
-            indices_tmp = np.where(blas.dgemm(alpha=1.0, a=l, b=np.transpose(C[j, :])) % 2 == 0)[0]
+            indices_tmp = np.where(
+                blas.dgemm(alpha=1.0, a=l, b=np.transpose(C[j, :])) % 2 == 0
+            )[0]
         else:
-            indices_tmp = np.where(blas.dgemm(alpha=1.0, a=l, b=np.transpose(C[j, :])) == 0)[0]
+            indices_tmp = np.where(
+                blas.dgemm(alpha=1.0, a=l, b=np.transpose(C[j, :])) == 0
+            )[0]
         l = l[indices_tmp, :]
         if l.shape[0] == 0:
             return dict(), dict(), bool_timeout
@@ -359,8 +393,12 @@ def solutions_per_line(
             l_proj.sort()
             l_proj = list(k for k, _ in itertools.groupby(l_proj))
             if verbose:
-                print(f"part {i}. dict_partitions[part] x S_proj: {len(dict_partitions[i])} x {len(l_proj)}")
-            dict_partitions[i] = intersection_of_lists_of_lists(dict_partitions[i], l_proj)
+                print(
+                    f"part {i}. dict_partitions[part] x S_proj: {len(dict_partitions[i])} x {len(l_proj)}"
+                )
+            dict_partitions[i] = intersection_of_lists_of_lists(
+                dict_partitions[i], l_proj
+            )
             if verbose:
                 print(f"after inter: {len(dict_partitions[i])}")
         dict_sols_per_eq[parts] = l.tolist()
@@ -394,7 +432,9 @@ def clean_local_solutions(tups, dict_sols_per_eq, dict_partitions):
             else:
                 l.append([[-1] * len(dict_partitions[i][0])])
         l = [list(itertools.chain(*x)) for x in itertools.product(*l)]
-        dict_sols_per_eq[parts] = intersection_of_lists_of_lists(dict_sols_per_eq[parts], l)
+        dict_sols_per_eq[parts] = intersection_of_lists_of_lists(
+            dict_sols_per_eq[parts], l
+        )
     return dict_sols_per_eq
 
 
@@ -478,7 +518,12 @@ def intersection_of_solutions(S1, S2, test_compatibility):
     """
 
     if test_compatibility:
-        S_inter = [list(np.maximum(sol1, sol2)) for sol1 in S1 for sol2 in S2 if compatibility(sol1, sol2)]
+        S_inter = [
+            list(np.maximum(sol1, sol2))
+            for sol1 in S1
+            for sol2 in S2
+            if compatibility(sol1, sol2)
+        ]
     else:
         S_inter = [list(np.maximum(sol1, sol2)) for sol1 in S1 for sol2 in S2]
     return S_inter
@@ -487,14 +532,14 @@ def intersection_of_solutions(S1, S2, test_compatibility):
 def sort_group_of_partitions(dict_sols_per_eq, group):
     """
     Sort the group of partitions based on the number of solutions per partition.
-    
+
     Parameters
     ----------
     dict_sols_per_eq : dict
         Dictionary containing the solutions for each equation.
     group : set
         Set representing the group of partitions to be sorted.
-    
+
     Returns
     -------
     group_sorted : list
@@ -545,15 +590,22 @@ def groups_of_solutions(dict_sols_per_eq, parts_groups, verbose=False):
             j = 0
             while find_one == False:
                 parts = group_sorted[j]
-                if group_involved == [] or len(set.intersection(set(parts), set(group_involved))) > 0:
+                if (
+                    group_involved == []
+                    or len(set.intersection(set(parts), set(group_involved))) > 0
+                ):
                     find_one = True
                     group_involved = group_involved + list(parts)
                     group_sorted.remove(parts)
                 else:
                     j = j + 1
             if verbose:
-                print(f"Parts {parts}.\ndict_sols[parts] x S_tmp: {len(dict_sols_per_eq[parts])} x {len(S_group)}")
-            S_group = intersection_of_solutions(dict_sols_per_eq[parts], S_group, test_compatibility=True)
+                print(
+                    f"Parts {parts}.\ndict_sols[parts] x S_tmp: {len(dict_sols_per_eq[parts])} x {len(S_group)}"
+                )
+            S_group = intersection_of_solutions(
+                dict_sols_per_eq[parts], S_group, test_compatibility=True
+            )
         S_groups.append(S_group)
     return S_groups
 
@@ -565,7 +617,7 @@ def groups_of_solutions(dict_sols_per_eq, parts_groups, verbose=False):
 
 def solve_by_partitions(A, b, max_nbr_partition=int(1e5), verbose=False):
     """
-    Solve the diophantine system AX=b on N with the partitions algorithm. 
+    Solve the diophantine system AX=b on N with the partitions algorithm.
 
     Parameters
     ----------
@@ -595,16 +647,24 @@ def solve_by_partitions(A, b, max_nbr_partition=int(1e5), verbose=False):
     # We compute the partitions of each element of N wrt P
     if verbose:
         print(f"We compute the partitions of each Ni")
-    dict_partitions, tups, bool_timeout = partitions_P_N(P, N, max_nbr_partition, bool_timeout)
+    dict_partitions, tups, bool_timeout = partitions_P_N(
+        P, N, max_nbr_partition, bool_timeout
+    )
     if verbose:
         for i in range(P.shape[0]):
-            print(f"Part {i}. Nb parts of {N[i]} in {tups[i][1]-tups[i][0]} parts: {len(dict_partitions[i])}")
+            print(
+                f"Part {i}. Nb parts of {N[i]} in {tups[i][1]-tups[i][0]} parts: {len(dict_partitions[i])}"
+            )
         if bool_timeout:
             print("T I M E O U T.")
     # We suppress eqs trivially satisfied since constants on partitions
-    indices, graph = equations_trivially_satisfied(C, N, tups, parity_indices, graph_index)
+    indices, graph = equations_trivially_satisfied(
+        C, N, tups, parity_indices, graph_index
+    )
     if verbose:
-        print(f"Nb of lines deleted since trivially satisfied: {C.shape[0]-len(indices)}")
+        print(
+            f"Nb of lines deleted since trivially satisfied: {C.shape[0]-len(indices)}"
+        )
         print(f"\nGraphicality satisfied directly? {graph}")
     C = C[indices, :]
     parity_indices = [parity_indices[i] for i in indices]
@@ -619,26 +679,41 @@ def solve_by_partitions(A, b, max_nbr_partition=int(1e5), verbose=False):
         # return S, percent_parts_used
         return S, bool_timeout
     # We compute partitions involved in each eq and sort the lines of C following the number of partitions involved
-    C, parity_indices, partitions_involved = sort_C_wrt_partitions_involved(C, tups, parity_indices)
+    C, parity_indices, partitions_involved = sort_C_wrt_partitions_involved(
+        C, tups, parity_indices
+    )
     if verbose:
         print(f"The couple of partitions involved: {partitions_involved} \n")
     # We compute the solutions for each equation in C
     if verbose:
         print(f"We compute the solutions of each equation")
     dict_sols_per_eq, dict_partitions, bool_timeout = solutions_per_line(
-        C, tups, parity_indices, dict_partitions, partitions_involved, max_nbr_partition, bool_timeout, verbose
+        C,
+        tups,
+        parity_indices,
+        dict_partitions,
+        partitions_involved,
+        max_nbr_partition,
+        bool_timeout,
+        verbose,
     )
     # If timeout has been reached, it is possible that no solution has been found
     if len(dict_sols_per_eq) == 0:
         return np.array([]), bool_timeout
     # We clean local solutions
     if verbose:
-        print(f"\nWe clean each local sol with the partitions cleaned during the process")
+        print(
+            f"\nWe clean each local sol with the partitions cleaned during the process"
+        )
     dict_sols_per_eq = clean_local_solutions(tups, dict_sols_per_eq, dict_partitions)
     # We add missing partitions
     if verbose:
-        print(f"All the partitions involved: {set(itertools.chain.from_iterable(partitions_involved))}")
-    missing_parts = set(range(len(tups))) - set(itertools.chain.from_iterable(partitions_involved))
+        print(
+            f"All the partitions involved: {set(itertools.chain.from_iterable(partitions_involved))}"
+        )
+    missing_parts = set(range(len(tups))) - set(
+        itertools.chain.from_iterable(partitions_involved)
+    )
     for j in missing_parts:
         l = []
         for i in range(len(tups)):
@@ -674,6 +749,6 @@ def solve_by_partitions(A, b, max_nbr_partition=int(1e5), verbose=False):
     if S.shape[0] != 0 and graph == False:
         indices_tmp = np.where(np.dot(S, np.transpose(graph_line)) % 2 == 0)[0]
         S = S[indices_tmp, :]
-        
+
     return S, bool_timeout
     # return S, percent_parts_used

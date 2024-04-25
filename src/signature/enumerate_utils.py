@@ -57,7 +57,12 @@ def reduced_fingerprint(smi, radius=2, useFeatures=False):
         info = ao.GetBitInfoMap()
     morgan_tmp = []
     for j in range(len(mol.GetAtoms())):
-        tmp = [(key, info[key][i][1]) for key in info for i in range(len(info[key])) if info[key][i][0] == j]
+        tmp = [
+            (key, info[key][i][1])
+            for key in info
+            for i in range(len(info[key]))
+            if info[key][i][0] == j
+        ]
         indice = np.argmax([tmp[i][1] for i in range(len(tmp))])
         morgan_tmp.append(tmp[indice][0])
     morgan = np.zeros((2048,))

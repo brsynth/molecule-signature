@@ -86,7 +86,9 @@ def signature_bond_type(bt="UNSPECIFIED"):
     return BondType[bt]
 
 
-def atom_signature(atm, radius=2, isomericSmiles=False, allHsExplicit=False, verbose=False):
+def atom_signature(
+    atm, radius=2, isomericSmiles=False, allHsExplicit=False, verbose=False
+):
     """
     Compute the signature (SMILES string) of an atom, where the root has label 1.
 
@@ -166,7 +168,9 @@ def atom_signature(atm, radius=2, isomericSmiles=False, allHsExplicit=False, ver
 
     except:
         if verbose:
-            print(f"WARNING cannot compute atom signature for: atom num: {atmidx} {atm.GetSymbol()} radius: {radius}")
+            print(
+                f"WARNING cannot compute atom signature for: atom num: {atmidx} {atm.GetSymbol()} radius: {radius}"
+            )
         signature = ""
     atm.SetAtomMapNum(0)
 

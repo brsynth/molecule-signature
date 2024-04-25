@@ -83,7 +83,9 @@ class SignatureAlphabet:
                 start_time = time.time()
             if "*" in Smiles[i]:  # no wild card allowed
                 continue
-            signature, _, _ = signature_from_smiles(Smiles[i], self, neighbor=True, verbose=verbose)
+            signature, _, _ = signature_from_smiles(
+                Smiles[i], self, neighbor=True, verbose=verbose
+            )
             if len(signature) == 0:
                 if verbose:
                     print(f"WARNING no signature for molecule {i} {Smiles[i]}")
@@ -259,7 +261,9 @@ def signature_sorted_string(sig, verbose=False):
         The sorted signature string.
     """
 
-    AS, NAS, Deg = signature_sorted_array(sig, Alphabet=None, unique=False, verbose=verbose)
+    AS, NAS, Deg = signature_sorted_array(
+        sig, Alphabet=None, unique=False, verbose=verbose
+    )
     sigsorted = AS[0]
     for i in range(1, AS.shape[0]):
         sigsorted = sigsorted + " " + AS[i]
@@ -423,7 +427,9 @@ def signature_from_smiles(smiles, Alphabet, neighbor=False, string=True, verbose
     signature = " . ".join(sig for sig in temp)
 
     if string == False and Alphabet.Dict != {}:
-        signature = signature_string_to_vector(signature, Alphabet.Dict, verbose=verbose)
+        signature = signature_string_to_vector(
+            signature, Alphabet.Dict, verbose=verbose
+        )
 
     return signature, molecule, smiles
 
