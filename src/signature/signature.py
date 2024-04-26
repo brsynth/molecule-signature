@@ -55,35 +55,10 @@ def signature_bond_type(bt="UNSPECIFIED"):
 
     Returns
     -------
-    BondType[bt] : RDKit.Chem.BondType
+    RDKit.Chem.BondType
         The corresponding RDKit BondType object.
     """
-
-    BondType = {
-        "UNSPECIFIED": Chem.BondType.UNSPECIFIED,
-        "SINGLE": Chem.BondType.SINGLE,
-        "DOUBLE": Chem.BondType.DOUBLE,
-        "TRIPLE": Chem.BondType.TRIPLE,
-        "QUADRUPLE": Chem.BondType.QUADRUPLE,
-        "QUINTUPLE": Chem.BondType.QUINTUPLE,
-        "HEXTUPLE": Chem.BondType.HEXTUPLE,
-        "ONEANDAHALF": Chem.BondType.ONEANDAHALF,
-        "TWOANDAHALF": Chem.BondType.TWOANDAHALF,
-        "THREEANDAHALF": Chem.BondType.THREEANDAHALF,
-        "FOURANDAHALF": Chem.BondType.FOURANDAHALF,
-        "FIVEANDAHALF": Chem.BondType.FIVEANDAHALF,
-        "AROMATIC": Chem.BondType.AROMATIC,
-        "IONIC": Chem.BondType.IONIC,
-        "HYDROGEN": Chem.BondType.HYDROGEN,
-        "THREECENTER": Chem.BondType.THREECENTER,
-        "DATIVEONE": Chem.BondType.DATIVEONE,
-        "DATIVE": Chem.BondType.DATIVE,
-        "DATIVEL": Chem.BondType.DATIVEL,
-        "DATIVER": Chem.BondType.DATIVER,
-        "OTHER": Chem.BondType.OTHER,
-        "ZERO": Chem.BondType.ZERO,
-    }
-    return BondType[bt]
+    return Chem.BondType.names[bt]
 
 
 def atom_signature(
