@@ -660,3 +660,19 @@ if __name__ == "__main__":
     print("As deprecated string (morgan=True, neighbors=True):")
     print(ms.as_deprecated_string(morgan=True, neighbors=True))
     print()
+
+    print("Testing combinations of parameters ======================")
+    print()
+    import itertools
+    # Array of parameters
+    arr_radius = [0, 1, 2]
+    arr_neighbor = [False, True]
+    arr_smarts = [False, True]
+    arr_nbits = [0, 2048]
+    for use_smarts, neighbor, radius, nbit in itertools.product(arr_smarts, arr_neighbor, arr_radius, arr_nbits):
+        ms = MoleculeSignature(mol, radius=radius, neighbor=neighbor, use_smarts=use_smarts, nbits=nbit)
+        # Pretty printings
+        print(f"Molecule signature (radius={radius}, neighbor={neighbor}, use_smarts={use_smarts}, nbits={nbit}):")
+        for atom_sig in ms.atom_signatures:
+            print(f"├── {atom_sig}")
+        print()
