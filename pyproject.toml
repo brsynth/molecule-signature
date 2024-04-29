@@ -17,3 +17,6 @@ version_provider = "pep621"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+
+[tool.black]
+line-length = 120
