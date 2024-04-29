@@ -17,7 +17,7 @@ import numpy as np
 from rdkit import Chem
 
 from src.signature.utils import dic_to_vector, vector_to_dic
-from src.signature.signature import get_molecule_signature, sanitize_molecule
+from signature.signature_old import get_molecule_signature, sanitize_molecule
 
 
 ########################################################################################################################

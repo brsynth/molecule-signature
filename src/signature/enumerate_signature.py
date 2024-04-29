@@ -21,7 +21,7 @@ from src.signature.enumerate_utils import (
     get_constraint_matrices,
     update_constraint_matrices,
 )
-from src.signature.signature import (
+from signature.signature_old import (
     atomic_num_charge,
     sanitize_molecule,
     signature_bond_type,

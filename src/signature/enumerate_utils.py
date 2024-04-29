@@ -11,7 +11,7 @@ import numpy as np
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
-from src.signature.signature import signature_neighbor
+from signature.signature_old import signature_neighbor
 from src.signature.signature_alphabet import signature_sorted_array
 
 
