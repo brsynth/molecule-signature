@@ -604,3 +604,59 @@ def clean_kwargs(kwargs: dict) -> dict:
             logger.warning(f"Invalid argument: {key} (value: {value}), skipping argument.")
 
     return cleaned_kwargs
+
+
+if __name__ == "__main__":
+
+    # Example usage
+    smiles = "c1ccccc1O"
+    mol = Chem.MolFromSmiles(smiles)
+
+    # Compute the molecule signature
+    ms = MoleculeSignature(mol, radius=2, neighbor=True, use_smarts=False, nbits=2048)
+
+    # Print the molecule signature
+    print("Molecule signature ======================")
+    print()
+
+    print("Atoms:")
+    print(ms.atoms)
+    print()
+
+    print("Atoms minus:")
+    print(ms.atoms_minus)
+    print()
+
+    print("Neighbors:")
+    print(ms.neighbors)
+    print()
+
+    print("Morgans:")
+    print(ms.morgans)
+    print()
+
+    print("As list (morgan=True, neighbors=False):")
+    for item in ms.as_list(morgan=True, neighbors=False):
+        print(f"- {item}")
+    print()
+    
+    print("As list (morgan=False, neighbors=True):")
+    for item in ms.as_list(morgan=False, neighbors=True):
+        print(f"- {item}")
+    print()
+
+    print("As string (morgan=True, neighbors=False):")
+    print(ms.as_str(morgan=True, neighbors=False))
+    print()
+
+    print("As string (morgan=True, neighbors=True):")
+    print(ms.as_str(morgan=True, neighbors=True))
+    print()
+
+    print("As deprecated string (morgan=True, neighbors=False):")
+    print(ms.as_deprecated_string(morgan=True, neighbors=False))
+    print()
+
+    print("As deprecated string (morgan=True, neighbors=True):")
+    print(ms.as_deprecated_string(morgan=True, neighbors=True))
+    print()
