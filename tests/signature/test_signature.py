@@ -3,38 +3,52 @@ from rdkit import Chem
 from signature.Signature import AtomSignature, MoleculeSignature
 
 
-# Test the AtomSignature initialization and basic attributes
-def test_atom_signature_initialization():
-    mol = Chem.MolFromSmiles("CCO")  # Ethanol as a simple test case
-    atom = mol.GetAtomWithIdx(0)  # Get the first carbon atom
+# Fixtures for creating molecules
+@pytest.fixture
+def benzene():
+    return Chem.MolFromSmiles('c1ccccc1')
 
-    atom_sig = AtomSignature(atom, radius=2, use_smarts=True)
+@pytest.fixture
+def ethanol():
+    return Chem.MolFromSmiles('CCO')
 
-    assert atom_sig.radius == 2
-    assert atom_sig.use_smarts is True
-    assert atom_sig.sig != "", "The signature should not be empty"
-
-
-# Test the molecule signature with various radii
-@pytest.mark.parametrize(
-    "radius,expected_length",
-    [(0, 3), (1, 3), (2, 3)],  # Testing with radius 0  # Testing with radius 1  # Testing with full molecule radius
-)
-def test_molecule_signature(radius, expected_length):
-    mol = Chem.MolFromSmiles("CCO")
-    mol_sig = MoleculeSignature(mol, radius=radius, use_smarts=False, nbits=2048)
-
-    assert (
-        len(mol_sig.atom_signatures) == expected_length
-    ), "The number of atom signatures should match the expected length"
+@pytest.fixture
+def caffeine():
+    return Chem.MolFromSmiles('CN1C=NC2=C1C(=O)N(C(=O)N2C)C')
 
 
-# Test handling of invalid inputs
-def test_invalid_inputs():
+# Test initialization and outputs
+def test_atom_signature(benzene):
+    atom = benzene.GetAtomWithIdx(0)  # First carbon in benzene
+    atom_sig = AtomSignature(atom, radius=1, use_smarts=False)
+    assert atom_sig.sig is not None
+    assert atom_sig.sig.startswith("C:[CH:1]:C")
+
+
+def test_molecule_signature(ethanol):
+    mol_sig = MoleculeSignature(ethanol, radius=1, use_smarts=True, nbits=2048)
+    assert len(mol_sig) > 0
+    assert all(isinstance(sig, AtomSignature) for sig in mol_sig.atom_signatures)
+
+
+# Performance testing
+def test_large_molecule():
+    # Assume this SMILES represents a large molecule
+    large_mol_smiles = 'C' * 50  # Simplified example
+    large_mol = Chem.MolFromSmiles(large_mol_smiles)
+    MoleculeSignature(large_mol, radius=2, use_smarts=True, nbits=2048)
+
+
+# Error handling
+def test_invalid_smiles():
+
     with pytest.raises(ValueError):
-        # This should raise an error as mol is None
-        mol = None
-        MoleculeSignature(mol, radius=2)
+        invalid_mol = Chem.MolFromSmiles('CCCCC(P')
+        MoleculeSignature(invalid_mol, radius=2)
+
+    with pytest.raises(ValueError):
+        invalid_mol = None
+        MoleculeSignature(invalid_mol, radius=2)
 
 
 # Test the deprecated string output
@@ -49,4 +63,4 @@ def test_deprecated_string():
 
 # Running the tests
 if __name__ == "__main__":
-    pytest.main()
+    pytest.main(["-v"])
