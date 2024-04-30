@@ -77,7 +77,6 @@ class AtomSignature:
 
         # Compute signature with neighbors
         if self.radius > 0:
-
             # Get the signatures of the neighbors at radius - 1
             self._sig_minus = atom_signature(atom, self.radius - 1, self.use_smarts, **self.kwargs)
 
@@ -607,7 +606,6 @@ def clean_kwargs(kwargs: dict) -> dict:
 
 
 if __name__ == "__main__":
-
     # Example usage
     smiles = "c1ccccc1O"
     mol = Chem.MolFromSmiles(smiles)
@@ -639,7 +637,7 @@ if __name__ == "__main__":
     for item in ms.as_list(morgan=True, neighbors=False):
         print(f"- {item}")
     print()
-    
+
     print("As list (morgan=False, neighbors=True):")
     for item in ms.as_list(morgan=False, neighbors=True):
         print(f"- {item}")
@@ -664,6 +662,7 @@ if __name__ == "__main__":
     print("Testing combinations of parameters ======================")
     print()
     import itertools
+
     # Array of parameters
     arr_radius = [0, 1, 2]
     arr_neighbor = [False, True]
