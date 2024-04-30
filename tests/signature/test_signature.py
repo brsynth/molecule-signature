@@ -8,9 +8,11 @@ from signature.Signature import AtomSignature, MoleculeSignature
 def benzene():
     return Chem.MolFromSmiles('c1ccccc1')
 
+
 @pytest.fixture
 def ethanol():
     return Chem.MolFromSmiles('CCO')
+
 
 @pytest.fixture
 def caffeine():
