@@ -58,9 +58,26 @@ except ImportError:
 
 
 class AtomSignature:
+    """Class representubg the signature of an atom."""
+
     def __init__(
         self, atom: Chem.Atom, radius: int = 2, use_smarts: bool = True, morgan_bit: int = None, **kwargs: dict
     ) -> None:
+        """Initialize the AtomSignature object
+
+        Parameters
+        ----------
+        atom : Chem.Atom
+            The atom to generate the signature for.
+        radius : int
+            The radius of the environment to consider.
+        use_smarts : bool
+            Whether to use SMARTS syntax for the signature (otherwise, use SMILES syntax).
+        morgan_bit : int
+            The Morgan bit to be associated to the atom (if any).
+        **kwargs
+            Additional arguments to pass to Chem.MolFragmentToSmiles calls.
+        """
         # Parameters reminder
         self.radius = radius
         self.use_smarts = use_smarts
@@ -148,6 +165,20 @@ class AtomSignature:
         return " && ".join(f"{bond} <> {sig}" for bond, sig in self._neighbors)
 
     def as_deprecated_string(self, morgan=True, neighbors=False) -> str:
+        """Return the signature in the deprecated string format
+
+        Parameters
+        ----------
+        morgan : bool
+            Whether to include the Morgan bit in the string.
+        neighbors : bool
+            Whether to include the neighbors in the string.
+
+        Returns
+        -------
+        str
+            The signature in the deprecated string format.
+        """
         s = ""
         if morgan:
             s += f"{self.morgan},"
@@ -407,10 +438,8 @@ def frag_to_smiles(mol: Chem.Mol, atoms: list, bonds: list, root_atom: int = -1,
         canonical=True,
         rootedAtAtom=root_atom,
     )
-    # Chem.MolFragmentToSmiles canonicalizes the rooted fragment
-    # but does not do the job properly.
-    # To overcome the issue the atom is mapped to 1, and the smiles
-    # is canonicalized via Chem.MolToSmiles
+    # Chem.MolFragmentToSmiles canonicalizes the rooted fragment but does not do the job properly. To overcome
+    # the issue the atom is mapped to 1, and the smiles is canonicalized via Chem.MolToSmiles().
     _mol = Chem.MolFromSmiles(smiles)
     if kwargs.get("allHsExplicit", False):
         _mol = Chem.rdmolops.AddHs(_mol)
@@ -429,6 +458,11 @@ def frag_to_smiles(mol: Chem.Mol, atoms: list, bonds: list, root_atom: int = -1,
 
 
 class MoleculeSignature:
+    """Class representing the signature of a molecule.
+
+    The signature of a molecule is composed of the signature of its atoms.
+    """
+
     def __init__(
         self,
         mol: Chem.Mol,
@@ -437,7 +471,24 @@ class MoleculeSignature:
         use_smarts: bool = True,
         nbits: int = 0,
         **kwargs: dict,
-    ):
+    ) -> None:
+        """Initialize the MoleculeSignature object
+
+        Parameters
+        ----------
+        mol : Chem.Mol
+            The molecule to generate the signature for.
+        radius : int
+            The radius of the environment to consider.
+        neighbor : bool
+            Whether to include the neighbors in the signature.
+        use_smarts : bool
+            Whether to use SMARTS syntax for the signature (otherwise, use SMILES syntax).
+        nbits : int
+            The number of bits to use for the Morgan fingerprint. If 0, no Morgan fingerprint is computed.
+        **kwargs
+            Additional arguments to pass to Chem.MolFragmentToSmiles calls.
+        """
         # Deprecation warnings
         if "nBits" in kwargs:
             logger.warning("nBits is deprecated, use nbits instead.")
@@ -531,6 +582,20 @@ class MoleculeSignature:
         return self.as_str()
 
     def as_deprecated_string(self, morgan=True, neighbors=False) -> str:
+        """Return the signature in the deprecated string format.
+
+        Parameters
+        ----------
+        morgan : bool
+            Whether to include the Morgan bits in the string.
+        neighbors : bool
+            Whether to include the neighbors in the string.
+
+        Returns
+        -------
+        str
+            The signature in the deprecated string format.
+        """
         return " ".join(atom.as_deprecated_string(morgan, neighbors) for atom in self.atom_signatures)
 
     @property
@@ -550,6 +615,23 @@ class MoleculeSignature:
         return [atom.morgan for atom in self.atom_signatures]
 
     def as_list(self, morgan=True, neighbors=False) -> list:
+        """Return the signature as a list of features.
+
+        If neighbors is False, the atom signature is used. If neighbors is True, the atom signature is used at 
+        a radius - 1, followed by the atom signature of the neighbor at radius - 1.
+
+        Parameters
+        ----------
+        morgan : bool
+            Whether to include the Morgan bits in the list.
+        neighbors : bool
+            Whether to include the neighbors in the list.
+        
+        Returns
+        -------
+        list
+            The list of features
+        """
         out = []
         for _morgan, _atom, _atom_minus, _neighbors in zip(
             self.morgans,
@@ -569,6 +651,26 @@ class MoleculeSignature:
         return out
 
     def as_str(self, morgan=True, neighbors=False) -> str:
+        """Return the signature as a string.
+
+        The signature is returned as a string, with each atom signature separated by a double dot surrounded
+        by spaces (` .. `).
+
+        If neighbors is False, the atom signature is used. If neighbors is True, the atom signature is used at
+        a radius - 1, followed by the atom signature of the neighbor at radius - 1.
+
+        Parameters
+        ----------
+        morgan : bool
+            Whether to include the Morgan bits in the string.
+        neighbors : bool
+            Whether to include the neighbors in the string.
+
+        Returns
+        -------
+        str
+            The signature as a string
+        """
         return " .. ".join(self.as_list(morgan=morgan, neighbors=neighbors))
 
 
