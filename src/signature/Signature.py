@@ -117,7 +117,7 @@ class AtomSignature:
             pass
 
         else:
-            raise NotImplementedError("Radius must be a positive integer or zero.")
+            raise ValueError("Radius must be a positive integer or zero.")
 
     def __repr__(self) -> str:
         _ = "AtomSignature("
@@ -494,6 +494,10 @@ class MoleculeSignature:
             logger.warning("nBits is deprecated, use nbits instead.")
             nbits = kwargs.pop("nBits")
 
+        # Check arguments
+        if mol is None:
+            raise ValueError("Molecule is None")
+
         # Parameters reminder
         self.radius = radius
         self.neighbor = neighbor
@@ -617,7 +621,7 @@ class MoleculeSignature:
     def as_list(self, morgan=True, neighbors=False) -> list:
         """Return the signature as a list of features.
 
-        If neighbors is False, the atom signature is used. If neighbors is True, the atom signature is used at 
+        If neighbors is False, the atom signature is used. If neighbors is True, the atom signature is used at
         a radius - 1, followed by the atom signature of the neighbor at radius - 1.
 
         Parameters
@@ -626,7 +630,7 @@ class MoleculeSignature:
             Whether to include the Morgan bits in the list.
         neighbors : bool
             Whether to include the neighbors in the list.
-        
+
         Returns
         -------
         list
