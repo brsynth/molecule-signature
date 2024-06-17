@@ -265,9 +265,6 @@ def atom_signature(atom: Chem.Atom, radius: int = 2, smarts: bool = True, **kwar
     else:
         signature = frag_to_smiles(mol, atoms, bonds, root_atom=atom.GetIdx(), **kwargs)
 
-    # Debugging
-    logger.debug(f"Atom signature: {signature}")
-
     return signature
 
 
@@ -438,6 +435,7 @@ def frag_to_smiles(mol: Chem.Mol, atoms: list, bonds: list, root_atom: int = -1,
         canonical=True,
         rootedAtAtom=root_atom,
     )
+
     # Chem.MolFragmentToSmiles canonicalizes the rooted fragment but does not do the job properly. To overcome
     # the issue the atom is mapped to 1, and the smiles is canonicalized via Chem.MolToSmiles().
     _mol = Chem.MolFromSmiles(smiles)
