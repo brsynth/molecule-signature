@@ -617,11 +617,14 @@ class MoleculeSignature:
             The list of features
         """
         out = []
-        for _morgan, _atom, _atom_minus, _neighbors in zip(
-            self.morgans,
-            self.atoms,
-            self.atoms_minus,
-            self.neighbors,
+        for _morgan, _atom, _atom_minus, _neighbors in sorted(
+            zip(
+                self.morgans,
+                self.atoms,
+                self.atoms_minus,
+                self.neighbors,
+            ),
+            key=lambda x: x[1],
         ):
             if morgan:
                 s = f"{str(_morgan)}, "
