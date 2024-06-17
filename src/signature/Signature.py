@@ -58,7 +58,7 @@ except ImportError:
 
 
 class AtomSignature:
-    """Class representubg the signature of an atom."""
+    """Class representing the signature of an atom."""
 
     def __init__(
         self, atom: Chem.Atom, radius: int = 2, use_smarts: bool = True, morgan_bit: int = None, **kwargs: dict
