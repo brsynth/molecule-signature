@@ -527,25 +527,6 @@ class MoleculeSignature:
                         radius_vect[atmidx] = rad
                         morgan_vect[atmidx] = bit
 
-        # # Get Morgan bits (old way, using deprecated GetMorganFingerprintAsBitVect call)
-        # if nbits > 0:
-        #     bits_info = {}
-        #     AllChem.GetMorganFingerprintAsBitVect(
-        #         mol,
-        #         radius=radius,
-        #         nBits=nbits,
-        #         bitInfo=bits_info,
-        #         useChirality=self.kwargs.get("isomericSmiles", True),
-        #         useFeatures=False,
-        #     )
-        #     radius_vect = -np.ones(mol.GetNumAtoms(), dtype=int)
-        #     morgan_vect = np.zeros(mol.GetNumAtoms(), dtype=int)
-        #     for bit, info in bits_info.items():
-        #         for atmidx, rad in info:
-        #             if rad > radius_vect[atmidx]:
-        #                 radius_vect[atmidx] = rad
-        #                 morgan_vect[atmidx] = bit
-
         # Compute the signatures of all atoms
         for atom in mol.GetAtoms():
             # Skip hydrogens
