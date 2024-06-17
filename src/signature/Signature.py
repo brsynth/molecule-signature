@@ -239,10 +239,11 @@ def atom_signature(atom: Chem.Atom, radius: int = 2, smarts: bool = True, **kwar
     elif radius > mol.GetNumAtoms():
         # Radius cannot be larger than the number of atoms in the molecule
         radius = mol.GetNumAtoms()
-    for radius in range(radius, 0, -1):
+    for radius in range(radius, -1, -1):
         # Check if the atom has an environment at the given radius
-        # If the radius falls outside of the molecule (i.e. it does not reach any atom), the list of bonds is empty
-        # In this case, we reduce the radius until we find a non-empty environment, or we reach radius 1.
+        # If the radius falls outside of the molecule (i.e. it does not reach any atom) then
+        # the list of bonds will be empty. In such a case, we reduce the radius until we find
+        # a non-empty environment, or we reach radius 0 (which means the radius itself).
         if len(Chem.FindAtomEnvironmentOfRadiusN(mol, radius, atom.GetIdx(), useHs=True)) > 0:
             break
         assert radius > 1, "Atom environment not found"
