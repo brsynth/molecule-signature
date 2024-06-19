@@ -345,7 +345,6 @@ def atom_signature(
         fragment = Chem.DeleteSubstructs(fragment, Chem.MolFromSmiles("[#0]"))
 
     if use_smarts:
-
         # Save atom map numbers if any
         mol_aams = {}
         for _atom in fragment.GetAtoms():
