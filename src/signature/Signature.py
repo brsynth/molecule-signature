@@ -61,7 +61,16 @@ class AtomSignature:
     """Class representing the signature of an atom."""
 
     def __init__(
-        self, atom: Chem.Atom, radius: int = 2, use_smarts: bool = True, morgan_bit: int = None, **kwargs: dict
+        self,
+        atom: Chem.Atom,
+        radius: int = 2,
+        use_smarts: bool = False,
+        boundary_bonds: bool = True,
+        map_root: bool = True,
+        rooted_smiles: bool = False,
+        morgan_bit: int = None,
+        legacy: bool = False,
+        **kwargs: dict,
     ) -> None:
         """Initialize the AtomSignature object
 
@@ -71,16 +80,27 @@ class AtomSignature:
             The atom to generate the signature for.
         radius : int
             The radius of the environment to consider.
+        boundary_bonds : bool
+            Whether to add bonds at the boundary of the radius.
         use_smarts : bool
             Whether to use SMARTS syntax for the signature (otherwise, use SMILES syntax).
+        map_root : bool
+            Whether to map the root atom in the signature. If yes, the root atom is labeled as 1.
+        rooted_smiles : bool
+            Whether to use rooted SMILES syntax for the signature. If yes, the SMILES is rooted at the root atom.
         morgan_bit : int
             The Morgan bit to be associated to the atom (if any).
+        legacy : bool
+            Whether to use the legacy version of the atom signature.
         **kwargs
             Additional arguments to pass to Chem.MolFragmentToSmiles calls.
         """
-        # Parameters reminder
+        # Parameters
         self.radius = radius
         self.use_smarts = use_smarts
+        self.boundary_bonds = boundary_bonds
+        self.map_root = map_root
+        self.rooted_smiles = rooted_smiles
         self.kwargs = clean_kwargs(kwargs)
 
         # Meaningful information
@@ -89,16 +109,43 @@ class AtomSignature:
         self._sig_minus = None
         self._neighbors = []
 
+        # Wildly switch between new and legacy version for atom signature
+        #
+        # This is a temporary solution to allow the use of the new atom signature
+        # while keeping the old one for backward compatibility.
+        if legacy:
+            atom_signature = globals()["atom_signature_legacy"]
+        else:
+            atom_signature = globals()["atom_signature"]
+            self.kwargs["boundary_bonds"] = self.boundary_bonds
+            self.kwargs["map_root"] = self.map_root
+            self.kwargs["rooted_smiles"] = self.rooted_smiles
+
         # Compute signature of the atom itself
-        self._sig = atom_signature(atom, self.radius, self.use_smarts, **self.kwargs)
+        self._sig = atom_signature(
+            atom,
+            self.radius,
+            self.use_smarts,
+            **self.kwargs,
+        )
 
         # Compute signature with neighbors
         if self.radius > 0:
             # Get the signatures of the neighbors at radius - 1
-            self._sig_minus = atom_signature(atom, self.radius - 1, self.use_smarts, **self.kwargs)
+            self._sig_minus = atom_signature(
+                atom,
+                self.radius - 1,
+                self.use_smarts,
+                **self.kwargs,
+            )
 
             for neighbor_atom in atom.GetNeighbors():
-                neighbor_sig = atom_signature(neighbor_atom, radius - 1, use_smarts, **self.kwargs)
+                neighbor_sig = atom_signature(
+                    neighbor_atom,
+                    radius - 1,
+                    self.use_smarts,
+                    **self.kwargs,
+                )
 
                 assert neighbor_sig != "", "Empty signature for neighbor"
 
@@ -124,7 +171,11 @@ class AtomSignature:
         _ += f"morgan={self._morgan}, "
         _ += f"signature='{self._sig}', "
         _ += f"signature_minus='{self._sig_minus}', "
-        _ += f"neighbor_signatures={self._neighbors})"
+        _ += f"neighbor_signatures={self._neighbors}, "
+        _ += f"boundary_bonds={self.boundary_bonds}, "
+        _ += f"use_smarts={self.use_smarts}, "
+        _ += f"map_root={self.map_root}, "
+        _ += f"rooted_smiles={self.rooted_smiles}"
         _ += ")"
         return _
 
@@ -425,7 +476,7 @@ def atom_signature_legacy(
         atoms = sorted(list(set(atoms)))
 
     # Now we get to the business of computing the atom signature
-    if smarts:
+    if use_smarts:
         signature = frag_to_smarts(mol, atoms, bonds, root_atom=atom.GetIdx(), **kwargs)
     else:
         signature = frag_to_smiles(mol, atoms, bonds, root_atom=atom.GetIdx(), **kwargs)
@@ -862,6 +913,7 @@ def clean_kwargs(kwargs: dict) -> dict:
             "isomericSmiles",
             "allBondsExplicit",
             "kekuleSmiles",
+            "legacy",
         ]:
             cleaned_kwargs[key] = value
         else:
