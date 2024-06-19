@@ -195,8 +195,16 @@ class AtomSignature:
 # =====================================================================================================================
 
 
-def atom_signature(atom: Chem.Atom, radius: int = 2, smarts: bool = True, **kwargs: dict):
-    """Generate a signature for an atom
+def atom_signature(
+    atom: Chem.Atom,
+    radius: int = 2,
+    use_smarts: bool = False,
+    boundary_bonds: bool = True,
+    map_root: bool = True,
+    rooted_smiles: bool = False,
+    **kwargs: dict,
+) -> str:
+    """Generate a signature for an atom (development version)
 
     This function generates a signature for an atom based on its environment up to a given radius. The signature is
     either represented as a SMARTS string (smarts=True) or a SMILES string (smarts=False). The atom is labeled as 1.
@@ -209,6 +217,12 @@ def atom_signature(atom: Chem.Atom, radius: int = 2, smarts: bool = True, **kwar
         The radius of the environment to consider. If negative, the whole molecule is considered.
     smarts : bool
         Whether to use SMARTS syntax for the signature.
+    boundary_bonds : bool
+        Whether to use boundary bonds at the border of the radius. This option is only available for SMILES syntax.
+    map_root : bool
+        Whether to map the root atom in the signature. If yes, the root atom is labeled as 1.
+    rooted_smiles : bool
+        Whether to use rooted SMILES syntax for the signature. If yes, the SMILES is rooted at the root atom.
     **kwargs
         Additional arguments to pass to Chem.MolFragmentToSmiles calls.
 
@@ -218,9 +232,159 @@ def atom_signature(atom: Chem.Atom, radius: int = 2, smarts: bool = True, **kwar
         The atom signature
     """
 
-    # Initialize the signature
-    signature = ""
+    # Check arguments
+    if boundary_bonds and use_smarts:
+        raise ValueError("Boundary bonds option is not available for SMARTS syntax.")
 
+    # Get the parent molecule
+    mol = atom.GetOwningMol()
+
+    # If radius is negative, consider the whole molecule
+    if radius < 0:
+        radius = mol.GetNumAtoms()
+
+    # Get the bonds at the border of the radius
+    bonds_radius = Chem.FindAtomEnvironmentOfRadiusN(mol, radius, atom.GetIdx())
+    bonds_radius_plus = Chem.FindAtomEnvironmentOfRadiusN(mol, radius + 1, atom.GetIdx())
+    bonds = [b for b in bonds_radius_plus if b not in bonds_radius]
+
+    # Fragment the molecule
+    if len(bonds) > 0:
+        # Fragment the molecule
+        fragmented_mol = Chem.FragmentOnBonds(
+            mol,
+            bonds,
+            addDummies=True,
+            dummyLabels=[(0, 0) for _ in bonds],  # Do not label the dummies
+        )
+    else:  # No bonds to cut
+        fragmented_mol = mol
+
+    # Retrieve the rooted fragment from amongst all the fragments
+    frag_to_mol_atom_mapping = []  # Mapping of atom indexes between original and fragments
+    for _frag_idx, _fragment in enumerate(
+        Chem.GetMolFrags(fragmented_mol, asMols=True, sanitizeFrags=False, fragsMolAtomMapping=frag_to_mol_atom_mapping)
+    ):
+        if atom.GetIdx() in frag_to_mol_atom_mapping[_frag_idx]:
+            fragment = _fragment
+
+            # Because the root_fragment is a new Mol object, atom indexes are renumbered, i.e.
+            # atom indexes in the new fragment are not the same as the original molecule. We'll need to
+            # store the correspondance of indexes between the original molecule and the new fragment.
+            frag_to_mol_atom_mapping = frag_to_mol_atom_mapping[_frag_idx]  # Dirty..
+
+            # Retrieve the index of the root atom within the fragment
+            atom_in_frag_index = frag_to_mol_atom_mapping.index(atom.GetIdx())
+            break
+
+    # Add map for the root atom if required
+    if map_root:
+        fragment.GetAtomWithIdx(atom_in_frag_index).SetAtomMapNum(1)
+
+    # FROM HERE: the fragment is ready to be converted into the required syntax
+
+    if not boundary_bonds:
+        # Remove the dummy atoms if boundary bonds is disabled
+        fragment = Chem.DeleteSubstructs(fragment, Chem.MolFromSmiles("[#0]"))
+
+    if use_smarts:
+        # Save atom map numbers if any
+        mol_aams = {}
+        for _atom in fragment.GetAtoms():
+            mol_aams[_atom.GetIdx()] = _atom.GetAtomMapNum()
+
+        # Store indices as atom map numbers
+        # Note: we append +1 otherwise the atom map number 0 is not considered
+        for _atom in fragment.GetAtoms():
+            _atom.SetAtomMapNum(_atom.GetIdx() + 1)
+
+        # Gen the SMILES string to be used as scaffold
+        smiles = Chem.MolToSmiles(
+            fragment,
+            allHsExplicit=kwargs.get("allHsExplicit", False),
+            isomericSmiles=kwargs.get("isomericSmiles", False),
+            allBondsExplicit=kwargs.get("allBondsExplicit", True),
+            kekuleSmiles=kwargs.get("kekuleSmiles", False),
+            canonical=True,
+            rootedAtAtom=atom_in_frag_index if rooted_smiles else -1,
+        )
+
+        # DEBUG: log the SMILES
+        # logger.debug("=== Fragment SMILES " + "=" * 58)
+        # logger.debug(f"SMILES: {smiles}")
+
+        # Collect atoms to use
+        atoms = []
+        for _atom in fragment.GetAtoms():
+            # Retrieve the atom index in the original (fragmented) molecule
+            atoms.append(frag_to_mol_atom_mapping[_atom.GetIdx()])
+
+        # Substitute with SMARTS
+        smarts = smiles
+        pattern = re.compile(r"(\[[^:\]]+:(\d+)\])")
+        for atom_smiles, atom_map in re.findall(pattern, smiles):
+            # Get the atom index
+            _atom_idx = int(atom_map) - 1
+
+            # Get the smarts for the atom
+            atom_smarts = atom_to_smarts(
+                mol.GetAtomWithIdx(frag_to_mol_atom_mapping[_atom_idx]),
+                atom_map=1 if _atom_idx == atom_in_frag_index else 0,
+            )
+
+            # Replace the atom string with the SMARTS
+            smarts = smarts.replace(atom_smiles, atom_smarts)
+
+        # Restore atom map numbers
+        for atom_idx, atom_map in mol_aams.items():
+            fragment.GetAtomWithIdx(atom_idx).SetAtomMapNum(atom_map)
+
+        # # Canonicalize the SMARTS
+        smarts = canon_smarts(smarts, mapping=True)
+
+        # Return the SMARTS
+        return smarts
+
+    else:
+        # Get the SMILES
+        return Chem.MolToSmiles(
+            fragment,
+            allHsExplicit=kwargs.get("allHsExplicit", False),
+            isomericSmiles=kwargs.get("isomericSmiles", False),
+            allBondsExplicit=kwargs.get("allBondsExplicit", True),
+            kekuleSmiles=kwargs.get("kekuleSmiles", False),
+            canonical=True,
+            rootedAtAtom=atom_in_frag_index if rooted_smiles else -1,
+        )
+
+
+def atom_signature_legacy(
+    atom: Chem.Atom,
+    radius: int = 2,
+    use_smarts: bool = False,
+    **kwargs: dict,
+) -> str:
+    """Generate a signature for an atom
+
+    This function generates a signature for an atom based on its environment up to a given radius. The signature is
+    either represented as a SMARTS string (smarts=True) or a SMILES string (smarts=False). The atom is labeled as 1.
+
+    Parameters
+    ----------
+    atom : Chem.Atom
+        The atom to generate the signature for.
+    radius : int
+        The radius of the environment to consider. If negative, the whole molecule is considered.
+    use_smarts : bool
+        Whether to use SMARTS syntax for the signature.
+    **kwargs
+        Additional arguments to pass to Chem.MolFragmentToSmiles calls.
+
+    Returns
+    -------
+    str
+        The atom signature
+    """
     # Check if the atom is None
     if atom is None:
         return ""
