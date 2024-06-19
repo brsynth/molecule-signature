@@ -686,7 +686,12 @@ def clean_kwargs(kwargs: dict) -> dict:
 
     # Check for valid arguments
     for key, value in kwargs.items():
-        if key in ["allHsExplicit", "isomericSmiles"]:
+        if key in [
+            "allHsExplicit",
+            "isomericSmiles",
+            "allBondsExplicit",
+            "kekuleSmiles",
+        ]:
             cleaned_kwargs[key] = value
         else:
             logger.warning(f"Invalid argument: {key} (value: {value}), skipping argument.")
