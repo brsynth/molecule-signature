@@ -688,7 +688,10 @@ class MoleculeSignature:
         mol: Chem.Mol,
         radius: int = 2,
         neighbor: bool = False,
-        use_smarts: bool = True,
+        use_smarts: bool = False,
+        boundary_bonds: bool = True,
+        map_root: bool = True,
+        rooted_smiles: bool = False,
         nbits: int = 0,
         **kwargs: dict,
     ) -> None:
@@ -704,6 +707,12 @@ class MoleculeSignature:
             Whether to include the neighbors in the signature.
         use_smarts : bool
             Whether to use SMARTS syntax for the signature (otherwise, use SMILES syntax).
+        boundary_bonds : bool
+            Whether to add bonds at the boundary of the radius.
+        map_root : bool
+            Whether to map root atoms in atom signatures. If yes, root atoms are labeled as 1.
+        rooted_smiles : bool
+            Whether to use rooted SMILES syntax within atom signatures. If yes, SMILES are rooted at the root atoms.
         nbits : int
             The number of bits to use for the Morgan fingerprint. If 0, no Morgan fingerprint is computed.
         **kwargs
@@ -722,6 +731,9 @@ class MoleculeSignature:
         self.radius = radius
         self.neighbor = neighbor
         self.use_smarts = use_smarts
+        self.boundary_bonds = boundary_bonds
+        self.map_root = map_root
+        self.rooted_smiles = rooted_smiles
         self.nbits = nbits
         self.kwargs = clean_kwargs(kwargs)
 
@@ -758,6 +770,9 @@ class MoleculeSignature:
                 atom=atom,
                 radius=self.radius,
                 use_smarts=self.use_smarts,
+                boundary_bonds=self.boundary_bonds,
+                map_root=self.map_root,
+                rooted_smiles=self.rooted_smiles,
                 morgan_bit=int(morgan_vect[atom.GetIdx()]) if nbits > 0 else None,  # int to avoid numpy.int64 type
                 **self.kwargs,
             )
@@ -774,6 +789,9 @@ class MoleculeSignature:
         _ += f"radius={self.radius}, "
         _ += f"neighbor={self.neighbor}, "
         _ += f"use_smarts={self.use_smarts}, "
+        _ += f"boundary_bonds={self.boundary_bonds}, "
+        _ += f"map_root={self.map_root}, "
+        _ += f"rooted_smiles={self.rooted_smiles}, "
         _ += f"nbits={self.nbits}, "
         _ += f"kwargs={self.kwargs}, "
         _ += f"atom_signatures={self.atom_signatures}"
@@ -927,7 +945,7 @@ if __name__ == "__main__":
     mol = Chem.MolFromSmiles(smiles)
 
     # Compute the molecule signature
-    ms = MoleculeSignature(mol, radius=2, neighbor=True, use_smarts=False, nbits=2048)
+    ms = MoleculeSignature(mol, radius=2, neighbor=True, use_smarts=False, boundary_bonds=True, nbits=2048)
 
     # Print the molecule signature
     print("Molecule signature ======================")
