@@ -988,14 +988,17 @@ if __name__ == "__main__":
     import itertools
 
     # Array of parameters
-    arr_radius = [0, 1, 2]
+    arr_radius = [0, 2, 4]
     arr_neighbor = [False, True]
     arr_smarts = [False, True]
     arr_nbits = [0, 2048]
-    for use_smarts, neighbor, radius, nbit in itertools.product(arr_smarts, arr_neighbor, arr_radius, arr_nbits):
-        ms = MoleculeSignature(mol, radius=radius, neighbor=neighbor, use_smarts=use_smarts, nbits=nbit)
+    arr_boundary_bonds = [False, True]
+    for use_smarts, neighbor, radius, nbit, boundary_bonds in itertools.product(arr_smarts, arr_neighbor, arr_radius, arr_nbits, arr_boundary_bonds):
+        if boundary_bonds and use_smarts:  # Skip unsupported combinations
+            continue
+        ms = MoleculeSignature(mol, radius=radius, neighbor=neighbor, use_smarts=use_smarts, nbits=nbit, boundary_bonds=boundary_bonds)
         # Pretty printings
-        print(f"Molecule signature (radius={radius}, neighbor={neighbor}, use_smarts={use_smarts}, nbits={nbit}):")
+        print(f"Molecule signature (radius={radius}, neighbor={neighbor}, use_smarts={use_smarts}, nbits={nbit}), boundary_bonds={boundary_bonds}:")
         for atom_sig in ms.atom_signatures:
             print(f"├── {atom_sig}")
         print()
