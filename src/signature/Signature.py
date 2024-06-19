@@ -36,8 +36,6 @@ from rdkit import Chem
 from rdkit.Chem import rdFingerprintGenerator
 from rdkit.Chem import rdqueries
 
-# from rdkit.Chem import AllChem  # used for deprecated GetMorganFingerprintAsBitVect
-
 # Logging settings
 logger = logging.getLogger(__name__)
 
@@ -339,15 +337,15 @@ def atom_signature(
         fragment = Chem.DeleteSubstructs(fragment, Chem.MolFromSmiles("[#0]"))
 
     if use_smarts:
+
         # Save atom map numbers if any
         mol_aams = {}
         for _atom in fragment.GetAtoms():
             mol_aams[_atom.GetIdx()] = _atom.GetAtomMapNum()
 
         # Store indices as atom map numbers
-        # Note: we append +1 otherwise the atom map number 0 is not considered
         for _atom in fragment.GetAtoms():
-            _atom.SetAtomMapNum(_atom.GetIdx() + 1)
+            _atom.SetAtomMapNum(_atom.GetIdx() + 1)  # +1 to avoid 0 atom map number (not considered)
 
         # Gen the SMILES string to be used as scaffold
         smiles = Chem.MolToSmiles(
@@ -360,37 +358,22 @@ def atom_signature(
             rootedAtAtom=atom_in_frag_index if rooted_smiles else -1,
         )
 
-        # DEBUG: log the SMILES
-        # logger.debug("=== Fragment SMILES " + "=" * 58)
-        # logger.debug(f"SMILES: {smiles}")
-
-        # Collect atoms to use
-        atoms = []
-        for _atom in fragment.GetAtoms():
-            # Retrieve the atom index in the original (fragmented) molecule
-            atoms.append(frag_to_mol_atom_mapping[_atom.GetIdx()])
-
         # Substitute with SMARTS
         smarts = smiles
         pattern = re.compile(r"(\[[^:\]]+:(\d+)\])")
         for atom_smiles, atom_map in re.findall(pattern, smiles):
-            # Get the atom index
-            _atom_idx = int(atom_map) - 1
-
-            # Get the smarts for the atom
-            atom_smarts = atom_to_smarts(
+            _atom_idx = int(atom_map) - 1  # Get the atom index
+            atom_smarts = atom_to_smarts(  # Get the smarts for the atom
                 mol.GetAtomWithIdx(frag_to_mol_atom_mapping[_atom_idx]),
                 atom_map=1 if _atom_idx == atom_in_frag_index else 0,
             )
-
-            # Replace the atom string with the SMARTS
-            smarts = smarts.replace(atom_smiles, atom_smarts)
+            smarts = smarts.replace(atom_smiles, atom_smarts)  # Replace the atom string with the SMARTS
 
         # Restore atom map numbers
         for atom_idx, atom_map in mol_aams.items():
             fragment.GetAtomWithIdx(atom_idx).SetAtomMapNum(atom_map)
 
-        # # Canonicalize the SMARTS
+        # # Canonize the SMARTS
         smarts = canon_smarts(smarts, mapping=True)
 
         # Return the SMARTS
