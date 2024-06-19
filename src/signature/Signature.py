@@ -786,6 +786,7 @@ class MoleculeSignature:
 
     def __repr__(self) -> str:
         _ = "MoleculeSignature("
+        _ += f"atom_signatures={self.atom_signatures}, "
         _ += f"radius={self.radius}, "
         _ += f"neighbor={self.neighbor}, "
         _ += f"use_smarts={self.use_smarts}, "
@@ -794,7 +795,6 @@ class MoleculeSignature:
         _ += f"rooted_smiles={self.rooted_smiles}, "
         _ += f"nbits={self.nbits}, "
         _ += f"kwargs={self.kwargs}, "
-        _ += f"atom_signatures={self.atom_signatures}"
         _ += ")"
         return _
 
