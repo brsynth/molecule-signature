@@ -452,6 +452,10 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
     # Initialize from the atom number
     qatom = Chem.MolFromSmarts(f"[#{atom.GetAtomicNum()}]").GetAtomWithIdx(0)
 
+    # Special case: * (wildcard)
+    if atom.GetAtomicNum() == 0:
+        return "*"
+
     # valence (most of the time, valence would remain the same for a given atom)
     # qatom.ExpandQuery(rdqueries.TotalValenceEqualsQueryAtom(atom.GetTotalValence()))
     # degree (number of explicit connections)
@@ -477,6 +481,9 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
     if atom.GetIsAromatic():
         symbol = symbol.lower()
     smarts = smarts.replace(f"#{atom.GetAtomicNum()}", symbol)
+
+    # Replace "&" by ";" for better clarity
+    smarts = smarts.replace("&", ";")
 
     return smarts
 
