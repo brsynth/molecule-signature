@@ -461,7 +461,6 @@ def atom_signature_legacy(
         # a non-empty environment, or we reach radius 0 (which means the radius itself).
         if len(Chem.FindAtomEnvironmentOfRadiusN(mol, radius, atom.GetIdx(), useHs=True)) > 0:
             break
-        assert radius > 1, "Atom environment not found"
 
     # Get the atoms and bonds to use
     if radius == 0:
