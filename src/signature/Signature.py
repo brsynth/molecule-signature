@@ -600,7 +600,7 @@ def frag_to_smarts(mol: Chem.Mol, atoms: list, bonds: list, root_atom: int = -1,
     logger.debug(f"Fragment SMARTS: {smarts}")
 
     # Canonicalize the SMARTS
-    smarts = canon_smarts(smarts, mapping=True)
+    smarts = canon_smarts(smarts)
 
     return smarts
 
