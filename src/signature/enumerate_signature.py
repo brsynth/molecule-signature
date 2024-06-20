@@ -21,7 +21,8 @@ from src.signature.enumerate_utils import (
     get_constraint_matrices,
     update_constraint_matrices,
 )
-from signature.signature_old import (
+from src.signature.Signature import MoleculeSignature
+from src.signature.signature_old import (
     atomic_num_charge,
     sanitize_molecule,
     signature_bond_type,
@@ -90,6 +91,7 @@ class MolecularGraph:
         B,  # Bond matrix
         SA,  # Atom signature
         Alphabet,  # SignatureAlphabet object
+        use_smarts=False,
         max_nbr_recursion=1e6,  # Max nbr of recursion
         ai=-1,  # Current atom nbr used when enumerating signature up
         max_nbr_solution=float("inf"),  # to produce all solutions
@@ -130,7 +132,7 @@ class MolecularGraph:
         rdmol = Chem.Mol()
         rdedmol = Chem.EditableMol(rdmol)
         for sa in self.SA:
-            num, charge = atomic_num_charge(sa)
+            num, charge = atomic_num_charge(sa, use_smarts)
             if num < 1:
                 print(sa)
             rdatom = Chem.Atom(num)
@@ -505,6 +507,7 @@ def enumerate_molecule_from_signature(
     sig,
     Alphabet,
     smi,
+    use_smarts=False,
     max_nbr_recursion=int(1e5),
     max_nbr_solution=float("inf"),
     nbr_component=1,
@@ -543,7 +546,7 @@ def enumerate_molecule_from_signature(
     """
 
     recursion_timeout = False
-    sign = signature_neighbor(sig)
+    #sign = signature_neighbor(sig)
 
     # initialization of the enumeration graph
     enum_graph = nx.DiGraph()
@@ -558,7 +561,7 @@ def enumerate_molecule_from_signature(
             print(f"repeat {r}")
         # Get initial molecule
         AS, NAS, Deg, A, B, C = get_constraint_matrices(
-            sign, unique=False, verbose=verbose
+            sig, unique=False, verbose=verbose
         )
         MG = MolecularGraph(
             A,
@@ -566,6 +569,7 @@ def enumerate_molecule_from_signature(
             AS,
             Alphabet,
             ai=-1,
+            use_smarts=use_smarts,
             max_nbr_recursion=(r + 1) * max_nbr_recursion,
             max_nbr_solution=max_nbr_solution,
         )
@@ -586,10 +590,11 @@ def enumerate_molecule_from_signature(
     SMIsig = set()
     for smi in S:
         if smi != "" and "." not in smi:
-            sigsmi, mol, smisig = signature_from_smiles(smi, Alphabet, neighbor=True)
-            sigsmi = signature_neighbor(sigsmi)
+            mol = Chem.MolFromSmiles(smi)
+            ms = MoleculeSignature(mol, radius=Alphabet.radius, neighbor=True, use_smarts=use_smarts, nbits=False, boundary_bonds=False, map_root=False, legacy=True)
+            sigsmi = ms.as_deprecated_string(morgan=False, neighbors=True)
             if sigsmi == sig:
-                SMIsig.add(smisig)
+                SMIsig.add(smi)
     if verbose:
         print(
             f"retain solutions having a signature = provided sig {len(S)}, {len(SMIsig)}"

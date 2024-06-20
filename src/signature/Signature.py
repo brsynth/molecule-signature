@@ -37,6 +37,8 @@ from rdkit import Chem
 from rdkit.Chem import rdFingerprintGenerator
 from rdkit.Chem import rdqueries
 
+from src.signature.signature_old import signature_neighbor
+
 # Logging settings
 logger = logging.getLogger(__name__)
 
@@ -822,7 +824,8 @@ class MoleculeSignature:
         str
             The signature in the deprecated string format.
         """
-        return " ".join(atom.as_deprecated_string(morgan, neighbors) for atom in self.atom_signatures)
+        s = " ".join(atom.as_deprecated_string(morgan, neighbors) for atom in self.atom_signatures)
+        return signature_neighbor(s)
 
     @property
     def atoms(self) -> list:

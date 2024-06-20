@@ -458,7 +458,7 @@ def atom_signature_mod(sa):
     return rsa
 
 
-def atomic_num_charge(sa):
+def atomic_num_charge(sa, use_smarts=False):
     """
     Return the atomic number and formal charge of the root atom in the atom signature.
     If the root atom is not found, (-1, 0) is returned.
@@ -479,7 +479,10 @@ def atomic_num_charge(sa):
     # return the atomic number of the root of sa
     sa = sa.split(".")[0]  # the root
     sa = sa.split(",")[1] if len(sa.split(",")) > 1 else sa
-    m = Chem.MolFromSmiles(sa)
+    if use_smarts:
+        m = Chem.MolFromSmarts(sa)
+    else:
+        m = Chem.MolFromSmiles(sa)
     for a in m.GetAtoms():
         if a.GetAtomMapNum() == 1:
             return a.GetAtomicNum(), a.GetFormalCharge()
