@@ -2,6 +2,22 @@
 
 ### Feat
 
+- **MoleculeSignature**: add MoleculeSignature equality comparison
+
+### Fix
+
+- **AtomSignature**: AtomSignature equality comparison was always false
+- **Signature**: disable SMARTS canonization
+- **Signature**: fix canon_smarts unexpected argument
+
+### Refactor
+
+- **Signature**: log status of SMARTS canonization at loading
+
+## 0.4.0 (2024-06-19)
+
+### Feat
+
 - **Signature**: enable new signature computation from MoleculeSignature objects
 - **Signature**: enable new signature generation from AtomSignature objects
 - **Signature**: improve atom to smarts conversion
