@@ -810,6 +810,16 @@ class MoleculeSignature:
     def __str__(self) -> str:
         return self.as_str()
 
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, MoleculeSignature):
+            return False
+        return (
+            self.atoms == other.atoms
+            and self.atoms_minus == other.atoms_minus
+            and self.neighbors == other.neighbors
+            and self.morgans == other.morgans
+        )
+
     def as_deprecated_string(self, morgan=True, neighbors=False) -> str:
         """Return the signature in the deprecated string format.
 
