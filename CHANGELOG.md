@@ -2,7 +2,9 @@
 
 ### Feat
 
+- **as_deprecated_string**: add on/off switch for root-style as_deprecated_string output
 - **MoleculeSignature**: add MoleculeSignature equality comparison
+- integration of the new SMILES & SMARTS sig to the enum algo
 
 ### Fix
 

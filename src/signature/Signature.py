@@ -37,8 +37,6 @@ from rdkit import Chem
 from rdkit.Chem import rdFingerprintGenerator
 from rdkit.Chem import rdqueries
 
-from src.signature.signature_old import signature_neighbor
-
 # Logging settings
 logger = logging.getLogger(__name__)
 
