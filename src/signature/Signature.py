@@ -878,7 +878,7 @@ class MoleculeSignature:
                 self.atoms_minus,
                 self.neighbors,
             ),
-            key=lambda x: (x[1], x[2], x[3], x[4]),
+            key=lambda x: (x[0], x[1], x[2], x[3]),
         ):
             if morgan:
                 s = f"{str(_morgan)}, "
