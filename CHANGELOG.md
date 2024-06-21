@@ -2,6 +2,18 @@
 
 ### Feat
 
+- **MoleculeSignature**: use multi-key sorting for the output
+
+### Fix
+
+- **Signature**: homogenize MolToSmiles options
+- **MoleculeSignature**: fix sorting
+- **as_deprecated_string**: fix args order
+
+## 0.6.0 (2024-06-21)
+
+### Feat
+
 - **as_deprecated_string**: add on/off switch for root-style as_deprecated_string output
 - **MoleculeSignature**: add MoleculeSignature equality comparison
 - integration of the new SMILES & SMARTS sig to the enum algo
