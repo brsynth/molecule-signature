@@ -48,6 +48,8 @@ logger = logging.getLogger(__name__)
 
 if os.environ.get("RD_CANON", "False").lower() == "true":
 
+    logger.warning("Canonicalization of SMARTS is enabled.")
+
     try:
         import rdcanon
         # from signature.drugbank_prims_with_nots import prims as smarts_primitives
