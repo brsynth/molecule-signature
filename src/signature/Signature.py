@@ -586,7 +586,6 @@ def frag_to_smarts(mol: Chem.Mol, atoms: list, bonds: list, root_atom: int = -1,
         allHsExplicit=kwargs.get("allHsExplicit", False),
         kekuleSmiles=kwargs.get("kekuleSmiles", False),
         canonical=True,
-        kekuleSmiles=False,
         rootedAtAtom=root_atom,
     )
 
