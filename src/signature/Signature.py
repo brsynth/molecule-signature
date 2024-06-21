@@ -216,8 +216,7 @@ class AtomSignature:
         if not isinstance(other, AtomSignature):
             return False
         return (
-            self is other
-            and self.sig == other.sig
+            self.sig == other.sig
             and self.neighbors == other.neighbors
             and self.morgan == other.morgan
         )
