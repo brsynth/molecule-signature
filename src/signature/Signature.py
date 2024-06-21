@@ -834,7 +834,7 @@ class MoleculeSignature:
         str
             The signature in the deprecated string format.
         """
-        return " ".join(sorted(atom.as_deprecated_string(morgan, neighbors, root) for atom in self.atom_signatures))
+        return " ".join(sorted(atom.as_deprecated_string(morgan, root, neighbors) for atom in self.atom_signatures))
 
     @property
     def atoms(self) -> list:
