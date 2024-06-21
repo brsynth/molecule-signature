@@ -237,7 +237,7 @@ class AtomSignature:
     def neighbors(self) -> tuple:
         return " && ".join(f"{bond} <> {sig}" for bond, sig in self._neighbors)
 
-    def as_deprecated_string(self, morgan=True, neighbors=False) -> str:
+    def as_deprecated_string(self, morgan=True, root=True, neighbors=True) -> str:
         """Return the signature in the deprecated string format
 
         Parameters
@@ -255,9 +255,10 @@ class AtomSignature:
         s = ""
         if morgan:
             s += f"{self.morgan},"
-        s += self.sig
+        if root:
+            s += f"{self.sig}&"
         if neighbors:
-            s += f"&{self.sig_minus}"
+            s += self.sig_minus
             for bond, sig in self._neighbors:
                 s += f".{bond}|{sig}"
         return s
@@ -820,7 +821,7 @@ class MoleculeSignature:
             and self.morgans == other.morgans
         )
 
-    def as_deprecated_string(self, morgan=True, neighbors=False) -> str:
+    def as_deprecated_string(self, morgan=True, root=True, neighbors=True) -> str:
         """Return the signature in the deprecated string format.
 
         Parameters
@@ -835,8 +836,7 @@ class MoleculeSignature:
         str
             The signature in the deprecated string format.
         """
-        s = " ".join(atom.as_deprecated_string(morgan, neighbors) for atom in self.atom_signatures)
-        return signature_neighbor(s)
+        return " ".join(sorted(atom.as_deprecated_string(morgan, neighbors, root) for atom in self.atom_signatures))
 
     @property
     def atoms(self) -> list:
