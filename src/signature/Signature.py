@@ -387,7 +387,7 @@ def atom_signature(
             _atom_idx = int(atom_map) - 1  # Get the atom index
             atom_smarts = atom_to_smarts(  # Get the smarts for the atom
                 mol.GetAtomWithIdx(frag_to_mol_atom_mapping[_atom_idx]),
-                atom_map=1 if _atom_idx == atom_in_frag_index else 0,
+                atom_map=1 if (_atom_idx == atom_in_frag_index and map_root) else 0,
             )
             smarts = smarts.replace(atom_smiles, atom_smarts)  # Replace the atom string with the SMARTS
 
