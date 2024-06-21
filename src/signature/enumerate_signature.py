@@ -591,10 +591,11 @@ def enumerate_molecule_from_signature(
     for smi in S:
         if smi != "" and "." not in smi:
             mol = Chem.MolFromSmiles(smi)
-            ms = MoleculeSignature(mol, radius=Alphabet.radius, neighbor=True, use_smarts=use_smarts, nbits=False, boundary_bonds=False, map_root=False, legacy=True)
-            sigsmi = ms.as_deprecated_string(morgan=False, neighbors=True)
-            if sigsmi == sig:
-                SMIsig.add(smi)
+            if mol is not None:
+                ms = MoleculeSignature(mol, radius=Alphabet.radius, neighbor=True, use_smarts=use_smarts, nbits=False, boundary_bonds=False, map_root=False, legacy=True)
+                sigsmi = ms.as_deprecated_string(morgan=False, neighbors=True)
+                if sigsmi == sig:
+                    SMIsig.add(smi)
     if verbose:
         print(
             f"retain solutions having a signature = provided sig {len(S)}, {len(SMIsig)}"
