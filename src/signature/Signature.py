@@ -372,9 +372,9 @@ def atom_signature(
         # Gen the SMILES string to be used as scaffold
         smiles = Chem.MolToSmiles(
             fragment,
-            allHsExplicit=kwargs.get("allHsExplicit", False),
-            isomericSmiles=kwargs.get("isomericSmiles", False),
+            isomericSmiles=kwargs.get("isomericSmiles", True),
             allBondsExplicit=kwargs.get("allBondsExplicit", True),
+            allHsExplicit=kwargs.get("allHsExplicit", False),
             kekuleSmiles=kwargs.get("kekuleSmiles", False),
             canonical=True,
             rootedAtAtom=atom_in_frag_index if rooted_smiles else -1,
@@ -405,9 +405,9 @@ def atom_signature(
         # Get the SMILES
         return Chem.MolToSmiles(
             fragment,
-            allHsExplicit=kwargs.get("allHsExplicit", False),
-            isomericSmiles=kwargs.get("isomericSmiles", False),
+            isomericSmiles=kwargs.get("isomericSmiles", True),
             allBondsExplicit=kwargs.get("allBondsExplicit", True),
+            allHsExplicit=kwargs.get("allHsExplicit", False),
             kekuleSmiles=kwargs.get("kekuleSmiles", False),
             canonical=True,
             rootedAtAtom=atom_in_frag_index if rooted_smiles else -1,
@@ -581,9 +581,10 @@ def frag_to_smarts(mol: Chem.Mol, atoms: list, bonds: list, root_atom: int = -1,
         mol,
         atomsToUse=atoms,
         bondsToUse=bonds,
-        allBondsExplicit=True,
-        allHsExplicit=kwargs.get("allHsExplicit", True),
         isomericSmiles=kwargs.get("isomericSmiles", True),
+        allBondsExplicit=kwargs.get("allBondsExplicit", True),
+        allHsExplicit=kwargs.get("allHsExplicit", False),
+        kekuleSmiles=kwargs.get("kekuleSmiles", False),
         canonical=True,
         kekuleSmiles=False,
         rootedAtAtom=root_atom,
@@ -655,10 +656,10 @@ def frag_to_smiles(mol: Chem.Mol, atoms: list, bonds: list, root_atom: int = -1,
         mol,
         atomsToUse=atoms,
         bondsToUse=bonds,
-        allBondsExplicit=True,
+        isomericSmiles=kwargs.get("isomericSmiles", True),
+        allBondsExplicit=kwargs.get("allBondsExplicit", True),
         allHsExplicit=kwargs.get("allHsExplicit", False),
-        isomericSmiles=kwargs.get("isomericSmiles", False),
-        kekuleSmiles=True,
+        kekuleSmiles=kwargs.get("kekuleSmiles", False),
         canonical=True,
         rootedAtAtom=root_atom,
     )
@@ -941,9 +942,9 @@ def clean_kwargs(kwargs: dict) -> dict:
     # Check for valid arguments
     for key, value in kwargs.items():
         if key in [
-            "allHsExplicit",
             "isomericSmiles",
             "allBondsExplicit",
+            "allHsExplicit",
             "kekuleSmiles",
             "legacy",
         ]:
