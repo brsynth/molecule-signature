@@ -17,6 +17,7 @@ import numpy as np
 from rdkit import Chem
 
 from src.signature.utils import dic_to_vector, vector_to_dic
+from src.signature.Signature import MoleculeSignature
 from src.signature.signature_old import get_molecule_signature, sanitize_molecule
 
 
@@ -30,6 +31,7 @@ class SignatureAlphabet:
         self,
         radius=2,
         nBits=0,
+        use_smarts=False,
         splitcomponent=False,
         isomericSmiles=False,
         formalCharge=True,
@@ -58,6 +60,9 @@ class SignatureAlphabet:
         # the alphabet dictionary keys = atom signature, values = index
         self.Dict = Dict
 
+        self.use_smarts = use_smarts
+        self.mol_pb = []
+
     def fill(self, Smiles, verbose=False):
         """
         Fill the signature dictionary from of list of smiles.
@@ -69,31 +74,39 @@ class SignatureAlphabet:
         verbose : bool, optional
             If True, print verbose output (default is False).
         """
-
+        
+        mol_pb = []
+        
         if self.Dict != {}:  # there's already signatures in the alphabet
             Dict = dic_to_vector(self.Dict)  # return a set
         else:
             Dict = set()
         start_time = time.time()
         for i in range(len(Smiles)):
+            smi = Smiles[i]
             if i % 1000 == 0:
                 print(
-                    f"... processing alphabet iteration: {i} size: {len(list(Dict))} time: {(time.time()-start_time)}"
+                    f"... processing alphabet iteration: {i} size: {len(list(Dict))} time: {(time.time()-start_time):2f}"
                 )
                 start_time = time.time()
-            if "*" in Smiles[i]:  # no wild card allowed
+            if "*" in smi:  # no wild card allowed
                 continue
-            signature, _, _ = signature_from_smiles(
-                Smiles[i], self, neighbor=True, verbose=verbose
-            )
+            mol = Chem.MolFromSmiles(smi)
+            if mol is None:
+                if verbose:
+                    print(f"WARNING no signature for molecule {i} {smi}")
+                continue
+            ms = MoleculeSignature(mol, radius=self.radius, neighbor=True, use_smarts=self.use_smarts, nbits=self.nBits, boundary_bonds=False, map_root=False)
+            signature = ms.as_deprecated_string(morgan=self.nBits, root=False, neighbors=True)
             if len(signature) == 0:
                 if verbose:
-                    print(f"WARNING no signature for molecule {i} {Smiles[i]}")
+                    print(f"WARNING no signature for molecule {i} {smi}")
                 continue
             for sig in signature.split(" . "):  # separate molecules
                 for s in sig.split(" "):  # separate atom signatures
                     Dict.add(s)
         self.Dict = vector_to_dic(list(Dict))
+
 
     def fill_from_signatures(self, signatures, verbose=False):
         """
