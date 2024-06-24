@@ -22,5 +22,4 @@ __pycache__/
 .coverage
 
 # datasets
-/datasets/MetaNetX.tsv
-/datasets/MetaNetX_weight_500.csv
+/datasets/

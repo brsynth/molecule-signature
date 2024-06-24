@@ -593,7 +593,7 @@ def enumerate_molecule_from_signature(
             mol = Chem.MolFromSmiles(smi)
             if mol is not None:
                 ms = MoleculeSignature(mol, radius=Alphabet.radius, neighbor=True, use_smarts=use_smarts, nbits=False, boundary_bonds=False, map_root=False, legacy=True)
-                sigsmi = ms.as_deprecated_string(morgan=False, neighbors=True)
+                sigsmi = ms.as_deprecated_string(morgan=False, root=False, neighbors=True)
                 if sigsmi == sig:
                     SMIsig.add(smi)
     if verbose:
