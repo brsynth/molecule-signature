@@ -13,7 +13,7 @@ __pycache__/
 .vscode/*
 
 # notebook checkpoints
-**/.ipynb_checkpoint/
+**/.ipynb_checkpoints/
 
 # pytest_cache
 **/.pytest_cache/
