@@ -35,7 +35,6 @@ import re
 
 from rdkit import Chem
 from rdkit.Chem import rdFingerprintGenerator
-from rdkit.Chem import rdqueries
 
 # Logging settings
 logger = logging.getLogger(__name__)
@@ -303,11 +302,6 @@ def atom_signature(
     str
         The atom signature
     """
-
-    # Check arguments
-    if boundary_bonds and use_smarts:
-        raise ValueError("Boundary bonds option is not available for SMARTS syntax.")
-
     # Get the parent molecule
     mol = atom.GetOwningMol()
 
@@ -339,39 +333,34 @@ def atom_signature(
     ):
         if atom.GetIdx() in frag_to_mol_atom_mapping[_frag_idx]:
             fragment = _fragment
-
-            # Because the root_fragment is a new Mol object, atom indexes are renumbered, i.e.
-            # atom indexes in the new fragment are not the same as the original molecule. We'll need to
-            # store the correspondance of indexes between the original molecule and the new fragment.
             frag_to_mol_atom_mapping = frag_to_mol_atom_mapping[_frag_idx]  # Dirty..
-
-            # Retrieve the index of the root atom within the fragment
-            atom_in_frag_index = frag_to_mol_atom_mapping.index(atom.GetIdx())
+            atom_in_frag_index = frag_to_mol_atom_mapping.index(atom.GetIdx())  # Atom index in the fragment
             break
 
-    # Add map for the root atom if required
-    if map_root:
-        fragment.GetAtomWithIdx(atom_in_frag_index).SetAtomMapNum(1)
+    # Get the SMARTS / SMILES
+    if use_smarts:  # Get the SMARTS
 
-    # FROM HERE: the fragment is ready to be converted into the required syntax
+        # Set a canonical atom mapping
+        if fragment.NeedsUpdatePropertyCache():
+            fragment.UpdatePropertyCache(strict=False)
+        canonical_map(fragment)
 
-    if not boundary_bonds:
-        # Remove the dummy atoms if boundary bonds is disabled
-        fragment = Chem.DeleteSubstructs(fragment, Chem.MolFromSmiles("[#0]"))
-
-    if use_smarts:
-        # Save atom map numbers if any
-        mol_aams = {}
-        for _atom in fragment.GetAtoms():
-            mol_aams[_atom.GetIdx()] = _atom.GetAtomMapNum()
-
-        # Store indices as atom map numbers
-        for _atom in fragment.GetAtoms():
-            _atom.SetAtomMapNum(_atom.GetIdx() + 1)  # +1 to avoid 0 atom map number (not considered)
-
-        # Gen the SMILES string to be used as scaffold
-        smiles = Chem.MolToSmiles(
+        # Build the SMARTS with / without the dummies
+        if boundary_bonds:
+            _atoms_to_use = list(range(fragment.GetNumAtoms()))
+        else:
+            _atoms_to_use = [atom.GetIdx() for atom in fragment.GetAtoms() if atom.GetAtomicNum() != 0]
+        _atom_symbols = [
+            atom_to_smarts(
+                atom=_atom,
+                atom_map=1 if _atom.GetIdx() == atom_in_frag_index and map_root else 0,
+            )
+            for _atom in fragment.GetAtoms()
+        ]
+        smarts = Chem.MolFragmentToSmiles(
             fragment,
+            atomsToUse=_atoms_to_use,
+            atomSymbols=_atom_symbols,
             isomericSmiles=kwargs.get("isomericSmiles", True),
             allBondsExplicit=kwargs.get("allBondsExplicit", True),
             allHsExplicit=kwargs.get("allHsExplicit", False),
@@ -380,29 +369,17 @@ def atom_signature(
             rootedAtAtom=atom_in_frag_index if rooted_smiles else -1,
         )
 
-        # Substitute with SMARTS
-        smarts = smiles
-        pattern = re.compile(r"(\[[^:\]]+:(\d+)\])")
-        for atom_smiles, atom_map in re.findall(pattern, smiles):
-            _atom_idx = int(atom_map) - 1  # Get the atom index
-            atom_smarts = atom_to_smarts(  # Get the smarts for the atom
-                mol.GetAtomWithIdx(frag_to_mol_atom_mapping[_atom_idx]),
-                atom_map=1 if (_atom_idx == atom_in_frag_index and map_root) else 0,
-            )
-            smarts = smarts.replace(atom_smiles, atom_smarts)  # Replace the atom string with the SMARTS
-
-        # Restore atom map numbers
-        for atom_idx, atom_map in mol_aams.items():
-            fragment.GetAtomWithIdx(atom_idx).SetAtomMapNum(atom_map)
-
-        # # Canonize the SMARTS
+        # Canonize the SMARTS
         smarts = canon_smarts(smarts)
 
         # Return the SMARTS
         return smarts
 
-    else:
-        # Get the SMILES
+    else:  # Get the SMILES
+        
+        if map_root:  # Map the root atom
+            fragment.GetAtomWithIdx(atom_in_frag_index).SetAtomMapNum(1)
+
         return Chem.MolToSmiles(
             fragment,
             isomericSmiles=kwargs.get("isomericSmiles", True),
@@ -503,42 +480,48 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
     str
         The SMARTS string
     """
-
-    # Initialize from the atom number
-    qatom = Chem.MolFromSmarts(f"[#{atom.GetAtomicNum()}]").GetAtomWithIdx(0)
-
-    # Special case: * (wildcard)
+    # Special case for dummies
     if atom.GetAtomicNum() == 0:
         return "*"
 
-    # valence (most of the time, valence would remain the same for a given atom)
-    # qatom.ExpandQuery(rdqueries.TotalValenceEqualsQueryAtom(atom.GetTotalValence()))
-    # degree (number of explicit connections)
-    # qatom.ExpandQuery(rdqueries.ExplicitDegreeEqualsQueryAtom(atom.GetDegree()))
-    # total-H-count
-    qatom.ExpandQuery(rdqueries.HCountEqualsQueryAtom(atom.GetTotalNumHs()))
-    # connectivity (explicit + implict connections)
-    qatom.ExpandQuery(rdqueries.TotalDegreeEqualsQueryAtom(atom.GetTotalDegree()))
-    # ring membership
-    qatom.ExpandQuery(rdqueries.IsInRingQueryAtom(negate=not atom.IsInRing()))
-    # charges
-    qatom.ExpandQuery(rdqueries.FormalChargeEqualsQueryAtom(atom.GetFormalCharge()))
+    _symbol = atom.GetSymbol()
+    _total_h_count = atom.GetTotalNumHs()  # Total number of Hs, including implicit Hs
+    _connectivity = atom.GetTotalDegree()  # Missleading naming, but it's the total number of connections, including H
+    _degree = atom.GetDegree()  # Number of explicit connections, hence excluding H if Hs are not explicit
+    # _non_h_degree = _connectivity - _total_h_count
+    _formal_charge = atom.GetFormalCharge()
 
-    # Atom map
-    if atom_map != 0:
-        qatom.SetAtomMapNum(atom_map)
-
-    # Transition to SMARTS for last minute refinements
-    smarts = qatom.GetSmarts()
-
-    # Aromatic vs aliphatic
-    symbol = atom.GetSymbol()
+    # Refine the symbol
     if atom.GetIsAromatic():
-        symbol = symbol.lower()
-    smarts = smarts.replace(f"#{atom.GetAtomicNum()}", symbol)
+        _symbol = _symbol.lower()
 
-    # Replace "&" by ";" for better clarity
-    smarts = smarts.replace("&", ";")
+    # Assemble the SMARTS
+    smarts = f"[{_symbol}"
+    if _total_h_count == 1:
+        smarts += "H"
+    else:
+        smarts += f"H{_total_h_count}"
+    if _degree == 1:
+        smarts += ";D"
+    else:
+        smarts += f";D{_degree}"
+    if _connectivity == 1:
+        smarts += ";X"
+    else:
+        smarts += f";X{_connectivity}"
+    if _formal_charge > 0:
+        if _formal_charge == 1:
+            smarts += ";+"
+        else:
+            smarts += f";+{_formal_charge}"
+    elif _formal_charge < 0:
+        if _formal_charge == -1:
+            smarts += ";-"
+        else:
+            smarts += f";-{_formal_charge}"
+    if atom_map != 0:
+        smarts += f":{atom_map}"
+    smarts += "]"
 
     return smarts
 
@@ -918,6 +901,25 @@ class MoleculeSignature:
 # =====================================================================================================================
 # Overall helper functions
 # =====================================================================================================================
+
+
+def canonical_map(mol: Chem.Mol) -> None:
+    """Canonize the atom map numbers of a molecule
+
+    This function canonizes the atom map numbers of a molecule.
+
+    Parameters
+    ----------
+    mol : Chem.Mol
+        The molecule to canonicalize the atom map numbers for.
+
+    Returns
+    -------
+    None
+    """
+    ranks = list(Chem.CanonicalRankAtoms(mol, breakTies=True, includeAtomMaps=False))
+    for j, i in enumerate(ranks):
+        mol.GetAtomWithIdx(j).SetIntProp('molAtomMapNumber', i+1)
 
 
 def clean_kwargs(kwargs: dict) -> dict:
