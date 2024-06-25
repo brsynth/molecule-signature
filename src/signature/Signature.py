@@ -345,7 +345,7 @@ def atom_signature(
             fragment.UpdatePropertyCache(strict=False)
         canonical_map(fragment)
 
-        # Build the SMARTS with / without the dummies
+        # Build with / without the dummies
         if boundary_bonds:
             _atoms_to_use = list(range(fragment.GetNumAtoms()))
         else:
@@ -376,12 +376,19 @@ def atom_signature(
         return smarts
 
     else:  # Get the SMILES
-        
+
         if map_root:  # Map the root atom
             fragment.GetAtomWithIdx(atom_in_frag_index).SetAtomMapNum(1)
 
-        return Chem.MolToSmiles(
+        # Build with / without the dummies
+        if boundary_bonds:
+            _atoms_to_use = list(range(fragment.GetNumAtoms()))
+        else:
+            _atoms_to_use = [atom.GetIdx() for atom in fragment.GetAtoms() if atom.GetAtomicNum() != 0]
+
+        return Chem.MolFragmentToSmiles(
             fragment,
+            atomsToUse=_atoms_to_use,
             isomericSmiles=kwargs.get("isomericSmiles", True),
             allBondsExplicit=kwargs.get("allBondsExplicit", True),
             allHsExplicit=kwargs.get("allHsExplicit", False),
@@ -389,6 +396,16 @@ def atom_signature(
             canonical=True,
             rootedAtAtom=atom_in_frag_index if rooted_smiles else -1,
         )
+
+        # return Chem.MolToSmiles(
+        #     fragment,
+        #     isomericSmiles=kwargs.get("isomericSmiles", True),
+        #     allBondsExplicit=kwargs.get("allBondsExplicit", True),
+        #     allHsExplicit=kwargs.get("allHsExplicit", False),
+        #     kekuleSmiles=kwargs.get("kekuleSmiles", False),
+        #     canonical=True,
+        #     rootedAtAtom=atom_in_frag_index if rooted_smiles else -1,
+        # )
 
 
 def atom_signature_legacy(
