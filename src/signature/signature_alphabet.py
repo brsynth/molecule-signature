@@ -32,6 +32,9 @@ class SignatureAlphabet:
         radius=2,
         nBits=0,
         use_smarts=False,
+        boundary_bonds=False,
+        map_root=False,
+        legacy=False,
         splitcomponent=False,
         isomericSmiles=False,
         formalCharge=True,
@@ -59,9 +62,10 @@ class SignatureAlphabet:
         self.maxvalence = maxvalence  # for all atoms
         # the alphabet dictionary keys = atom signature, values = index
         self.Dict = Dict
-
         self.use_smarts = use_smarts
-        self.mol_pb = []
+        self.boundary_bonds = boundary_bonds
+        self.map_root = map_root
+        self.legacy = legacy
 
     def fill(self, Smiles, verbose=False):
         """
@@ -74,9 +78,7 @@ class SignatureAlphabet:
         verbose : bool, optional
             If True, print verbose output (default is False).
         """
-        
-        mol_pb = []
-        
+
         if self.Dict != {}:  # there's already signatures in the alphabet
             Dict = dic_to_vector(self.Dict)  # return a set
         else:
@@ -96,7 +98,16 @@ class SignatureAlphabet:
                 if verbose:
                     print(f"WARNING no signature for molecule {i} {smi}")
                 continue
-            ms = MoleculeSignature(mol, radius=self.radius, neighbor=True, use_smarts=self.use_smarts, nbits=self.nBits, boundary_bonds=False, map_root=False)
+            ms = MoleculeSignature(
+                mol,
+                radius=self.radius,
+                neighbor=True,
+                use_smarts=self.use_smarts,
+                nbits=self.nBits,
+                boundary_bonds=self.boundary_bonds,
+                map_root=self.map_root,
+                legacy=self.legacy,
+            )
             signature = ms.as_deprecated_string(morgan=self.nBits, root=False, neighbors=True)
             if len(signature) == 0:
                 if verbose:
@@ -106,7 +117,6 @@ class SignatureAlphabet:
                 for s in sig.split(" "):  # separate atom signatures
                     Dict.add(s)
         self.Dict = vector_to_dic(list(Dict))
-
 
     def fill_from_signatures(self, signatures, verbose=False):
         """
@@ -274,9 +284,7 @@ def signature_sorted_string(sig, verbose=False):
         The sorted signature string.
     """
 
-    AS, NAS, Deg = signature_sorted_array(
-        sig, Alphabet=None, unique=False, verbose=verbose
-    )
+    AS, NAS, Deg = signature_sorted_array(sig, Alphabet=None, unique=False, verbose=verbose)
     sigsorted = AS[0]
     for i in range(1, AS.shape[0]):
         sigsorted = sigsorted + " " + AS[i]
@@ -440,9 +448,7 @@ def signature_from_smiles(smiles, Alphabet, neighbor=False, string=True, verbose
     signature = " . ".join(sig for sig in temp)
 
     if string is False and Alphabet.Dict != {}:
-        signature = signature_string_to_vector(
-            signature, Alphabet.Dict, verbose=verbose
-        )
+        signature = signature_string_to_vector(signature, Alphabet.Dict, verbose=verbose)
 
     return signature, molecule, smiles
 

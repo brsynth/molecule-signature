@@ -61,9 +61,7 @@ def signature_bond_type(bt="UNSPECIFIED"):
     return Chem.BondType.names[bt]
 
 
-def atom_signature(
-    atm, radius=2, isomericSmiles=False, allHsExplicit=False, verbose=False
-):
+def atom_signature(atm, radius=2, isomericSmiles=False, allHsExplicit=False, verbose=False):
     """
     Compute the signature (SMILES string) of an atom, where the root has label 1.
 
@@ -143,9 +141,7 @@ def atom_signature(
 
     except Exception:
         if verbose:
-            print(
-                f"WARNING cannot compute atom signature for: atom num: {atmidx} {atm.GetSymbol()} radius: {radius}"
-            )
+            print(f"WARNING cannot compute atom signature for: atom num: {atmidx} {atm.GetSymbol()} radius: {radius}")
         signature = ""
     atm.SetAtomMapNum(0)
 
@@ -482,9 +478,8 @@ def atomic_num_charge(sa, use_smarts=False):
     if use_smarts:
         m = Chem.MolFromSmarts(sa)
     else:
-        m = Chem.MolFromSmiles(sa)
+        m = Chem.MolFromSmiles(sa, sanitize=False)
     for a in m.GetAtoms():
         if a.GetAtomMapNum() == 1:
             return a.GetAtomicNum(), a.GetFormalCharge()
-
     return -1, 0
