@@ -884,7 +884,7 @@ class MoleculeSignature:
                 s = f"{str(_morgan)}, "
             else:
                 s = ""
-            if neighbors:
+            if neighbors and len(_neighbors):
                 s += f"{_atom_minus} || {_neighbors}"
             else:
                 s += _atom
