@@ -16,9 +16,9 @@ import time
 import numpy as np
 from rdkit import Chem
 
-from src.signature.utils import dic_to_vector, vector_to_dic
-from src.signature.Signature import MoleculeSignature
-from src.signature.signature_old import get_molecule_signature, sanitize_molecule
+from signature.utils import dic_to_vector, vector_to_dic
+from signature.Signature import MoleculeSignature
+from signature.signature_old import get_molecule_signature, sanitize_molecule
 
 
 ########################################################################################################################

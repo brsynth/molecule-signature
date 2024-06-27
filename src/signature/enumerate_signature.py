@@ -17,23 +17,21 @@ import numpy as np
 from rdkit import Chem
 from sympy import Matrix
 
-from src.signature.enumerate_utils import (
+from signature.enumerate_utils import (
     get_constraint_matrices,
     update_constraint_matrices,
 )
-from src.signature.Signature import MoleculeSignature
-from src.signature.signature_old import (
+from signature.Signature import MoleculeSignature
+from signature.signature_old import (
     atomic_num_charge,
     sanitize_molecule,
     signature_bond_type,
-    signature_neighbor,
 )
-from src.signature.signature_alphabet import (
+from signature.signature_alphabet import (
     signature_alphabet_from_morgan_bit,
-    signature_from_smiles,
     signature_vector_to_string,
 )
-from src.signature.solve_partitions import solve_by_partitions
+from signature.solve_partitions import solve_by_partitions
 
 
 ########################################################################################################################
