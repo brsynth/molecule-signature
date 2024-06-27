@@ -40,39 +40,6 @@ from rdkit.Chem import rdFingerprintGenerator
 logger = logging.getLogger(__name__)
 
 # =====================================================================================================================
-# Define how to canonicalize SMARTS
-# =====================================================================================================================
-
-if os.environ.get("RD_CANON", "False").lower() == "true":
-
-    logger.warning("Canonicalization of SMARTS is enabled.")
-
-    try:
-        import rdcanon
-        # from signature.drugbank_prims_with_nots import prims as smarts_primitives
-
-        def canon_smarts(smarts):
-            try:
-                # return rdcanon.canon_smarts(smarts, mapping=True, embedding=smarts_primitives)
-                return rdcanon.canon_smarts(smarts, mapping=True)
-            except Exception as err:
-                logger.error(f"Canonicalization failed: {err}")
-                return smarts
-
-    except ImportError:
-        logger.warning("Module named 'rdcanon' not found. Using default canonicalization function.")
-
-        def canon_smarts(smarts):
-            return smarts
-
-else:
-    logger.warning("Canonicalization of SMARTS is disabled.")
-
-    def canon_smarts(smarts):
-        return smarts
-
-
-# =====================================================================================================================
 # Atom Signature
 # =====================================================================================================================
 
@@ -369,9 +336,6 @@ def atom_signature(
             rootedAtAtom=atom_in_frag_index if rooted_smiles else -1,
         )
 
-        # Canonize the SMARTS
-        smarts = canon_smarts(smarts)
-
         # Return the SMARTS
         return smarts
 
@@ -613,9 +577,6 @@ def frag_to_smarts(mol: Chem.Mol, atoms: list, bonds: list, root_atom: int = -1,
 
     # Debugging
     logger.debug(f"Fragment SMARTS: {smarts}")
-
-    # Canonicalize the SMARTS
-    smarts = canon_smarts(smarts)
 
     return smarts
 
