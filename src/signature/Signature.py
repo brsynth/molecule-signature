@@ -998,12 +998,22 @@ if __name__ == "__main__":
     arr_smarts = [False, True]
     arr_nbits = [0, 2048]
     arr_boundary_bonds = [False, True]
-    for use_smarts, neighbor, radius, nbit, boundary_bonds in itertools.product(arr_smarts, arr_neighbor, arr_radius, arr_nbits, arr_boundary_bonds):
+    for use_smarts, neighbor, radius, nbit, boundary_bonds in itertools.product(
+        arr_smarts,
+        arr_neighbor,
+        arr_radius,
+        arr_nbits,
+        arr_boundary_bonds
+    ):
         if boundary_bonds and use_smarts:  # Skip unsupported combinations
             continue
-        ms = MoleculeSignature(mol, radius=radius, neighbor=neighbor, use_smarts=use_smarts, nbits=nbit, boundary_bonds=boundary_bonds)
+        ms = MoleculeSignature(
+            mol, radius=radius, neighbor=neighbor, use_smarts=use_smarts, nbits=nbit, boundary_bonds=boundary_bonds
+        )
         # Pretty printings
-        print(f"Molecule signature (radius={radius}, neighbor={neighbor}, use_smarts={use_smarts}, nbits={nbit}), boundary_bonds={boundary_bonds}:")
+        print(
+            f"Molecule signature (radius={radius}, neighbor={neighbor}, use_smarts={use_smarts}, nbits={nbit}), boundary_bonds={boundary_bonds}:"
+        )
         for atom_sig in ms.atom_signatures:
             print(f"├── {atom_sig}")
         print()
