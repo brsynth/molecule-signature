@@ -30,7 +30,6 @@ Authors:
 """
 import numpy as np
 import logging
-import os
 import re
 
 from rdkit import Chem
