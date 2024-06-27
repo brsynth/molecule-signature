@@ -187,7 +187,8 @@ def sanitize_molecule(
 
     verbose = False
     try:
-        Chem.SanitizeMol(mol)
+        Chem.SanitizeMol(mol, Chem.SanitizeFlags.SANITIZE_ALL, catchErrors=True) # crash for [nH]
+        Chem.SetAromaticity(mol)     
     except Exception:
         if verbose:
             print("WARNING SANITIZATION: molecule cannot be sanitized")
@@ -199,12 +200,13 @@ def sanitize_molecule(
             if verbose:
                 print("WARNING SANITIZATION: molecule cannot be kekularized")
             return None, ""
-    try:
-        mol = Chem.RemoveHs(mol)
-    except Exception:
-        if verbose:
-            print("WARNING SANITIZATION: hydrogen cannot be removed)")
-        return None, ""
+    if 1 == 0:
+        try:
+            mol = Chem.RemoveHs(mol)
+        except Exception:
+            if verbose:
+                print("WARNING SANITIZATION: hydrogen cannot be removed)")
+            return None, ""
     if allHsExplicit:
         try:
             mol = Chem.rdmolops.AddHs(mol)

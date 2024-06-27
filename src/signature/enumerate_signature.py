@@ -307,7 +307,7 @@ class MolecularGraph:
             atomMapping=self.Alphabet.atomMapping,
             verbose=verbose,
         )
-        if 1 == 0:
+        if 1 == 1:
             smis = correction_nitrogen(mol)
             return set(smis)
         else:
@@ -380,8 +380,8 @@ def correction_nitrogen(mol):
         List of smiles of all the possible corrections.
     """
 
-    smii = Chem.MolToSmiles(mol)
-    mols = [mol]
+    smi = Chem.MolToSmiles(mol)
+    smis = [smi]
     list_N = []
     for atom in mol.GetAtoms():
         if atom.GetSymbol() == "N" and atom.GetIsAromatic() and atom.GetTotalDegree() != 3:
@@ -393,19 +393,10 @@ def correction_nitrogen(mol):
         for atoms_N in lists_atoms_N_to_incr:
             new_mol = copy.deepcopy(mol)
             for atom in new_mol.GetAtoms():
-                if (
-                    atom.GetSymbol() == "N"
-                    and atom.GetIsAromatic()
-                    and atom.GetTotalDegree() != 3
-                    and atom.GetIdx() in atoms_N
-                ):
+                if atom.GetIdx() in atoms_N:
                     atom.SetNumExplicitHs(atom.GetNumExplicitHs() + 1)
-                mols.append(new_mol)
-            smii = Chem.MolToSmiles(mol)
-    smis = [smii]
-    for mol_cur in mols:
-        smi = Chem.MolToSmiles(mol_cur)
-        smis.append(smi)
+            new_mol_smi = Chem.MolToSmiles(new_mol)
+            smis.append(new_mol_smi)
     return smis
 
 
