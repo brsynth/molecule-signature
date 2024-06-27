@@ -2,6 +2,35 @@
 
 ### Feat
 
+- enumeration with smiles radius 2 and boundaries
+
+### Fix
+
+- **Signature**: remove rdcanon calls
+- correction of the [nH] pb in the enum sig to mol
+- suppress src. from local imports
+- **Signature**: double check neighbor output is required
+
+## 0.8.0 (2024-06-26)
+
+### Feat
+
+- **Signature**: revisit how to build SMARTS to be sure it will be canonic
+
+### Fix
+
+- **Signature**: put back boundary_bonds on / off option
+- **.gitignore**: **/.ipynb_checkpoints/
+- **signature_alphabet**: integration of the SMARTS and SMILES sig in the computation of the alphabet
+- add of root=False when signature is used in the enumeration
+- **enumerate_signature**: mol None bug in enumerate_molecule_from_signature
+- **Signature**: fix map_root=False
+- **Signature**: remove duplicated arg
+
+## 0.7.0 (2024-06-21)
+
+### Feat
+
 - **MoleculeSignature**: use multi-key sorting for the output
 
 ### Fix
