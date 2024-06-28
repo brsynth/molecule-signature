@@ -1011,7 +1011,8 @@ if __name__ == "__main__":
         )
         # Pretty printings
         print(
-            f"Molecule signature (radius={radius}, neighbor={neighbor}, use_smarts={use_smarts}, nbits={nbit}), boundary_bonds={boundary_bonds}:"
+            f"Molecule signature (radius={radius}, neighbor={neighbor}, use_smarts={use_smarts}, "
+            f"nbits={nbit}), boundary_bonds={boundary_bonds}:"
         )
         for atom_sig in ms.atom_signatures:
             print(f"├── {atom_sig}")
