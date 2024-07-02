@@ -518,7 +518,6 @@ def enumerate_molecule_from_signature(
     """
 
     recursion_timeout = False
-    # sign = signature_neighbor(sig)
 
     # initialization of the enumeration graph
     enum_graph = nx.DiGraph()
@@ -568,7 +567,7 @@ def enumerate_molecule_from_signature(
                     neighbor=True,
                     use_smarts=use_smarts,
                     nbits=False,
-                    boundary_bonds=True,
+                    boundary_bonds=False,
                     map_root=True,
                     legacy=False,
                 )
