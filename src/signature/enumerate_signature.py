@@ -552,23 +552,26 @@ def enumerate_molecule_from_signature(
     # retain solutions having a signature = provided sig
     Alphabet.nBits = 0
     SMIsig = set()
+    S = [smi for smi in S if smi != "" and "." not in smi]
+    if len(S) > int(max_nbr_solution/10):
+        recursion_timeout = True
+    S = S[:int(max_nbr_solution/10)]
     for smi in S:
-        if smi != "" and "." not in smi:
-            mol = Chem.MolFromSmiles(smi)
-            if mol is not None:
-                ms = MoleculeSignature(
-                    mol,
-                    radius=Alphabet.radius,
-                    neighbor=True,
-                    use_smarts=Alphabet.use_smarts,
-                    nbits=False,
-                    boundary_bonds=Alphabet.boundary_bonds,
-                    map_root=True,
-                    legacy=False,
-                )
-                sigsmi = ms.as_deprecated_string(morgan=False, root=False, neighbors=True)
-                if sigsmi == sig:
-                    SMIsig.add(smi)
+        mol = Chem.MolFromSmiles(smi)
+        if mol is not None:
+            ms = MoleculeSignature(
+                mol,
+                radius=Alphabet.radius,
+                neighbor=True,
+                use_smarts=Alphabet.use_smarts,
+                nbits=False,
+                boundary_bonds=Alphabet.boundary_bonds,
+                map_root=True,
+                legacy=False,
+            )
+            sigsmi = ms.as_deprecated_string(morgan=False, root=False, neighbors=True)
+            if sigsmi == sig:
+                SMIsig.add(smi)
     if verbose:
         print(f"retain solutions having a signature = provided sig {len(S)}, {len(SMIsig)}")
     return list(SMIsig), recursion_timeout
