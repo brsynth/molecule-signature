@@ -11,6 +11,7 @@ import numpy as np
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
+from signature.Signature import MoleculeSignature
 from signature.signature_old import signature_neighbor
 from signature.signature_alphabet import signature_sorted_array
 
@@ -20,7 +21,7 @@ from signature.signature_alphabet import signature_sorted_array
 ########################################################################################################################
 
 
-def reduced_fingerprint(smi, radius=2, useFeatures=False):
+def reduced_fingerprint(smi, radius=2, nbits=2048, useFeatures=False):
     """
     Compute the reduced ECFP (Extended-Connectivity Fingerprints) or FCFP (Feature-Connectivity Fingerprints) for a
     given SMILES string. The reduced fingerprint is obtained by selecting the most prominent bit for each atom in the
@@ -42,7 +43,9 @@ def reduced_fingerprint(smi, radius=2, useFeatures=False):
         The reduced ECFP (or FCFP) fingerprint.
     """
 
-    fpgen = AllChem.GetMorganGenerator(radius=radius, fpSize=2048)
+    if nbits <= 0:
+        print("WARNING Nbits <= 0")
+    fpgen = AllChem.GetMorganGenerator(radius=radius, fpSize=nbits)
     ao = AllChem.AdditionalOutput()
     ao.CollectBitInfoMap()
     mol = Chem.MolFromSmiles(smi)
@@ -51,21 +54,16 @@ def reduced_fingerprint(smi, radius=2, useFeatures=False):
         fp = AllChem.GetMorganFingerprint(mol, radius, useFeatures=True, bitInfo=info2)
         info = {}
         for i in info2:
-            info[i % 2048] = info2[i]
+            info[i % nbits] = info2[i]
     else:
         ecfp_list = fpgen.GetCountFingerprint(mol, additionalOutput=ao).ToList()
         info = ao.GetBitInfoMap()
     morgan_tmp = []
     for j in range(len(mol.GetAtoms())):
-        tmp = [
-            (key, info[key][i][1])
-            for key in info
-            for i in range(len(info[key]))
-            if info[key][i][0] == j
-        ]
+        tmp = [(key, info[key][i][1]) for key in info for i in range(len(info[key])) if info[key][i][0] == j]
         indice = np.argmax([tmp[i][1] for i in range(len(tmp))])
         morgan_tmp.append(tmp[indice][0])
-    morgan = np.zeros((2048,))
+    morgan = np.zeros((nbits,))
     for i in range(morgan.shape[0]):
         if i in morgan_tmp:
             morgan[i] = morgan_tmp.count(i)
@@ -384,3 +382,44 @@ def update_constraint_matrices(AS, IDX, MIN, MAX, deg, verbose=False):
             print(f"{i} {BS[i]}")
 
     return AS, IDX, MIN, MAX, deg, C
+
+
+########################################################################################################################
+# Functions to test if a set of smiles has the same representation (ecfp, ecfp reduced or signature).
+########################################################################################################################
+
+
+def test_sol_ECFP(smis, Alphabet):
+    fpgen = AllChem.GetMorganGenerator(radius=Alphabet.radius, fpSize=Alphabet.nBits)
+    ecfp_list = []
+    for smi in smis:
+        mol = Chem.MolFromSmiles(smi)
+        morgan = fpgen.GetCountFingerprint(mol).ToList()
+        ecfp_list.append(morgan)
+    return len(set(tuple(i) for i in ecfp_list)) == 1
+
+
+def test_sol_ECFP_reduced(smis, Alphabet):
+    ecfp_list = []
+    for smi in smis:
+        morgan = reduced_fingerprint(smi, radius=Alphabet.radius, nbits=Alphabet.nBits, useFeatures=False).tolist()
+        ecfp_list.append(morgan)
+    return len(set(tuple(i) for i in ecfp_list)) == 1
+
+
+def test_sol_sig(smis, Alphabet):
+    sig_list = []
+    for smi in smis:
+        mol = Chem.MolFromSmiles(smi)
+        ms = MoleculeSignature(
+            mol,
+            radius=Alphabet.radius,
+            neighbor=True,
+            use_smarts=Alphabet.use_smarts,
+            nbits=False,
+            boundary_bonds=Alphabet.boundary_bonds,
+            map_root=True,
+        )
+        sig = ms.as_deprecated_string(morgan=False, root=False, neighbors=True)
+        sig_list.append(sig)
+    return len(set(tuple(i) for i in sig_list)) == 1
