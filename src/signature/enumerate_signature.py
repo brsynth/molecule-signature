@@ -87,7 +87,6 @@ class MolecularGraph:
         B,  # Bond matrix
         SA,  # Atom signature
         Alphabet,  # SignatureAlphabet object
-        use_smarts=False,
         max_nbr_recursion=1e6,  # Max nbr of recursion
         ai=-1,  # Current atom nbr used when enumerating signature up
         max_nbr_solution=float("inf"),  # to produce all solutions
@@ -128,7 +127,7 @@ class MolecularGraph:
         rdmol = Chem.Mol()
         rdedmol = Chem.EditableMol(rdmol)
         for sa in self.SA:
-            num, charge = atomic_num_charge(sa, use_smarts)
+            num, charge = atomic_num_charge(sa, Alphabet.use_smarts)
             if num < 1:
                 print(sa)
             rdatom = Chem.Atom(num)
@@ -477,8 +476,6 @@ def enumerate_molecule_from_signature(
     sig,
     Alphabet,
     smi,
-    use_smarts=False,
-    boundary_bonds=False,
     max_nbr_recursion=int(1e5),
     max_nbr_solution=float("inf"),
     nbr_component=1,
@@ -537,7 +534,6 @@ def enumerate_molecule_from_signature(
             AS,
             Alphabet,
             ai=-1,
-            use_smarts=use_smarts,
             max_nbr_recursion=(r + 1) * max_nbr_recursion,
             max_nbr_solution=max_nbr_solution,
         )
@@ -564,9 +560,9 @@ def enumerate_molecule_from_signature(
                     mol,
                     radius=Alphabet.radius,
                     neighbor=True,
-                    use_smarts=use_smarts,
+                    use_smarts=Alphabet.use_smarts,
                     nbits=False,
-                    boundary_bonds=boundary_bonds,
+                    boundary_bonds=Alphabet.boundary_bonds,
                     map_root=True,
                     legacy=False,
                 )
