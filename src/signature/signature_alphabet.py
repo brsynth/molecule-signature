@@ -162,6 +162,8 @@ class SignatureAlphabet:
             filename=filename,
             radius=self.radius,
             nBits=self.nBits,
+            use_smarts=self.use_smarts,
+            boundary_bonds=self.boundary_bonds,
             splitcomponent=self.splitcomponent,
             isomericSmiles=self.isomericSmiles,
             formalCharge=self.formalCharge,
