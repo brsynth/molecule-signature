@@ -12,7 +12,6 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 
 from signature.Signature import MoleculeSignature
-from signature.signature_old import signature_neighbor
 from signature.signature_alphabet import signature_sorted_array
 
 
@@ -125,8 +124,6 @@ def bond_signature_occurence(bsig, asig):
     as1, as2 = bsig.split("|")[0], bsig.split("|")[2]
     btype = bsig.split("|")[1]
     asig0, asign = atom_signature_root_neighbors(asig)
-    asig0 = signature_neighbor(asig0)
-    asign = [signature_neighbor(s) for s in asign]
     asig1, asig2 = btype + "|" + as1, btype + "|" + as2
     occ1, occ2 = asign.count(asig1), asign.count(asig2)
 
