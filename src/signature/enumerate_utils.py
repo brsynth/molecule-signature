@@ -420,3 +420,56 @@ def test_sol_sig(smis, Alphabet):
         sig = ms.as_deprecated_string(morgan=False, root=False, neighbors=True)
         sig_list.append(sig)
     return len(set(tuple(i) for i in sig_list)) == 1
+
+
+########################################################################################################################
+# Signature Callable functions.
+########################################################################################################################
+
+
+def atomic_num_charge(sa, use_smarts=False):
+    """
+    Return the atomic number and formal charge of the root atom in the atom signature.
+    If the root atom is not found, (-1, 0) is returned.
+
+    Parameters
+    ----------
+    sa : str
+        The atom signature.
+
+    Returns
+    -------
+    int
+        The atomic number of the root atom.
+    int
+        The formal charge of the root atom.
+    """
+
+    # return the atomic number of the root of sa
+    sa = sa.split(".")[0]  # the root
+    sa = sa.split(",")[1] if len(sa.split(",")) > 1 else sa
+    if use_smarts:
+        m = Chem.MolFromSmarts(sa)
+    else:
+        m = Chem.MolFromSmiles(sa, sanitize=False)
+    for a in m.GetAtoms():
+        if a.GetAtomMapNum() == 1:
+            return a.GetAtomicNum(), a.GetFormalCharge()
+    return -1, 0
+
+
+def signature_bond_type(bt="UNSPECIFIED"):
+    """
+    Convert a bond type string to its corresponding RDKit BondType object (Must be updated with new RDKit release).
+
+    Parameters
+    ----------
+    bt : str, optional
+        The bond type string. Defaults to "UNSPECIFIED".
+
+    Returns
+    -------
+    RDKit.Chem.BondType
+        The corresponding RDKit BondType object.
+    """
+    return Chem.BondType.names[bt]

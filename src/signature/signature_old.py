@@ -44,23 +44,6 @@ from rdkit.Chem import AllChem
 ########################################################################################################################
 
 
-def signature_bond_type(bt="UNSPECIFIED"):
-    """
-    Convert a bond type string to its corresponding RDKit BondType object (Must be updated with new RDKit release).
-
-    Parameters
-    ----------
-    bt : str, optional
-        The bond type string. Defaults to "UNSPECIFIED".
-
-    Returns
-    -------
-    RDKit.Chem.BondType
-        The corresponding RDKit BondType object.
-    """
-    return Chem.BondType.names[bt]
-
-
 def atom_signature(atm, radius=2, isomericSmiles=False, allHsExplicit=False, verbose=False):
     """
     Compute the signature (SMILES string) of an atom, where the root has label 1.
@@ -146,88 +129,6 @@ def atom_signature(atm, radius=2, isomericSmiles=False, allHsExplicit=False, ver
     atm.SetAtomMapNum(0)
 
     return signature
-
-
-def sanitize_molecule(
-    mol,
-    kekuleSmiles=False,
-    allHsExplicit=False,
-    isomericSmiles=False,
-    formalCharge=False,
-    atomMapping=False,
-    verbose=False,
-):
-    """
-    Sanitize a RDKit molecule.
-
-    Parameters
-    ----------
-    mol : RDKit.Mol
-        The RDKit molecule object to be sanitized.
-    kekuleSmiles : bool, optional
-        If True, remove aromaticity. Defaults to False.
-    allHsExplicit : bool, optional
-        If True, include all hydrogen atoms explicitly. Defaults to False.
-    isomericSmiles : bool, optional
-        If True, include information about stereochemistry. Defaults to False.
-    formalCharge : bool, optional
-        If False, remove charges. Defaults to False.
-    atomMapping : bool, optional
-        If False, remove atom map numbers. Defaults to False.
-    verbose : bool, optional
-        If True, print detailed information during the operation. Defaults to False.
-
-    Returns
-    -------
-    mol : RDKit.Mol
-        The sanitized RDKit molecule object.
-    smi : str
-        The corresponding SMILES string.
-    """
-
-    verbose = False
-    try:
-        Chem.SanitizeMol(mol, Chem.SanitizeFlags.SANITIZE_ALL, catchErrors=True) # crash for [nH]
-        Chem.SetAromaticity(mol)     
-    except Exception:
-        if verbose:
-            print("WARNING SANITIZATION: molecule cannot be sanitized")
-        return None, ""
-    if kekuleSmiles:
-        try:
-            Chem.Kekulize(mol)
-        except Exception:
-            if verbose:
-                print("WARNING SANITIZATION: molecule cannot be kekularized")
-            return None, ""
-    if 1 == 0:
-        try:
-            mol = Chem.RemoveHs(mol)
-        except Exception:
-            if verbose:
-                print("WARNING SANITIZATION: hydrogen cannot be removed)")
-            return None, ""
-    if allHsExplicit:
-        try:
-            mol = Chem.rdmolops.AddHs(mol)
-        except Exception:
-            if verbose:
-                print("WARNING SANITIZATION: hydrogen cannot be added)")
-            return None, ""
-    if isomericSmiles is False:
-        try:
-            Chem.RemoveStereochemistry(mol)
-        except Exception:
-            if verbose:
-                print("WARNING SANITIZATION: stereochemistry cannot be removed")
-            return None, ""
-    if formalCharge is False:
-        [a.SetFormalCharge(0) for a in mol.GetAtoms()]
-    if atomMapping is False:
-        [a.SetAtomMapNum(0) for a in mol.GetAtoms()]
-    smi = Chem.MolToSmiles(mol)
-
-    return mol, smi
 
 
 def get_atom_signature(
@@ -454,34 +355,3 @@ def atom_signature_mod(sa):
     rsa = rsa.replace("|", "§")
 
     return rsa
-
-
-def atomic_num_charge(sa, use_smarts=False):
-    """
-    Return the atomic number and formal charge of the root atom in the atom signature.
-    If the root atom is not found, (-1, 0) is returned.
-
-    Parameters
-    ----------
-    sa : str
-        The atom signature.
-
-    Returns
-    -------
-    int
-        The atomic number of the root atom.
-    int
-        The formal charge of the root atom.
-    """
-
-    # return the atomic number of the root of sa
-    sa = sa.split(".")[0]  # the root
-    sa = sa.split(",")[1] if len(sa.split(",")) > 1 else sa
-    if use_smarts:
-        m = Chem.MolFromSmarts(sa)
-    else:
-        m = Chem.MolFromSmiles(sa, sanitize=False)
-    for a in m.GetAtoms():
-        if a.GetAtomMapNum() == 1:
-            return a.GetAtomicNum(), a.GetFormalCharge()
-    return -1, 0

@@ -18,7 +18,7 @@ from rdkit import Chem
 
 from signature.utils import dic_to_vector, vector_to_dic
 from signature.Signature import MoleculeSignature
-from signature.signature_old import get_molecule_signature, sanitize_molecule
+from signature.signature_old import get_molecule_signature
 
 
 ########################################################################################################################
@@ -580,3 +580,89 @@ def signature_alphabet_from_morgan_bit(MorganBit, Alphabet, verbose=False):
             Signatures.append(sa)
 
     return list(Signatures)
+
+
+########################################################################################################################
+# Molecule sanitize function.
+########################################################################################################################
+
+
+def sanitize_molecule(
+    mol,
+    kekuleSmiles=False,
+    allHsExplicit=False,
+    isomericSmiles=False,
+    formalCharge=False,
+    atomMapping=False,
+    verbose=False,
+):
+    """
+    Sanitize a RDKit molecule.
+
+    Parameters
+    ----------
+    mol : RDKit.Mol
+        The RDKit molecule object to be sanitized.
+    kekuleSmiles : bool, optional
+        If True, remove aromaticity. Defaults to False.
+    allHsExplicit : bool, optional
+        If True, include all hydrogen atoms explicitly. Defaults to False.
+    isomericSmiles : bool, optional
+        If True, include information about stereochemistry. Defaults to False.
+    formalCharge : bool, optional
+        If False, remove charges. Defaults to False.
+    atomMapping : bool, optional
+        If False, remove atom map numbers. Defaults to False.
+    verbose : bool, optional
+        If True, print detailed information during the operation. Defaults to False.
+
+    Returns
+    -------
+    mol : RDKit.Mol
+        The sanitized RDKit molecule object.
+    smi : str
+        The corresponding SMILES string.
+    """
+
+    verbose = False
+    try:
+        Chem.SanitizeMol(mol, Chem.SanitizeFlags.SANITIZE_ALL, catchErrors=True)  # crash for [nH]
+        Chem.SetAromaticity(mol)
+    except Exception:
+        if verbose:
+            print("WARNING SANITIZATION: molecule cannot be sanitized")
+        return None, ""
+    if kekuleSmiles:
+        try:
+            Chem.Kekulize(mol)
+        except Exception:
+            if verbose:
+                print("WARNING SANITIZATION: molecule cannot be kekularized")
+            return None, ""
+    if 1 == 0:
+        try:
+            mol = Chem.RemoveHs(mol)
+        except Exception:
+            if verbose:
+                print("WARNING SANITIZATION: hydrogen cannot be removed)")
+            return None, ""
+    if allHsExplicit:
+        try:
+            mol = Chem.rdmolops.AddHs(mol)
+        except Exception:
+            if verbose:
+                print("WARNING SANITIZATION: hydrogen cannot be added)")
+            return None, ""
+    if isomericSmiles is False:
+        try:
+            Chem.RemoveStereochemistry(mol)
+        except Exception:
+            if verbose:
+                print("WARNING SANITIZATION: stereochemistry cannot be removed")
+            return None, ""
+    if formalCharge is False:
+        [a.SetFormalCharge(0) for a in mol.GetAtoms()]
+    if atomMapping is False:
+        [a.SetAtomMapNum(0) for a in mol.GetAtoms()]
+    smi = Chem.MolToSmiles(mol)
+    return mol, smi

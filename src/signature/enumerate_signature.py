@@ -18,16 +18,14 @@ from rdkit import Chem
 from sympy import Matrix
 
 from signature.enumerate_utils import (
+    atomic_num_charge,
     get_constraint_matrices,
+    signature_bond_type,
     update_constraint_matrices,
 )
 from signature.Signature import MoleculeSignature
-from signature.signature_old import (
-    atomic_num_charge,
-    sanitize_molecule,
-    signature_bond_type,
-)
 from signature.signature_alphabet import (
+    sanitize_molecule,
     signature_alphabet_from_morgan_bit,
     signature_vector_to_string,
 )
