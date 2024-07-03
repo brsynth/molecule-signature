@@ -480,6 +480,7 @@ def enumerate_molecule_from_signature(
     Alphabet,
     smi,
     use_smarts=False,
+    boundary_bonds=False,
     max_nbr_recursion=int(1e5),
     max_nbr_solution=float("inf"),
     nbr_component=1,
@@ -567,7 +568,7 @@ def enumerate_molecule_from_signature(
                     neighbor=True,
                     use_smarts=use_smarts,
                     nbits=False,
-                    boundary_bonds=False,
+                    boundary_bonds=boundary_bonds,
                     map_root=True,
                     legacy=False,
                 )
