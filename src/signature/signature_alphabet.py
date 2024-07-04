@@ -189,6 +189,8 @@ class SignatureAlphabet:
         print(f"kekuleSmiles: {self.kekuleSmiles}")
         print(f"allHsExplicit: {self.allHsExplicit}")
         print(f"maxvalence: {self.maxvalence}")
+        print(f"use_smarts: {self.use_smarts}")
+        print(f"boundary_bonds: {self.boundary_bonds}")
         print(f"alphabet length: {len(self.Dict.keys())}")
 
 
@@ -217,6 +219,8 @@ def load_alphabet(filename, verbose=False):
     # Flags to compute signatures
     Alphabet.radius = int(load["radius"])
     Alphabet.nBits = int(load["nBits"])
+    Alphabet.use_smarts = bool(load["use_smarts"])
+    Alphabet.boundary_bonds = bool(load["boundary_bonds"])
     Alphabet.maxvalence = int(load["maxvalence"])
     Alphabet.splitcomponent = bool(load["splitcomponent"])
     Alphabet.isomericSmiles = bool(load["isomericSmiles"])
