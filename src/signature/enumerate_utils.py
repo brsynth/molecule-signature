@@ -457,7 +457,15 @@ def atomic_num_charge(sa, use_smarts=False):
         m = Chem.MolFromSmiles(sa, sanitize=False)
     for a in m.GetAtoms():
         if a.GetAtomMapNum() == 1:
-            return a.GetAtomicNum(), a.GetFormalCharge()
+            if use_smarts:
+                formal_charge_str = a.DescribeQuery().split("AtomFormalCharge")[-1].split(" ")[1]
+                if len(formal_charge_str) == 0:
+                    formal_charge = 0
+                else:
+                    formal_charge = int(formal_charge_str)
+            else:
+                formal_charge = a.GetFormalCharge()
+            return a.GetAtomicNum(), formal_charge
     return -1, 0
 
 
