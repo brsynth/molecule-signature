@@ -662,6 +662,8 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
     Deg = np.asarray([len(AS[i].split(".")) - 1 for i in range(AS.shape[0])])
     n1 = AS.shape[0]
     AS, IDX, MIN, MAX, Deg, C = update_constraint_matrices(AS, IDX, MIN, MAX, Deg, verbose=verbose)
+    if AS.shape[0] == 0:
+        return [], False, 0
     n2 = AS.shape[0]
     if verbose:
         print(f"AS reduction {n1}, {n2}")

@@ -351,7 +351,7 @@ def update_constraint_matrices(AS, IDX, MIN, MAX, deg, verbose=False):
     """
 
     N = float("inf")
-    while AS.shape[0] < N:
+    while AS.shape[0] > 0 and AS.shape[0] < N:
         N, K, I = AS.shape[0], np.max(deg), []
         B, BS = bond_matrices(AS, MAX, deg, unique=True, verbose=verbose)
         for i in range(N):
