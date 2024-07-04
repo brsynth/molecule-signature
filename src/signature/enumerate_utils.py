@@ -365,6 +365,9 @@ def update_constraint_matrices(AS, IDX, MIN, MAX, deg, verbose=False):
         AS, IDX = AS[I], IDX[I]
         MIN, MAX, deg = MIN[I], MAX[I], deg[I]
 
+    if AS.shape[0] == 0:
+        return AS, IDX, MIN, MAX, deg, np.array([])
+
     # Get constraint matrices
     C = constraint_matrix(AS, BS, deg, verbose=verbose)
 
