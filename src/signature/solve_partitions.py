@@ -706,6 +706,8 @@ def solve_by_partitions(A, b, max_nbr_partition=int(1e5), verbose=False):
             "\nWe clean each local sol with the partitions cleaned during the process"
         )
     dict_sols_per_eq = clean_local_solutions(tups, dict_sols_per_eq, dict_partitions)
+    if [] in dict_sols_per_eq.values():
+        return np.array([]), bool_timeout
     # We add missing partitions
     if verbose:
         print(
