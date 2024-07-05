@@ -304,11 +304,8 @@ class MolecularGraph:
             atomMapping=self.Alphabet.atomMapping,
             verbose=verbose,
         )
-        if 1 == 1:
-            smis = correction_nitrogen(mol)
-            return set(smis)
-        else:
-            return set([smi])
+        smis = correction_nitrogen(mol, self.Alphabet, verbose=verbose)
+        return set(smis)
 
     def end(self, i, enum_graph_dict, node_current, j_current, verbose):
         """
@@ -362,7 +359,7 @@ class MolecularGraph:
 ########################################################################################################################
 
 
-def correction_nitrogen(mol):
+def correction_nitrogen(mol, Alphabet, verbose=False):
     """
     Correction of the [nH] valence problems on a molecule.
 
@@ -394,7 +391,20 @@ def correction_nitrogen(mol):
                     atom.SetNumExplicitHs(atom.GetNumExplicitHs() + 1)
             new_mol_smi = Chem.MolToSmiles(new_mol)
             smis.append(new_mol_smi)
-    return smis
+    smis_san = []
+    for smi in smis:
+        mol = Chem.MolFromSmiles(smi)
+        mol, smi_san = sanitize_molecule(
+            mol,
+            kekuleSmiles=Alphabet.kekuleSmiles,
+            allHsExplicit=Alphabet.allHsExplicit,
+            isomericSmiles=Alphabet.isomericSmiles,
+            formalCharge=Alphabet.formalCharge,
+            atomMapping=Alphabet.atomMapping,
+            verbose=verbose
+            )
+        smis_san.append(smi_san)
+    return smis_san
 
 
 def enumeration(MG, index, enum_graph, enum_graph_dict, node_previous, j_current, verbose=False):
