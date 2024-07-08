@@ -9,6 +9,75 @@ import csv
 
 import numpy as np
 import pandas as pd
+from rdkit import Chem
+from rdkit.Chem import Descriptors
+
+
+########################################################################################################################
+# Sanitize and inspect molecular structures
+########################################################################################################################
+
+
+def mol_from_smiles(smiles: str, max_mw: int = 500, keep_stereo: bool = False) -> Chem.Mol:
+    """Sanitize a molecule
+
+    Parameters
+    ----------
+    smiles : str
+        Smiles string to sanitize.
+    max_mw : int, optional
+        Maximum molecular weight, by default 500.
+    keep_stereo : bool, optional
+        Whether to keep stereochemistry, by default False.
+
+    Returns
+    -------
+    Chem.Mol
+        Sanitized molecule. If smiles is not valid, returns None.
+    """
+    try:
+        if smiles == "nan" or smiles == "" or pd.isna(smiles):
+            return
+        if "." in smiles:  # Reject molecules
+            return
+        if "*" in smiles:   # Reject generic molecules
+            return
+        if not keep_stereo:
+            # Wild but effective stereo removal
+            smiles = smiles.replace("@", "").replace("/", "").replace("\\", "")
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            return
+        return mol
+
+    except Exception as err:
+        raise err
+
+
+def mol_filter(mol: Chem.Mol, max_mw: int = 500, no_radical: bool = False) -> Chem.Mol:
+    """Filter a molecule
+
+    Parameters
+    ----------
+    mol : Chem.Mol
+        Molecule to filter.
+    max_mw : int, optional
+        Maximum molecular weight, by default 500.
+    keep_radical : bool, optional
+        Whether to keep radicals, by default False.
+
+    Returns
+    -------
+    Chem.Mol
+        The molecule if it passes the filter, None otherwise.
+    """
+    if Chem.Descriptors.MolWt(mol) > max_mw:
+        return
+    if no_radical:
+        for atom in mol.GetAtoms():
+            if atom.GetNumRadicalElectrons() > 0:
+                return
+    return mol
 
 
 ########################################################################################################################
