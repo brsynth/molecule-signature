@@ -9,7 +9,7 @@
 # March 2023, Updated Jan 2024
 ########################################################################################################################
 
-
+import copy
 import sys
 import time
 
@@ -66,6 +66,49 @@ class SignatureAlphabet:
         self.boundary_bonds = boundary_bonds
         self.map_root = map_root
         self.legacy = legacy
+
+    def get_attributes(self):
+        """
+        Retrieve the attributes of the object as a dictionary.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        dict
+            A dictionary containing the following key-value pairs:
+            - 'radius': The radius attribute of the object.
+            - 'nBits': The nBits attribute of the object.
+            - 'use_smarts': The use_smarts attribute of the object.
+            - 'boundary_bonds': The boundary_bonds attribute of the object.
+            - 'map_root': The map_root attribute of the object.
+            - 'legacy': The legacy attribute of the object.
+            - 'splitcomponent': The splitcomponent attribute of the object.
+            - 'isomericSmiles': The isomericSmiles attribute of the object.
+            - 'formalCharge': The formalCharge attribute of the object.
+            - 'atomMapping': The atomMapping attribute of the object.
+            - 'kekuleSmiles': The kekuleSmiles attribute of the object.
+            - 'allHsExplicit': The allHsExplicit attribute of the object.
+            - 'maxvalence': The maxvalence attribute of the object.
+        """
+
+        return {
+            "radius": self.radius,
+            "nBits": self.nBits,
+            "use_smarts": self.use_smarts,
+            "boundary_bonds": self.boundary_bonds,
+            "map_root": self.map_root,
+            "legacy": self.legacy,
+            "splitcomponent": self.splitcomponent,
+            "isomericSmiles": self.isomericSmiles,
+            "formalCharge": self.formalCharge,
+            "atomMapping": self.atomMapping,
+            "kekuleSmiles": self.kekuleSmiles,
+            "allHsExplicit": self.allHsExplicit,
+            "maxvalence": self.maxvalence,
+        }
 
     def fill(self, Smiles, verbose=False):
         """
@@ -192,6 +235,65 @@ class SignatureAlphabet:
         print(f"use_smarts: {self.use_smarts}")
         print(f"boundary_bonds: {self.boundary_bonds}")
         print(f"alphabet length: {len(self.Dict.keys())}")
+
+
+def compatible_alphabets(Alphabet_1, Alphabet_2):
+    """
+    Determine if two alphabets are compatible by comparing their attributes.
+
+    Parameters
+    ----------
+    Alphabet_1 : object
+        The first alphabet object. Must have a `get_attributes` method.
+    Alphabet_2 : object
+        The second alphabet object. Must have a `get_attributes` method.
+
+    Returns
+    -------
+    bool
+        True if the attributes of both alphabets are identical, False otherwise.
+    """
+
+    attributes_1 = Alphabet_1.get_attributes()
+    attributes_2 = Alphabet_2.get_attributes()
+    if len(attributes_1) != len(attributes_2):
+        return False
+    for x in attributes_1.keys():
+        if attributes_1[x] != attributes_2[x]:
+            return False
+    return True
+
+
+def merge_alphabets(Alphabet_1, Alphabet_2):
+    """
+    Merge two alphabet objects into a new alphabet object.
+
+    This function combines the dictionaries of two alphabet objects, ensuring that the resulting
+    dictionary contains unique keys from both inputs. The values in the new dictionary are
+    assigned as sequential integers.
+
+    Parameters
+    ----------
+    Alphabet_1 : object
+        The first alphabet object. Must have a `Dict` attribute.
+    Alphabet_2 : object
+        The second alphabet object. Must have a `Dict` attribute.
+
+    Returns
+    -------
+    Alphabet_3 : object
+        A new alphabet object with a combined dictionary from Alphabet_1 and Alphabet_2.
+    """
+
+    d_1 = Alphabet_1.Dict
+    d_2 = Alphabet_2.Dict
+    d_3_keys = list(d_1.keys()) + list(d_2.keys())
+    d_3_keys = list(set(d_3_keys))
+    d_3_values = list(range(len(d_3_keys)))
+    d_3 = dict(zip(d_3_keys, d_3_values))
+    Alphabet_3 = copy.deepcopy(Alphabet_1)
+    Alphabet_3.Dict = d_3
+    return Alphabet_3
 
 
 def load_alphabet(filename, verbose=False):
