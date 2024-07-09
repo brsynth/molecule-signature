@@ -706,6 +706,8 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
     if verbose == 2:
         print(f"A = {A}\nb = {b}")
     # Solve
+    if sum(list(morgan)) != sum(list(b)):
+        return [], False, 0
     st = time.time()
     if method == "diophantine":  # diophantine
         A, b = Matrix(A.astype(int)), Matrix(b.astype(int))
