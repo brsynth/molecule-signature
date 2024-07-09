@@ -361,25 +361,35 @@ class MolecularGraph:
 
 def correction_nitrogen(mol, Alphabet, verbose=False):
     """
-    Correction of the [nH] valence problems on a molecule.
+    Perform correction of the [nH] valence problems on a molecule by increasing 
+    the number of explicit hydrogens on aromatic nitrogen atoms.
 
     Parameters
     ----------
-    mol : rdkit molecule
-        Molecule that we want to correct.
+    mol : rdkit.Chem.Mol
+        The molecule object that needs correction.
+
+    Alphabet : object
+        Object containing various settings for molecule sanitization (from an
+        external library or module).
+
+    verbose : bool, optional
+        If True, print verbose output during the correction process.
 
     Returns
     -------
-    smis : list
-        List of smiles of all the possible corrections.
+    smis_san : list of str
+        List of canonical SMILES strings after applying all possible corrections.
     """
 
     smi = Chem.MolToSmiles(mol)
     smis = [smi]
     list_N = []
+    # Identify aromatic nitrogen atoms with incorrect valence
     for atom in mol.GetAtoms():
         if atom.GetSymbol() == "N" and atom.GetIsAromatic() and atom.GetTotalDegree() != 3:
             list_N.append(atom.GetIdx())
+    # Generate all possible corrections by incrementing explicit hydrogens on identified atoms
     if len(list_N) > 0:
         lists_atoms_N_to_incr = [
             list(l) for l in chain.from_iterable(combinations(list_N, r + 1) for r in range(len(list_N)))
@@ -392,6 +402,7 @@ def correction_nitrogen(mol, Alphabet, verbose=False):
             new_mol_smi = Chem.MolToSmiles(new_mol)
             smis.append(new_mol_smi)
     smis_san = []
+    # Sanitize each corrected molecule and return canonical SMILES strings
     for smi in smis:
         mol = Chem.MolFromSmiles(smi)
         mol, smi_san = sanitize_molecule(
