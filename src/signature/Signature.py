@@ -55,7 +55,6 @@ class AtomSignature:
         map_root: bool = True,
         rooted_smiles: bool = False,
         morgan_bit: int = None,
-        legacy: bool = False,
         **kwargs: dict,
     ) -> None:
         """Initialize the AtomSignature object
@@ -76,8 +75,6 @@ class AtomSignature:
             Whether to use rooted SMILES syntax for the signature. If yes, the SMILES is rooted at the root atom.
         morgan_bit : int
             The Morgan bit to be associated to the atom (if any).
-        legacy : bool
-            Whether to use the legacy version of the atom signature.
         **kwargs
             Additional arguments to pass to Chem.MolFragmentToSmiles calls.
         """
@@ -95,23 +92,14 @@ class AtomSignature:
         self._sig_minus = None
         self._neighbors = []
 
-        # Wildly switch between new and legacy version for atom signature
-        #
-        # This is a temporary solution to allow the use of the new atom signature
-        # while keeping the old one for backward compatibility.
-        if legacy:
-            atom_signature = globals()["atom_signature_legacy"]
-        else:
-            atom_signature = globals()["atom_signature"]
-            self.kwargs["boundary_bonds"] = self.boundary_bonds
-            self.kwargs["map_root"] = self.map_root
-            self.kwargs["rooted_smiles"] = self.rooted_smiles
-
         # Compute signature of the atom itself
         self._sig = atom_signature(
             atom,
             self.radius,
             self.use_smarts,
+            self.boundary_bonds,
+            self.map_root,
+            self.rooted_smiles,
             **self.kwargs,
         )
 
@@ -122,6 +110,9 @@ class AtomSignature:
                 atom,
                 self.radius - 1,
                 self.use_smarts,
+                self.boundary_bonds,
+                self.map_root,
+                self.rooted_smiles,
                 **self.kwargs,
             )
 
@@ -130,6 +121,9 @@ class AtomSignature:
                     neighbor_atom,
                     radius - 1,
                     self.use_smarts,
+                    self.boundary_bonds,
+                    self.map_root,
+                    self.rooted_smiles,
                     **self.kwargs,
                 )
 
@@ -359,90 +353,6 @@ def atom_signature(
             canonical=True,
             rootedAtAtom=atom_in_frag_index if rooted_smiles else -1,
         )
-
-        # return Chem.MolToSmiles(
-        #     fragment,
-        #     isomericSmiles=kwargs.get("isomericSmiles", True),
-        #     allBondsExplicit=kwargs.get("allBondsExplicit", True),
-        #     allHsExplicit=kwargs.get("allHsExplicit", False),
-        #     kekuleSmiles=kwargs.get("kekuleSmiles", False),
-        #     canonical=True,
-        #     rootedAtAtom=atom_in_frag_index if rooted_smiles else -1,
-        # )
-
-
-def atom_signature_legacy(
-    atom: Chem.Atom,
-    radius: int = 2,
-    use_smarts: bool = False,
-    **kwargs: dict,
-) -> str:
-    """Generate a signature for an atom
-
-    This function generates a signature for an atom based on its environment up to a given radius. The signature is
-    either represented as a SMARTS string (smarts=True) or a SMILES string (smarts=False). The atom is labeled as 1.
-
-    Parameters
-    ----------
-    atom : Chem.Atom
-        The atom to generate the signature for.
-    radius : int
-        The radius of the environment to consider. If negative, the whole molecule is considered.
-    use_smarts : bool
-        Whether to use SMARTS syntax for the signature.
-    **kwargs
-        Additional arguments to pass to Chem.MolFragmentToSmiles calls.
-
-    Returns
-    -------
-    str
-        The atom signature
-    """
-    # Check if the atom is None
-    if atom is None:
-        return ""
-
-    # Check if we're working on a hydrogen
-    if atom.GetAtomicNum() == 1 and atom.GetFormalCharge() == 0 and not kwargs.get("allHsExplicit", False):
-        return ""
-
-    # Get the parent molecule
-    mol = atom.GetOwningMol()
-
-    # Refine the radius
-    if radius < 0:
-        # If radius is negative, consider the whole molecule
-        radius = mol.GetNumAtoms()
-    elif radius > mol.GetNumAtoms():
-        # Radius cannot be larger than the number of atoms in the molecule
-        radius = mol.GetNumAtoms()
-    for radius in range(radius, -1, -1):
-        # Check if the atom has an environment at the given radius
-        # If the radius falls outside of the molecule (i.e. it does not reach any atom) then
-        # the list of bonds will be empty. In such a case, we reduce the radius until we find
-        # a non-empty environment, or we reach radius 0 (which means the radius itself).
-        if len(Chem.FindAtomEnvironmentOfRadiusN(mol, radius, atom.GetIdx(), useHs=True)) > 0:
-            break
-
-    # Get the atoms and bonds to use
-    if radius == 0:
-        bonds = []
-        atoms = [atom.GetIdx()]
-    else:
-        bonds = sorted(list(Chem.FindAtomEnvironmentOfRadiusN(mol, radius, atom.GetIdx(), useHs=True)))
-        atoms = list()
-        for bidx in bonds:
-            atoms.append(mol.GetBondWithIdx(bidx).GetBeginAtomIdx())
-            atoms.append(mol.GetBondWithIdx(bidx).GetEndAtomIdx())
-        atoms = sorted(list(set(atoms)))
-
-    # Now we get to the business of computing the atom signature
-    if use_smarts:
-        signature = frag_to_smarts(mol, atoms, bonds, root_atom=atom.GetIdx(), **kwargs)
-    else:
-        signature = frag_to_smiles(mol, atoms, bonds, root_atom=atom.GetIdx(), **kwargs)
-
-    return signature
 
 
 def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
@@ -924,7 +834,6 @@ def clean_kwargs(kwargs: dict) -> dict:
             "allBondsExplicit",
             "allHsExplicit",
             "kekuleSmiles",
-            "legacy",
         ]:
             cleaned_kwargs[key] = value
         else:
