@@ -160,22 +160,22 @@ class AtomSignature:
         return _
 
     def __lt__(self, other) -> bool:
-        if self.sig == other.sig:
-            if self.neighbors == other.neighbors:
-                if self.morgan == other.morgan:
+        if self.morgan == other.morgan:
+            if self.sig == other.sig:
+                if self.neighbors == other.neighbors:
                     return False
-                return self.morgan < other.morgan
-            return self.neighbors < other.neighbors
-        return self.sig < other.sig
+                return self.neighbors < other.neighbors
+            return self.sig < other.sig
+        return self.morgan < other.morgan
 
     def __eq__(self, other) -> bool:
         # check if the signature are the same type
         if not isinstance(other, AtomSignature):
             return False
         return (
-            self.sig == other.sig
+            self.morgan == other.morgan
+            and self.sig == other.sig
             and self.neighbors == other.neighbors
-            and self.morgan == other.morgan
         )
 
     @property
