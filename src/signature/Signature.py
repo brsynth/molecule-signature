@@ -53,7 +53,7 @@ class AtomSignature:
 
     def __init__(
         self,
-        atom: Chem.Atom,
+        atom: Chem.Atom = None,
         radius: int = 2,
         use_smarts: bool = True,
         boundary_bonds: bool = False,
@@ -91,6 +91,12 @@ class AtomSignature:
         self._root = None
         self._root_minus = None
         self._neighbors = []
+
+        # Early return if the atom is None
+        if atom is None:
+            return
+        else:
+            assert isinstance(atom, Chem.Atom), "atom must be a RDKit atom object"
 
         # Compute signature of the atom itself
         self._root = atom_signature(
@@ -147,7 +153,7 @@ class AtomSignature:
         _ += f"morgan={self._morgan}, "
         _ += f"signature='{self._root}', "
         _ += f"signature_minus='{self._root_minus}', "
-        _ += f"neighbor_signatures={self._neighbors}, "
+        _ += f"neighbor_signatures={self._neighbors}"
         _ += ")"
         return _
 
@@ -231,6 +237,42 @@ class AtomSignature:
                 s += f".{bond}|{sig}"
         return s
 
+    @classmethod
+    def from_string(cls, signature: str) -> None:
+        """Initialize the AtomSignature object from a string
+
+        Parameters
+        ----------
+        signature : str
+            The signature as a string
+        """
+        # Parse the string
+        parts = signature.split(cls._morgan_sep)
+        if len(parts) == 2:
+            morgan_bit, remaining = parts[0], parts[1]
+            morgan_bit = int(morgan_bit)
+        else:
+            morgan_bit, remaining = None, parts[0]
+
+        if cls._neig_sep in remaining:
+            root = None
+            root_minus, neighbors_str = remaining.split(cls._neig_sep, 1)
+            neighbors = [
+                (bond_sig.split(cls._bond_sep)[0], bond_sig.split(cls._bond_sep)[1])
+                for bond_sig in neighbors_str.split(cls._neig_sep)
+            ]
+        else:
+            root_minus = None
+            root, neighbors = remaining, []
+
+        # Build the AtomSignature instance
+        instance = cls()
+        instance._morgan = morgan_bit
+        instance._root = root
+        instance._root_minus = root_minus
+        instance._neighbors = neighbors
+
+        return instance
 
 # =====================================================================================================================
 # Atom Signature Helper Functions
