@@ -2,6 +2,54 @@
 
 ### Feat
 
+- **MoleculeSignature**: enable MoleculeSignature init from list and from string
+- **MoleculeSignature**: complete rewrite of as_str now named to_string
+- **AtomSignature**: add from_string constructor
+- **AtomSignature**: improve to_string export
+- **utils**: add functions to sanitize and filter molecular structures
+- **signature_alphabet**: add merge and compatibility functions
+- **3.drug_application.ipynb**: draft of a notebook to enumerate drug molecules and create drug databases
+- **enumerate_signature**: add new timeouts
+- **2.reverse_engineer**: add outputs of timeout with enumeration
+
+### Fix
+
+- **AtomSignature**: fix attribute error
+- **enumerate_signature_from_morgan**: bug when not enough fragments have been found
+- **enumerate_signature**: second correction of the [nH] pb in the enum sig to mol
+- **atomic_num_charge**: correction of formal charge extraction bug from smarts
+- **signature_alphabet**: add missing parameters in print_out and load functions
+- **solve_partitions**: bug when clean_local_solutions gives a zero solution
+- **update_constraint_matrices**: bug correction when AS is zero length v2
+- **update_constraint_matrices**: bug correction when AS is zero length
+- **enumerate_molecule_from_signature**: add boundary_bonds argument
+- **signature_alphabet**: add boundary_bounds and use_smarts in save method
+
+### Refactor
+
+- **MoleculeSignature**: constructor accept None mol
+- **MoleculeSignature**: rewrite to_list to stick with AtomSignature behaviour
+- **MoleculeSignature**: update repr
+- **MoleculeSignature**: clean code
+- **MoleculeSignature**: rename attributes
+- **MoleculeSignature**: remove unused neighbor argument
+- **AtomSignature**: change repr method to keep on track with attribute names
+- **AtomSignature**: edit class attribute names
+- **MoleculeSignature**: remove dispensable attributes
+- **AtomSignature**: rename variables
+- **AtomSignature**: remove dispensable attributes
+- **AtomSignature**: update atom signature comparison methods
+- **Signature**: remvove legacy implementation for computing signature
+- **Signature**: use smarts syntex as default
+- **enumerate_signature**: suppress useless arguments
+- **signature_old**: move the last usefull functions from signature_old to other scripts
+- **enumerate_utils**: suppress useless signature_neighbor
+- **enumerate_utils**: move test functions from notebooks to scripts
+
+## 0.9.0 (2024-06-27)
+
+### Feat
+
 - enumeration with smiles radius 2 and boundaries
 
 ### Fix
