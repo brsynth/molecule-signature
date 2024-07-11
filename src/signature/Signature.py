@@ -656,13 +656,6 @@ class MoleculeSignature:
             raise ValueError("Molecule is None")
 
         # Parameters reminder
-        self.radius = radius
-        self.neighbor = neighbor
-        self.use_smarts = use_smarts
-        self.boundary_bonds = boundary_bonds
-        self.map_root = map_root
-        self.rooted_smiles = rooted_smiles
-        self.nbits = nbits
         self.kwargs = clean_kwargs(kwargs)
 
         # Meaningful information
@@ -695,12 +688,12 @@ class MoleculeSignature:
 
             # Collect non-empty atom signatures
             _sig = AtomSignature(
-                atom=atom,
-                radius=self.radius,
-                use_smarts=self.use_smarts,
-                boundary_bonds=self.boundary_bonds,
-                map_root=self.map_root,
-                rooted_smiles=self.rooted_smiles,
+                atom,
+                radius,
+                use_smarts,
+                boundary_bonds,
+                map_root,
+                rooted_smiles,
                 morgan_bit=int(morgan_vect[atom.GetIdx()]) if nbits > 0 else None,  # int to avoid numpy.int64 type
                 **self.kwargs,
             )
@@ -715,13 +708,6 @@ class MoleculeSignature:
     def __repr__(self) -> str:
         _ = "MoleculeSignature("
         _ += f"atom_signatures={self.atom_signatures}, "
-        _ += f"radius={self.radius}, "
-        _ += f"neighbor={self.neighbor}, "
-        _ += f"use_smarts={self.use_smarts}, "
-        _ += f"boundary_bonds={self.boundary_bonds}, "
-        _ += f"map_root={self.map_root}, "
-        _ += f"rooted_smiles={self.rooted_smiles}, "
-        _ += f"nbits={self.nbits}, "
         _ += f"kwargs={self.kwargs}, "
         _ += ")"
         return _
