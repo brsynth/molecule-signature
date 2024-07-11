@@ -83,12 +83,12 @@ class AtomSignature:
 
         # Meaningful information
         self._morgan = morgan_bit
-        self._sig = None
-        self._sig_minus = None
+        self._root = None
+        self._root_minus = None
         self._neighbors = []
 
         # Compute signature of the atom itself
-        self._sig = atom_signature(
+        self._root = atom_signature(
             atom,
             radius,
             use_smarts,
@@ -101,7 +101,7 @@ class AtomSignature:
         # Compute signature with neighbors
         if radius > 0:
             # Get the signatures of the neighbors at radius - 1
-            self._sig_minus = atom_signature(
+            self._root_minus = atom_signature(
                 atom,
                 radius - 1,
                 use_smarts,
@@ -126,10 +126,7 @@ class AtomSignature:
 
                 bond = atom.GetOwningMol().GetBondBetweenAtoms(atom.GetIdx(), neighbor_atom.GetIdx())
                 self._neighbors.append(
-                    (
-                        str(bond.GetBondType()),
-                        neighbor_sig,
-                    )
+                    (str(bond.GetBondType()), neighbor_sig)
                 )
 
             self._neighbors.sort()
@@ -143,19 +140,19 @@ class AtomSignature:
     def __repr__(self) -> str:
         _ = "AtomSignature("
         _ += f"morgan={self._morgan}, "
-        _ += f"signature='{self._sig}', "
-        _ += f"signature_minus='{self._sig_minus}', "
+        _ += f"signature='{self._root}', "
+        _ += f"signature_minus='{self._root_minus}', "
         _ += f"neighbor_signatures={self._neighbors}, "
         _ += ")"
         return _
 
     def __lt__(self, other) -> bool:
         if self.morgan == other.morgan:
-            if self.sig == other.sig:
+            if self.root == other.sig:
                 if self.neighbors == other.neighbors:
                     return False
                 return self.neighbors < other.neighbors
-            return self.sig < other.sig
+            return self.root < other.sig
         return self.morgan < other.morgan
 
     def __eq__(self, other) -> bool:
@@ -164,7 +161,7 @@ class AtomSignature:
             return False
         return (
             self.morgan == other.morgan
-            and self.sig == other.sig
+            and self.root == other.root
             and self.neighbors == other.neighbors
         )
 
@@ -173,12 +170,12 @@ class AtomSignature:
         return self._morgan
 
     @property
-    def sig(self) -> str:
-        return self._sig
+    def root(self) -> str:
+        return self._root
 
     @property
-    def sig_minus(self) -> str:
-        return self._sig_minus
+    def root_minus(self) -> str:
+        return self._root_minus
 
     @property
     def neighbors(self) -> tuple:
@@ -203,9 +200,9 @@ class AtomSignature:
         if morgan:
             s += f"{self.morgan},"
         if root:
-            s += f"{self.sig}&"
+            s += f"{self.root}&"
         if neighbors:
-            s += self.sig_minus
+            s += self.root_minus
             for bond, sig in self._neighbors:
                 s += f".{bond}|{sig}"
         return s
