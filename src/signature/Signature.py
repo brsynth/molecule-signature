@@ -159,11 +159,11 @@ class AtomSignature:
 
     def __lt__(self, other) -> bool:
         if self.morgan == other.morgan:
-            if self.root == other.sig:
+            if self.root == other.root:
                 if self.neighbors == other.neighbors:
                     return False
                 return self.neighbors < other.neighbors
-            return self.root < other.sig
+            return self.root < other.root
         return self.morgan < other.morgan
 
     def __eq__(self, other) -> bool:
