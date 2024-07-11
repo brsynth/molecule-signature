@@ -78,12 +78,7 @@ class AtomSignature:
         **kwargs
             Additional arguments to pass to Chem.MolFragmentToSmiles calls.
         """
-        # Parameters
-        self.radius = radius
-        self.use_smarts = use_smarts
-        self.boundary_bonds = boundary_bonds
-        self.map_root = map_root
-        self.rooted_smiles = rooted_smiles
+        # Parameters reminder
         self.kwargs = clean_kwargs(kwargs)
 
         # Meaningful information
@@ -95,24 +90,24 @@ class AtomSignature:
         # Compute signature of the atom itself
         self._sig = atom_signature(
             atom,
-            self.radius,
-            self.use_smarts,
-            self.boundary_bonds,
-            self.map_root,
+            radius,
+            use_smarts,
+            boundary_bonds,
+            map_root,
             self.rooted_smiles,
             **self.kwargs,
         )
 
         # Compute signature with neighbors
-        if self.radius > 0:
+        if radius > 0:
             # Get the signatures of the neighbors at radius - 1
             self._sig_minus = atom_signature(
                 atom,
-                self.radius - 1,
-                self.use_smarts,
-                self.boundary_bonds,
-                self.map_root,
-                self.rooted_smiles,
+                radius - 1,
+                use_smarts,
+                boundary_bonds,
+                map_root,
+                rooted_smiles,
                 **self.kwargs,
             )
 
@@ -120,10 +115,10 @@ class AtomSignature:
                 neighbor_sig = atom_signature(
                     neighbor_atom,
                     radius - 1,
-                    self.use_smarts,
-                    self.boundary_bonds,
-                    self.map_root,
-                    self.rooted_smiles,
+                    use_smarts,
+                    boundary_bonds,
+                    map_root,
+                    rooted_smiles,
                     **self.kwargs,
                 )
 
@@ -139,8 +134,7 @@ class AtomSignature:
 
             self._neighbors.sort()
 
-        elif self.radius == 0:
-            # There's nothing to do if radius is 0
+        elif radius == 0:  # There's nothing to do if radius is 0
             pass
 
         else:
@@ -152,10 +146,6 @@ class AtomSignature:
         _ += f"signature='{self._sig}', "
         _ += f"signature_minus='{self._sig_minus}', "
         _ += f"neighbor_signatures={self._neighbors}, "
-        _ += f"boundary_bonds={self.boundary_bonds}, "
-        _ += f"use_smarts={self.use_smarts}, "
-        _ += f"map_root={self.map_root}, "
-        _ += f"rooted_smiles={self.rooted_smiles}"
         _ += ")"
         return _
 
