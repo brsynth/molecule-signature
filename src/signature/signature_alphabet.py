@@ -144,12 +144,10 @@ class SignatureAlphabet:
             ms = MoleculeSignature(
                 mol,
                 radius=self.radius,
-                neighbor=True,
                 use_smarts=self.use_smarts,
                 nbits=self.nBits,
                 boundary_bonds=self.boundary_bonds,
-                map_root=self.map_root,
-                legacy=self.legacy,
+                map_root=self.map_root
             )
             signature = ms.as_deprecated_string(morgan=self.nBits, root=False, neighbors=True)
             if len(signature) == 0:
