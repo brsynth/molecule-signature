@@ -678,11 +678,6 @@ class MoleculeSignature:
 
         # Compute the signatures of all atoms
         for atom in mol.GetAtoms():
-            # # Skip hydrogens
-            # if atom.GetAtomicNum() == 1 and atom.GetFormalCharge() == 0:
-            #     continue
-
-            # Collect non-empty atom signatures
             _sig = AtomSignature(
                 atom,
                 radius,
