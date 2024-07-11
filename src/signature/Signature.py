@@ -698,8 +698,7 @@ class MoleculeSignature:
 
     def __repr__(self) -> str:
         _ = "MoleculeSignature("
-        _ += f"atom_signatures={self.atom_signatures}, "
-        _ += f"kwargs={self.kwargs}, "
+        _ += f"atoms={self.atoms}"
         _ += ")"
         return _
 
@@ -738,11 +737,15 @@ class MoleculeSignature:
 
     @property
     def atoms(self) -> list:
-        return [atom.sig for atom in self.atom_signatures]
+        return [atom for atom in self._atoms]
 
     @property
-    def atoms_minus(self) -> list:
-        return [atom.sig_minus for atom in self.atom_signatures]
+    def roots(self) -> list:
+        return [atom.root for atom in self._atoms]
+
+    @property
+    def root_minus(self) -> list:
+        return [atom.root_minus for atom in self._atoms]
 
     @property
     def neighbors(self) -> list:
