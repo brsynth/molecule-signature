@@ -611,6 +611,8 @@ class MoleculeSignature:
     The signature of a molecule is composed of the signature of its atoms.
     """
 
+    _ATOM_SEP = " .. "  # Separator between atom signatures
+
     def __init__(
         self,
         mol: Chem.Mol = None,
@@ -707,7 +709,7 @@ class MoleculeSignature:
         return len(self._atoms)
 
     def __str__(self) -> str:
-        return self.as_str()
+        return self.to_string()
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, MoleculeSignature):
@@ -775,16 +777,15 @@ class MoleculeSignature:
         """
         return [atom.to_string(neighbors=neighbors) for atom in self._atoms]
 
-        The signature is returned as a string, with each atom signature separated by a double dot surrounded
-        by spaces (` .. `).
+    def to_string(self, neighbors=False) -> str:
+        """Return the signature as a string.
 
-        If neighbors is False, the atom signature is used. If neighbors is True, the atom signature is used at
-        a radius - 1, followed by the atom signature of the neighbor at radius - 1.
+        If neighbors is False, the signature of the root atum at full radius is used. If neighbors is True,
+        the signature of the root atom at radius - 1 is used, followed by the atom signature of the neighbors
+        at radius - 1.
 
         Parameters
         ----------
-        morgan : bool
-            Whether to include the Morgan bits in the string.
         neighbors : bool
             Whether to include the neighbors in the string.
 
@@ -793,7 +794,7 @@ class MoleculeSignature:
         str
             The signature as a string
         """
-        return " .. ".join(self.as_list(morgan=morgan, neighbors=neighbors))
+        return self._ATOM_SEP.join(self.to_list(neighbors=neighbors))
 
 
 # =====================================================================================================================
@@ -892,11 +893,11 @@ if __name__ == "__main__":
     print()
 
     print("As string (morgan=True, neighbors=False):")
-    print(ms.as_str(morgan=True, neighbors=False))
+    print(ms.to_string(morgan=True, neighbors=False))
     print()
 
     print("As string (morgan=True, neighbors=True):")
-    print(ms.as_str(morgan=True, neighbors=True))
+    print(ms.to_string(morgan=True, neighbors=True))
     print()
 
     print("As deprecated string (morgan=True, neighbors=False):")
