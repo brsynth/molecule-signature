@@ -47,9 +47,9 @@ class AtomSignature:
     """Class representing the signature of an atom."""
 
     # Separators defined at the class level
-    _morgan_sep = " ## "
-    _neig_sep = " && "
-    _bond_sep = " <> "
+    _MORGAN_SEP = " ## "
+    _NEIG_SEP = " && "
+    _BOND_SEP = " <> "
 
     def __init__(
         self,
@@ -201,12 +201,12 @@ class AtomSignature:
             The signature as a string
         """
         if self.morgan is not None:
-            _ = f"{self._morgan}{AtomSignature._morgan_sep}"
+            _ = f"{self._morgan}{AtomSignature._MORGAN_SEP}"
         else:
             _ = ""
         if neighbors:
-            _ += f"{self._root_minus}{AtomSignature._neig_sep}"
-            _ += AtomSignature._neig_sep.join([f"{bond}{AtomSignature._bond_sep}{sig}" for bond, sig in self.neighbors])
+            _ += f"{self._root_minus}{AtomSignature._NEIG_SEP}"
+            _ += AtomSignature._NEIG_SEP.join([f"{bond}{AtomSignature._BOND_SEP}{sig}" for bond, sig in self.neighbors])
         else:
             _ += self._root
         return _
@@ -247,19 +247,19 @@ class AtomSignature:
             The signature as a string
         """
         # Parse the string
-        parts = signature.split(cls._morgan_sep)
+        parts = signature.split(cls._MORGAN_SEP)
         if len(parts) == 2:
             morgan_bit, remaining = parts[0], parts[1]
             morgan_bit = int(morgan_bit)
         else:
             morgan_bit, remaining = None, parts[0]
 
-        if cls._neig_sep in remaining:
+        if cls._NEIG_SEP in remaining:
             root = None
-            root_minus, neighbors_str = remaining.split(cls._neig_sep, 1)
+            root_minus, neighbors_str = remaining.split(cls._NEIG_SEP, 1)
             neighbors = [
-                (bond_sig.split(cls._bond_sep)[0], bond_sig.split(cls._bond_sep)[1])
-                for bond_sig in neighbors_str.split(cls._neig_sep)
+                (bond_sig.split(cls._BOND_SEP)[0], bond_sig.split(cls._BOND_SEP)[1])
+                for bond_sig in neighbors_str.split(cls._NEIG_SEP)
             ]
         else:
             root_minus = None

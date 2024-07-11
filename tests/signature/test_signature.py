@@ -30,7 +30,7 @@ def test_atom_signature(benzene):
 def test_molecule_signature(ethanol):
     mol_sig = MoleculeSignature(ethanol, radius=1, use_smarts=True, nbits=2048)
     assert len(mol_sig) > 0
-    assert all(isinstance(sig, AtomSignature) for sig in mol_sig.atom_signatures)
+    assert all(isinstance(sig, AtomSignature) for sig in mol_sig._atoms)
 
 
 # Performance testing
