@@ -583,12 +583,10 @@ def enumerate_molecule_from_signature(
             ms = MoleculeSignature(
                 mol,
                 radius=Alphabet.radius,
-                neighbor=True,
                 use_smarts=Alphabet.use_smarts,
                 nbits=False,
                 boundary_bonds=Alphabet.boundary_bonds,
-                map_root=True,
-                legacy=False,
+                map_root=True
             )
             sigsmi = ms.as_deprecated_string(morgan=False, root=False, neighbors=True)
             if sigsmi == sig:
