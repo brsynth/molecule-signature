@@ -655,9 +655,7 @@ class MoleculeSignature:
 
         # Parameters reminder
         self.kwargs = clean_kwargs(kwargs)
-
-        # Meaningful information
-        self.atom_signatures = []
+        self._atoms = []
 
         # Get Morgan bits
         if nbits > 0:
@@ -695,13 +693,13 @@ class MoleculeSignature:
                 morgan_bit=int(morgan_vect[atom.GetIdx()]) if nbits > 0 else None,  # int to avoid numpy.int64 type
                 **self.kwargs,
             )
-            if _sig != "":
-                self.atom_signatures.append(_sig)
+            if _sig != "":  # only collect non-empty signatures
+                self._atoms.append(_sig)
 
-        assert len(self.atom_signatures) > 0, "No atom signature found"
+        assert len(self._atoms) > 0, "No atom signature found"
 
         # Sort the atom signatures
-        self.atom_signatures.sort()
+        self._atoms.sort()
 
     def __repr__(self) -> str:
         _ = "MoleculeSignature("
@@ -711,7 +709,7 @@ class MoleculeSignature:
         return _
 
     def __len__(self) -> int:
-        return len(self.atom_signatures)
+        return len(self._atoms)
 
     def __str__(self) -> str:
         return self.as_str()
@@ -741,7 +739,7 @@ class MoleculeSignature:
         str
             The signature in the deprecated string format.
         """
-        return " ".join(sorted(atom.as_deprecated_string(morgan, root, neighbors) for atom in self.atom_signatures))
+        return " ".join(sorted(atom.as_deprecated_string(morgan, root, neighbors) for atom in self._atoms))
 
     @property
     def atoms(self) -> list:
@@ -753,11 +751,11 @@ class MoleculeSignature:
 
     @property
     def neighbors(self) -> list:
-        return [atom.neighbors for atom in self.atom_signatures]
+        return [atom.neighbors for atom in self._atoms]
 
     @property
     def morgans(self) -> list:
-        return [atom.morgan for atom in self.atom_signatures]
+        return [atom.morgan for atom in self._atoms]
 
     def as_list(self, morgan=True, neighbors=False) -> list:
         """Return the signature as a list of features.
@@ -960,6 +958,6 @@ if __name__ == "__main__":
             f"Molecule signature (radius={radius}, neighbor={neighbor}, use_smarts={use_smarts}, "
             f"nbits={nbit}), boundary_bonds={boundary_bonds}:"
         )
-        for atom_sig in ms.atom_signatures:
+        for atom_sig in ms._atoms:
             print(f"├── {atom_sig}")
         print()
