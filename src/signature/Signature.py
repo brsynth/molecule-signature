@@ -755,47 +755,24 @@ class MoleculeSignature:
     def morgans(self) -> list:
         return [atom.morgan for atom in self._atoms]
 
-    def as_list(self, morgan=True, neighbors=False) -> list:
+    def to_list(self, neighbors=False) -> list:
         """Return the signature as a list of features.
 
-        If neighbors is False, the atom signature is used. If neighbors is True, the atom signature is used at
-        a radius - 1, followed by the atom signature of the neighbor at radius - 1.
+        If neighbors is False, the signature of the root atum at full radius is used. If neighbors is True,
+        the signature of the root atom at radius - 1 is used, followed by the atom signature of the neighbors
+        at radius - 1.
 
         Parameters
         ----------
-        morgan : bool
-            Whether to include the Morgan bits in the list.
         neighbors : bool
             Whether to include the neighbors in the list.
 
         Returns
         -------
         list
-            The list of features
+            The signature as a list
         """
-        out = []
-        for _morgan, _atom, _atom_minus, _neighbors in sorted(
-            zip(
-                self.morgans,
-                self.atoms,
-                self.atoms_minus,
-                self.neighbors,
-            ),
-            key=lambda x: (x[0], x[1], x[2], x[3]),
-        ):
-            if morgan:
-                s = f"{str(_morgan)}, "
-            else:
-                s = ""
-            if neighbors and len(_neighbors):
-                s += f"{_atom_minus} || {_neighbors}"
-            else:
-                s += _atom
-            out.append(s)
-        return out
-
-    def as_str(self, morgan=True, neighbors=False) -> str:
-        """Return the signature as a string.
+        return [atom.to_string(neighbors=neighbors) for atom in self._atoms]
 
         The signature is returned as a string, with each atom signature separated by a double dot surrounded
         by spaces (` .. `).
@@ -904,12 +881,12 @@ if __name__ == "__main__":
     print()
 
     print("As list (morgan=True, neighbors=False):")
-    for item in ms.as_list(morgan=True, neighbors=False):
+    for item in ms.to_list(morgan=True, neighbors=False):
         print(f"- {item}")
     print()
 
     print("As list (morgan=False, neighbors=True):")
-    for item in ms.as_list(morgan=False, neighbors=True):
+    for item in ms.to_list(morgan=False, neighbors=True):
         print(f"- {item}")
     print()
 
