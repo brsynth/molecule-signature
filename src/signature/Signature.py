@@ -796,6 +796,36 @@ class MoleculeSignature:
         """
         return self._ATOM_SEP.join(self.to_list(neighbors=neighbors))
 
+    @classmethod
+    def from_list(cls, signatures: list) -> None:
+        """Initialize the MoleculeSignature object from a list
+
+        Parameters
+        ----------
+        signatures : list
+            The list of signatures as strings
+        """
+        # Parse the list
+        atoms = [AtomSignature.from_string(sig) for sig in signatures]
+
+        # Build the MoleculeSignature instance
+        instance = cls()
+        instance._atoms = atoms
+
+        return instance
+
+    @classmethod
+    def from_string(cls, signature: str) -> None:
+        """Initialize the MoleculeSignature object from a string
+
+        Parameters
+        ----------
+        signature : str
+            The signature as a string
+        """
+        signatures = signature.split(cls._ATOM_SEP)
+        return cls.from_list(signatures)
+
 
 # =====================================================================================================================
 # Overall helper functions
