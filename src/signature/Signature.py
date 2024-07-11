@@ -282,8 +282,8 @@ class AtomSignature:
 def atom_signature(
     atom: Chem.Atom,
     radius: int = 2,
-    use_smarts: bool = False,
-    boundary_bonds: bool = True,
+    use_smarts: bool = True,
+    boundary_bonds: bool = False,
     map_root: bool = True,
     rooted_smiles: bool = False,
     **kwargs: dict,
