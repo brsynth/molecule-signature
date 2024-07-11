@@ -613,9 +613,8 @@ class MoleculeSignature:
 
     def __init__(
         self,
-        mol: Chem.Mol,
+        mol: Chem.Mol = None,
         radius: int = 2,
-        neighbor: bool = False,
         use_smarts: bool = True,
         boundary_bonds: bool = False,
         map_root: bool = True,
@@ -651,7 +650,9 @@ class MoleculeSignature:
 
         # Check arguments
         if mol is None:
-            raise ValueError("Molecule is None")
+            return
+        else:
+            assert isinstance(mol, Chem.Mol), "mol must be a RDKit molecule object"
 
         # Parameters reminder
         self.kwargs = clean_kwargs(kwargs)
