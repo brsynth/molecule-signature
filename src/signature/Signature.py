@@ -151,9 +151,9 @@ class AtomSignature:
     def __repr__(self) -> str:
         _ = "AtomSignature("
         _ += f"morgan={self._morgan}, "
-        _ += f"signature='{self._root}', "
-        _ += f"signature_minus='{self._root_minus}', "
-        _ += f"neighbor_signatures={self._neighbors}"
+        _ += f"root='{self._root}', "
+        _ += f"root_minus='{self._root_minus}', "
+        _ += f"neighbors={self._neighbors}"
         _ += ")"
         return _
 
