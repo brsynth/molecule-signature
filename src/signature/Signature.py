@@ -631,8 +631,6 @@ class MoleculeSignature:
             The molecule to generate the signature for.
         radius : int
             The radius of the environment to consider.
-        neighbor : bool
-            Whether to include the neighbors in the signature.
         use_smarts : bool
             Whether to use SMARTS syntax for the signature (otherwise, use SMILES syntax).
         boundary_bonds : bool
