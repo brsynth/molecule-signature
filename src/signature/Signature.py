@@ -46,6 +46,11 @@ logger = logging.getLogger(__name__)
 class AtomSignature:
     """Class representing the signature of an atom."""
 
+    # Separators defined at the class level
+    _morgan_sep = " ## "
+    _neig_sep = " && "
+    _bond_sep = " <> "
+
     def __init__(
         self,
         atom: Chem.Atom,
@@ -179,7 +184,26 @@ class AtomSignature:
 
     @property
     def neighbors(self) -> tuple:
-        return " && ".join(f"{bond} <> {sig}" for bond, sig in self._neighbors)
+        return self._neighbors
+
+    def to_string(self, neighbors=False) -> str:
+        """Return the signature as a string
+
+        Returns
+        -------
+        str
+            The signature as a string
+        """
+        if self.morgan is not None:
+            _ = f"{self._morgan}{AtomSignature._morgan_sep}"
+        else:
+            _ = ""
+        if neighbors:
+            _ += f"{self._root_minus}{AtomSignature._neig_sep}"
+            _ += AtomSignature._neig_sep.join([f"{bond}{AtomSignature._bond_sep}{sig}" for bond, sig in self.neighbors])
+        else:
+            _ += self._root
+        return _
 
     def as_deprecated_string(self, morgan=True, root=True, neighbors=True) -> str:
         """Return the signature in the deprecated string format

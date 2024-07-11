@@ -23,8 +23,8 @@ def caffeine():
 def test_atom_signature(benzene):
     atom = benzene.GetAtomWithIdx(0)  # First carbon in benzene
     atom_sig = AtomSignature(atom, radius=1, use_smarts=False)
-    assert atom_sig.sig is not None
-    assert atom_sig.sig.startswith("C:[CH:1]:C")
+    assert atom_sig.root is not None
+    assert atom_sig.root.startswith("C:[CH:1]:C")
 
 
 def test_molecule_signature(ethanol):
