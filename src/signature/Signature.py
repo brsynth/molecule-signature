@@ -99,7 +99,7 @@ class AtomSignature:
             use_smarts,
             boundary_bonds,
             map_root,
-            self.rooted_smiles,
+            rooted_smiles,
             **self.kwargs,
         )
 
