@@ -499,7 +499,6 @@ def enumerate_molecule_from_signature(
     smi,
     max_nbr_recursion=int(1e5),
     max_nbr_solution=float("inf"),
-    nbr_component=1,
     repeat=1,
     verbose=False,
 ):
