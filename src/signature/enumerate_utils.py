@@ -390,6 +390,23 @@ def update_constraint_matrices(AS, IDX, MIN, MAX, deg, verbose=False):
 
 
 def test_sol_ECFP(smis, Alphabet):
+    """
+    Generate Extended-Connectivity Fingerprints (ECFP) for a list of SMILES strings and check if all generated fingerprints are identical.
+
+    Parameters
+    ----------
+    smis : list of str
+        A list of SMILES (Simplified Molecular Input Line Entry System) strings representing the molecules.
+    Alphabet : object
+        An object with attributes 'radius' and 'nBits' which specify the parameters for the Morgan fingerprint generator.
+        'radius' determines the radius of the atom environments considered, and 'nBits' specifies the size of the fingerprint bit vector.
+
+    Returns
+    -------
+    bool
+        True if all generated ECFPs are identical, otherwise False.
+    """
+
     fpgen = AllChem.GetMorganGenerator(radius=Alphabet.radius, fpSize=Alphabet.nBits)
     ecfp_list = []
     for smi in smis:
@@ -400,6 +417,23 @@ def test_sol_ECFP(smis, Alphabet):
 
 
 def test_sol_ECFP_reduced(smis, Alphabet):
+    """
+    Generate reduced Extended-Connectivity Fingerprints (ECFP) for a list of SMILES strings and check if all generated fingerprints are identical.
+
+    Parameters
+    ----------
+    smis : list of str
+        A list of SMILES (Simplified Molecular Input Line Entry System) strings representing the molecules.
+    Alphabet : object
+        An object with attributes 'radius' and 'nBits' which specify the parameters for the reduced fingerprint generator.
+        'radius' determines the radius of the atom environments considered, and 'nBits' specifies the size of the fingerprint bit vector.
+
+    Returns
+    -------
+    bool
+        True if all generated reduced ECFPs are identical, otherwise False.
+    """
+
     ecfp_list = []
     for smi in smis:
         morgan = reduced_fingerprint(smi, radius=Alphabet.radius, nbits=Alphabet.nBits, useFeatures=False).tolist()
@@ -408,6 +442,25 @@ def test_sol_ECFP_reduced(smis, Alphabet):
 
 
 def test_sol_sig(smis, Alphabet):
+    """
+    Generate molecular signatures for a list of SMILES strings and check if all generated signatures are identical.
+
+    Parameters
+    ----------
+    smis : list of str
+        A list of SMILES (Simplified Molecular Input Line Entry System) strings representing the molecules.
+    Alphabet : object
+        An object with attributes specifying the parameters for generating the molecular signatures:
+        - radius: int, the radius for the signature calculation.
+        - use_smarts: bool, whether to use SMARTS patterns.
+        - boundary_bonds: bool, whether to consider boundary bonds.
+
+    Returns
+    -------
+    bool
+        True if all generated molecular signatures are identical, otherwise False.
+    """
+
     sig_list = []
     for smi in smis:
         mol = Chem.MolFromSmiles(smi)
