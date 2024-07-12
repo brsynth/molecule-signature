@@ -656,22 +656,17 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
     """
 
     AS, MIN, MAX, IDX, I = {}, {}, {}, {}, 0
-    L = np.arange(morgan.shape[0])
-    # np.random.shuffle(L)
-    for i in list(L):
-        if morgan[i] == 0:
-            continue
+    indices = [i for i in range(len(morgan)) if morgan[i] != 0]
+    for i in indices:
         # get all signature neighbor in Alphabet having MorganBit = i
         sig = signature_alphabet_from_morgan_bit(i, Alphabet)
-        # sig = [s.split("&")[1] for s in sig]
         if verbose:
             print(f"MorganBit {i}:{int(morgan[i])}, Nbr in alphabet {len(sig)}")
-        (maxi, K) = (morgan[i], 1)
+        maxi = morgan[i]
         mini = 0 if len(sig) > 1 else maxi
         for j in range(len(sig)):
-            for k in range(int(K)):
-                AS[I], MIN[I], MAX[I], IDX[I] = sig[j], mini, maxi, i
-                I += 1
+            AS[I], MIN[I], MAX[I], IDX[I] = sig[j], mini, maxi, i
+            I += 1
     # Get Matrices for enumeration
     AS = np.asarray(list(AS.values()))
     IDX = np.asarray(list(IDX.values()))
