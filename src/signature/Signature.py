@@ -110,37 +110,6 @@ class AtomSignature:
             **self.kwargs,
         )
 
-        # Compute signature with neighbors
-        if radius > 0:
-
-            # Get the root signature at radius - 1
-            self._root_minus = self.atom_signature(
-                atom,
-                radius - 1,
-                use_smarts,
-                boundary_bonds,
-                map_root,
-                rooted_smiles,
-                **self.kwargs,
-            )
-
-            # Get the neighbors signatures at radius - 1
-            self._neighbors = self.atom_signature_neighbors(
-                atom,
-                radius - 1,
-                use_smarts,
-                boundary_bonds,
-                map_root,
-                rooted_smiles,
-                **self.kwargs,
-            )
-
-        elif radius == 0:  # There's nothing to do if radius is 0
-            pass
-
-        else:
-            raise ValueError("Radius must be a positive integer or zero.")
-
     def __repr__(self) -> str:
         _ = "AtomSignature("
         _ += f"morgan={self._morgan}, "
