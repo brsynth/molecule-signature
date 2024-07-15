@@ -579,7 +579,7 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
         if _formal_charge == -1:
             smarts += ";-"
         else:
-            smarts += f";-{_formal_charge}"
+            smarts += f";-{abs(_formal_charge)}"
     if atom_map != 0:
         smarts += f":{atom_map}"
     smarts += "]"
