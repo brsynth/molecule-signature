@@ -1,3 +1,14 @@
+## Unreleased
+
+### Feat
+
+- **AtomSignature**: stop computing the with neighbors signature on __init__
+
+### Fix
+
+- **AtomSignature**: force no implicit Hs
+- **AtomSignature**: correctly handle negative charges
+
 ## 1.1.0 (2024-07-15)
 
 ### Feat
