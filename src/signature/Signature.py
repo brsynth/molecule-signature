@@ -370,7 +370,12 @@ class AtomSignature:
         # Retrieve the rooted fragment from amongst all the fragments
         frag_to_mol_atom_mapping = []  # Mapping of atom indexes between original and fragments
         for _frag_idx, _fragment in enumerate(
-            Chem.GetMolFrags(fragmented_mol, asMols=True, sanitizeFrags=False, fragsMolAtomMapping=frag_to_mol_atom_mapping)
+            Chem.GetMolFrags(
+                fragmented_mol,
+                asMols=True,
+                sanitizeFrags=False,
+                fragsMolAtomMapping=frag_to_mol_atom_mapping,
+            )
         ):
             if atom.GetIdx() in frag_to_mol_atom_mapping[_frag_idx]:
                 fragment = _fragment
