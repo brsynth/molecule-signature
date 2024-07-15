@@ -441,8 +441,38 @@ def atom_signature(
             kekuleSmiles=kwargs.get("kekuleSmiles", False),
             canonical=True,
             rootedAtAtom=atom_in_frag_index if rooted_smiles else -1,
+    def post_compute_neighbors(self, radius=2):
+        """Compute the neighbors signature of the atom from the signature of the root atom
+
+        Parameters
+        ----------
+        radius : int
+            The radius of be used (usually radius - 1 compared to the root signature)
+
+        Returns
+        -------
+        None
+        """
+        # Get the corresponding molecule
+        mol = self.to_mol()
+
+        # Get the root atom
+        for _atom in mol.GetAtoms():
+            if _atom.GetAtomMapNum() == 1:
+                root_atom = _atom
+                break
+
+        # Compute the root signature at radius
+        self._root_minus = self.atom_signature(
+            root_atom,
+            radius - 1,
         )
 
+        # Compute the neighbors signatures at radius - 1
+        self._neighbors = self.atom_signature_neighbors(
+            root_atom,
+            radius - 1,
+        )
 
 def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
     """Generate a SMARTS string for an atom
@@ -732,6 +762,22 @@ class MoleculeSignature:
         """
         signatures = signature.split(cls._ATOM_SEP)
         return cls.from_list(signatures)
+
+    def post_compute_neighbors(self, radius=2):
+        """Compute the neighbors signature of the atoms from the signature of the root atom
+
+        Parameters
+        ----------
+        signatures : list
+            The list of atom signatures
+        radius : int
+            The radius of be used (usually radius - 1 compared to the root signature)
+
+        Returns
+        -------
+        None
+        """
+        [_atom.post_compute_neighbors(radius=radius) for _atom in self._atoms]
 
 
 # =====================================================================================================================
