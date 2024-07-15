@@ -289,6 +289,7 @@ class AtomSignature:
                 _total_h_count = 0
             finally:
                 _atom.SetNumExplicitHs(_total_h_count)
+                _atom.SetNoImplicit(True)
 
             # Formal charge
             try:
