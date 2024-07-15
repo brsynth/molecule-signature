@@ -1,4 +1,27 @@
-## Unreleased
+## 1.1.0 (2024-07-15)
+
+### Feat
+
+- **Signature**: retrieve the signature with neighbors from the without one
+- **AtomSignature**: export an AtomSignature as a RDKit Mol
+
+### Fix
+
+- **AtomSignature**: use hashtag syntax for hydrogens
+- **enumerate_molecule_from_signature**: smiles cleaning before timeout condition
+- **signature_alphabet**: suppress outdated arguments
+- **enumerate_signature**: suppress outdated arguments
+- **MoleculeSignature**: wrong attribute in test equality
+
+### Refactor
+
+- **AtomSignature**: atom_signature as a class function
+- **Signature**: sweep deprecated functions
+- **Signature**: update default value for atom_signature
+- **reduced_fingerprint**: int type of morgan vectors
+- **enumerate_signature_from_morgan**: simplification of some loops
+
+## 1.0.0 (2024-07-11)
 
 ### Feat
 
