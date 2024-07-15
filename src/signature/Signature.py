@@ -437,6 +437,8 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
     # Refine the symbol
     if atom.GetIsAromatic():
         _symbol = _symbol.lower()
+    elif atom.GetAtomicNum() == 1:
+        _symbol = "#1"  # otherwise, H is not recognized
 
     # Assemble the SMARTS
     smarts = f"[{_symbol}"
