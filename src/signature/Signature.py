@@ -100,6 +100,10 @@ class AtomSignature:
         else:
             assert isinstance(atom, Chem.Atom), "atom must be a RDKit atom object"
 
+        # Refine the Morgan bit
+        if isinstance(self._morgan, list):
+            self._morgan = tuple(self._morgan)
+
         # Compute signature of the atom itself
         self._root = self.atom_signature(
             atom,
@@ -218,7 +222,7 @@ class AtomSignature:
         if len(parts) == 2:
             morgan, remaining = parts[0], parts[1]
             if cls._BIT_SEP in morgan:
-                morgan = [int(bit) for bit in morgan.split(cls._BIT_SEP)]
+                morgan = tuple(int(bit) for bit in morgan.split(cls._BIT_SEP))
             else:
                 morgan = int(morgan)
         else:
