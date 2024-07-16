@@ -587,6 +587,7 @@ class MoleculeSignature:
         map_root: bool = True,
         rooted_smiles: bool = False,
         nbits: int = 2048,
+        all_bits: bool = True,
         **kwargs: dict,
     ) -> None:
         """Initialize the MoleculeSignature object
@@ -607,6 +608,8 @@ class MoleculeSignature:
             Whether to use rooted SMILES syntax within atom signatures. If yes, SMILES are rooted at the root atoms.
         nbits : int
             The number of bits to use for the Morgan fingerprint. If 0, no Morgan fingerprint is computed.
+        all_bits : bool
+            Whether to use all the bits of the Morgan fingerprint within the atom signatures.
         **kwargs
             Additional arguments to pass to Chem.MolFragmentToSmiles calls.
         """
@@ -627,22 +630,42 @@ class MoleculeSignature:
 
         # Get Morgan bits
         if nbits > 0:
-            # Prepare recipient to collect bits information
-            bits_info = rdFingerprintGenerator.AdditionalOutput()
-            bits_info.AllocateBitInfoMap()
 
-            # Compute Morgan bits
-            rdFingerprintGenerator.GetMorganGenerator(
-                radius=radius,
-                fpSize=nbits,
-            ).GetFingerprint(mol, additionalOutput=bits_info)
-            radius_vect = -np.ones(mol.GetNumAtoms(), dtype=int)
-            morgan_vect = np.zeros(mol.GetNumAtoms(), dtype=int)
-            for bit, info in bits_info.GetBitInfoMap().items():
-                for atmidx, rad in info:
-                    if rad > radius_vect[atmidx]:
-                        radius_vect[atmidx] = rad
-                        morgan_vect[atmidx] = bit
+            if all_bits:
+                # Prepare recipient to collect bits information
+                bits_info = rdFingerprintGenerator.AdditionalOutput()
+                bits_info.AllocateAtomToBits()
+
+                # Compute Morgan bits
+                rdFingerprintGenerator.GetMorganGenerator(
+                    radius=radius,
+                    fpSize=nbits,
+                ).GetFingerprint(mol, additionalOutput=bits_info)
+
+                # Get the Morgan bits per atom
+                morgan_vect = bits_info.GetAtomToBits()
+
+            else:
+                # Prepare recipient to collect bits information
+                bits_info = rdFingerprintGenerator.AdditionalOutput()
+                bits_info.AllocateBitInfoMap()
+
+                # Compute Morgan bits
+                rdFingerprintGenerator.GetMorganGenerator(
+                    radius=radius,
+                    fpSize=nbits,
+                ).GetFingerprint(mol, additionalOutput=bits_info)
+                radius_vect = -np.ones(mol.GetNumAtoms(), dtype=int)
+                morgan_vect = np.zeros(mol.GetNumAtoms(), dtype=int)
+                for bit, info in bits_info.GetBitInfoMap().items():
+                    for atmidx, rad in info:
+                        if rad > radius_vect[atmidx]:
+                            radius_vect[atmidx] = rad
+                            morgan_vect[atmidx] = bit
+                morgan_vect = morgan_vect.tolist()
+
+        else:
+            morgan_vect = [None] * nbits
 
         # Compute the signatures of all atoms
         for atom in mol.GetAtoms():
@@ -653,7 +676,7 @@ class MoleculeSignature:
                 boundary_bonds,
                 map_root,
                 rooted_smiles,
-                morgan_bit=int(morgan_vect[atom.GetIdx()]) if nbits > 0 else None,  # int to avoid numpy.int64 type
+                morgan_bit=morgan_vect[atom.GetIdx()],
                 **self.kwargs,
             )
             if _sig != "":  # only collect non-empty signatures
