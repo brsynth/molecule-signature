@@ -1,5 +1,12 @@
 ## Unreleased
 
+### Fix
+
+- **AtomSignature**: always use tuple for morgans
+- **MoleculeSignature**: wrong attribute name
+
+## 1.3.0 (2024-07-16)
+
 ### Feat
 
 - **MoleculeSignature**: allow generation of molecule signature with multiple morgan bit per atom
