@@ -48,6 +48,7 @@ class AtomSignature:
     """Class representing the signature of an atom."""
 
     # Separators defined at the class level
+    _BIT_SEP = "-"
     _MORGAN_SEP = " ## "
     _NEIG_SEP = " && "
     _BOND_SEP = " <> "
@@ -60,7 +61,7 @@ class AtomSignature:
         boundary_bonds: bool = False,
         map_root: bool = True,
         rooted_smiles: bool = False,
-        morgan_bit: int = None,
+        morgan_bit: None | int | list[int] = None,
         **kwargs: dict,
     ) -> None:
         """Initialize the AtomSignature object
@@ -79,8 +80,8 @@ class AtomSignature:
             Whether to map the root atom in the signature. If yes, the root atom is labeled as 1.
         rooted_smiles : bool
             Whether to use rooted SMILES syntax for the signature. If yes, the SMILES is rooted at the root atom.
-        morgan_bit : int
-            The Morgan bit to be associated to the atom (if any).
+        morgan_bit : None | int | list[int]
+            The Morgan bit(s) of the atom.
         **kwargs
             Additional arguments to pass to Chem.MolFragmentToSmiles calls.
         """
@@ -139,7 +140,7 @@ class AtomSignature:
         )
 
     @property
-    def morgan(self) -> int:
+    def morgan(self) -> None | int | list[int]:
         return self._morgan
 
     @property
@@ -162,13 +163,17 @@ class AtomSignature:
         str
             The signature as a string
         """
-        if self.morgan is not None:
-            _ = f"{self._morgan}{AtomSignature._MORGAN_SEP}"
-        else:
+        if self.morgan is None:
             _ = ""
+        elif isinstance(self._morgan, int):
+            _ = f"{self._morgan}{self._MORGAN_SEP}"
+        elif isinstance(self._morgan, (list, tuple)):
+            _ = f"{self._BIT_SEP.join([str(bit) for bit in self._morgan])}{self._MORGAN_SEP}"
+        else:
+            raise NotImplementedError("Morgan bit must be an integer or a list of integers")
         if neighbors:
-            _ += f"{self._root_minus}{AtomSignature._NEIG_SEP}"
-            _ += AtomSignature._NEIG_SEP.join([f"{bond}{AtomSignature._BOND_SEP}{sig}" for bond, sig in self.neighbors])
+            _ += f"{self._root_minus}{self._NEIG_SEP}"
+            _ += self._NEIG_SEP.join([f"{bond}{self._BOND_SEP}{sig}" for bond, sig in self.neighbors])
         else:
             _ += self._root
         return _
@@ -211,10 +216,13 @@ class AtomSignature:
         # Parse the string
         parts = signature.split(cls._MORGAN_SEP)
         if len(parts) == 2:
-            morgan_bit, remaining = parts[0], parts[1]
-            morgan_bit = int(morgan_bit)
+            morgan, remaining = parts[0], parts[1]
+            if cls._BIT_SEP in morgan:
+                morgan = [int(bit) for bit in morgan.split(cls._BIT_SEP)]
+            else:
+                morgan = int(morgan)
         else:
-            morgan_bit, remaining = None, parts[0]
+            morgan, remaining = None, parts[0]
 
         if cls._NEIG_SEP in remaining:
             root = None
@@ -229,7 +237,7 @@ class AtomSignature:
 
         # Build the AtomSignature instance
         instance = cls()
-        instance._morgan = morgan_bit
+        instance._morgan = morgan
         instance._root = root
         instance._root_minus = root_minus
         instance._neighbors = neighbors
