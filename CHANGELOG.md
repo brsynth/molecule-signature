@@ -2,6 +2,13 @@
 
 ### Feat
 
+- **MoleculeSignature**: allow generation of molecule signature with multiple morgan bit per atom
+- **AtomSignature**: enable multiple morgan bits
+
+## 1.2.0 (2024-07-15)
+
+### Feat
+
 - **AtomSignature**: stop computing the with neighbors signature on __init__
 
 ### Fix
