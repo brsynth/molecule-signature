@@ -704,7 +704,7 @@ class MoleculeSignature:
             return False
         return (
             self.atoms == other.atoms
-            and self.atoms_minus == other.atoms_minus
+            and self.root_minus == other.root_minus
             and self.neighbors == other.neighbors
             and self.morgans == other.morgans
         )
