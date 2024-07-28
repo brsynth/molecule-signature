@@ -14,14 +14,14 @@ from itertools import chain, combinations
 import networkx as nx
 import numpy as np
 from rdkit import Chem
-from src.signature.enumerate_utils import (atomic_num_charge,
+from signature.enumerate_utils import (atomic_num_charge,
                                            get_constraint_matrices,
                                            signature_bond_type,
                                            update_constraint_matrices)
-from src.signature.Signature import MoleculeSignature
-from src.signature.signature_alphabet import (sanitize_molecule,
+from signature.Signature import MoleculeSignature
+from signature.signature_alphabet import (sanitize_molecule,
                                               signature_vector_to_string)
-from src.signature.solve_partitions import solve_by_partitions
+from signature.solve_partitions import solve_by_partitions
 
 ########################################################################################################################
 # MolecularGraph class used for smiles enumeration from signature.
