@@ -8,13 +8,13 @@
 import collections
 import itertools
 import math
+from collections import Counter
 from functools import reduce
 from operator import mul
 
 import numpy as np
 import scipy.linalg.blas as blas
 from sympy.utilities.iterables import multiset_permutations
-
 
 ########################################################################################################################
 # Local functions
@@ -67,7 +67,7 @@ def partitions(n, k):
         A list of all partitions of n into at most k parts.
     """
 
-    return [part for i in range(1, min(k, n) + 1) for part in sized_partitions(n, i)]
+    return [part for i in range(1, min(k, n) + 1) for part in sized_partitions(n, i)][::-1]
 
 
 def nb_permutations(l):
@@ -92,193 +92,6 @@ def nb_permutations(l):
     return int(nb_perm)
 
 
-def extract_matrices_C_P(A, b):
-    """
-    Extract matrices C and P from A and b.
-
-    Parameters
-    ----------
-    A : np.array
-        Matrix.
-    b : np.array
-        Vector.
-
-    Returns
-    -------
-    C : np.array
-        Matrix C.
-    P : np.array
-        Matrix P.
-    N : np.array
-        Vector N.
-    parity_indices : list
-        List of equations that require parity.
-    graph_line : np.array
-        Graphicality equation.
-    graph_index : int
-        Index of the graphicality equation in the matrix C.
-    """
-
-    j1 = [i for i in range(len(A[:, 0])) if A[:, 0][i] == 1][-1]
-    j2 = [i for i in range(len(A[-1, :])) if A[-1, :][i] == 1][-1] + 1
-    P = A[j1:, :j2]
-    N = b[-P.shape[0] :]
-    C = A[:j1, :]
-    parity_indices = [
-        sum(C[i, j2:] == [0] * (A.shape[1] - j2)) != (A.shape[1] - j2)
-        for i in range(C.shape[0])
-    ]
-    C = C[:, :j2]
-    graph_line = C[-1:, :]
-    graph_index = j1 - 1
-    return C, P, N, parity_indices, graph_line, graph_index
-
-
-def partitions_P_N(P, N, max_nbr_partition, bool_timeout):
-    """
-    Compute partitions of each element of N with respect to P.
-
-    Parameters
-    ----------
-    P : np.array
-        Matrix.
-    N : np.array
-        Vector.
-    max_nbr_partition : int
-        Maximum number of partitions.
-    bool_timeout : bool
-        Timeout flag.
-
-    Returns
-    -------
-    dict_partitions : dictionary
-        Dictionary of the partitions of N with respect to P.
-    tups : list of tuples
-        List of tuples indicating column indices for each partition.
-    bool_timeout : bool
-        Timeout flag.
-    """
-
-    tups = []
-    dict_partitions = {}
-    # nb_parts_tot, nb_parts_loc = 0, 0
-    for i in range(P.shape[0]):
-        tups.append((list(P[i, :]).index(1), list(P[i, :]).index(1) + sum(P[i, :])))
-        All_parts = list(partitions(N[i], sum(P[i, :])))
-        dict_partitions[i] = []
-        for x in All_parts:
-            nb_perm = nb_permutations(x + [0] * (sum(P[i, :]) - len(x)))
-            if nb_perm > max_nbr_partition:
-                bool_timeout = True
-                dict_partitions[i] = dict_partitions[i] + list(
-                    itertools.islice(
-                        multiset_permutations(x + [0] * (sum(P[i, :]) - len(x))),
-                        max_nbr_partition,
-                    )
-                )
-                # nb_parts_loc += max_nbr_partition
-            else:
-                dict_partitions[i] = dict_partitions[i] + list(
-                    multiset_permutations(x + [0] * (sum(P[i, :]) - len(x)))
-                )
-                # nb_parts_loc += nb_perm
-            # nb_parts_tot += nb_perm
-    # percent_parts_used = 100 * nb_parts_loc / nb_parts_tot
-    return dict_partitions, tups, bool_timeout
-
-
-def equations_trivially_satisfied(C, N, tups, parity_indices, graph_index):
-    """
-    Identify equations trivially satisfied since constants on partitions.
-
-    Parameters
-    ----------
-    C : np.array
-        Matrix.
-    N : np.array
-        Vector.
-    tups : list of tuples
-        List of tuples representing indices of partitions.
-    parity_indices : list of bool
-        List indicating parity of indices.
-    graph_index : int
-        Index of the graph.
-
-    Returns
-    -------
-    indices : list
-        Indices of equations not trivially satisfied.
-    graph : bool
-        Boolean indicating if graphicality is trivially satisfied or not.
-    """
-
-    indices = []
-    graph = False
-    for j in range(C.shape[0]):
-        i = 0
-        prod = 0
-        while i < len(tups) and len(set(C[j, tups[i][0] : tups[i][1]])) == 1:
-            prod = prod + N[i] * C[j, tups[i][0] : tups[i][1]][0]
-            i = i + 1
-        if i == len(tups):
-            if j == graph_index:
-                graph = prod % 2 == 0
-            elif (parity_indices[j] is False and prod != 0) or (
-                parity_indices[j] and prod % 2 != 0
-            ):
-                indices.append(j)
-        else:
-            indices.append(j)
-    return indices, graph
-
-
-def sort_C_wrt_partitions_involved(C, tups, parity_indices):
-    """
-    Sort the lines of C following the number of partitions involved per equation.
-
-    Parameters
-    ----------
-    C : np.array
-        Matrix.
-    tups : list of tuples
-        Tuple of tuples representing indices of partitions.
-    parity_indices : list of bool
-        List of equations that require parity.
-
-    Returns
-    -------
-    C : np.array
-        Matrix C sorted.
-    parity_indices : list
-        List of equations that require parity.
-    partitions_involved : list of tuples
-        List of tuples indicating the partitions involved for each equation.
-    """
-
-    partitions_involved = []
-    for j in range(C.shape[0]):
-        partitions_involved.append(
-            tuple(
-                [
-                    i
-                    for i in range(len(tups))
-                    if set(C[j, tups[i][0] : tups[i][1]]) != {0}
-                ]
-            )
-        )
-    # We sort the lines of C following the number of partitions involved
-    indices_tmp = sorted(
-        range(len(partitions_involved)), key=lambda k: len(partitions_involved[k])
-    )
-    C_tmp = C.copy()
-    for i in range(C.shape[0]):
-        C_tmp[i,] = C[indices_tmp[i],]
-    C = C_tmp
-    parity_indices = [parity_indices[i] for i in indices_tmp]
-    partitions_involved = [partitions_involved[i] for i in indices_tmp]
-    return C, parity_indices, partitions_involved
-
-
 def intersection_of_lists_of_lists(S1, S2):
     """
     Find the intersection of two lists of lists.
@@ -296,183 +109,8 @@ def intersection_of_lists_of_lists(S1, S2):
         Intersection of the two input lists of lists.
     """
 
-    S_inter = [
-        list(x)
-        for x in set(tuple(x) for x in S1).intersection(set(tuple(x) for x in S2))
-    ]
+    S_inter = [list(x) for x in set(tuple(x) for x in S1).intersection(set(tuple(x) for x in S2))]
     return S_inter
-
-
-def solutions_per_line(
-    C,
-    tups,
-    parity_indices,
-    dict_partitions,
-    partitions_involved,
-    max_nbr_partition,
-    bool_timeout,
-    verbose=False,
-):
-    """
-    Compute the solutions for each line.
-
-    Parameters
-    ----------
-    C : np.array
-        Matrix.
-    tups : list of tuples
-        List of tuples representing indices of partitions.
-    parity_indices : list of bool
-        List of equations that require parity.
-    dict_partitions : dict
-        Dictionary containing partitions.
-    partitions_involved : list
-        List of partitions involved.
-    max_nbr_partition : int
-        Maximum number of partitions.
-    bool_timeout : bool
-        Boolean indicating timeout.
-    verbose : bool, optional
-        If True, print verbose output (default is False).
-
-    Returns
-    -------
-    dict_sols_per_eq : dictionary
-        Dictionary containing solutions per line.
-    dict_partitions : dictionary
-        Updated dictionary of partitions.
-    bool_timeout : bool
-        Timeout flag.
-    """
-
-    dict_sols_per_eq = {}
-    for j in range(C.shape[0]):
-        parts = partitions_involved[j]
-        if verbose:
-            print(f"\nLine {j}: \nThe partitions involved are {parts}")
-        if parts in dict_sols_per_eq:
-            if verbose:
-                print("These partitions have already been involved")
-            l = np.array(dict_sols_per_eq[parts])
-        else:
-            if verbose:
-                print("These partitions have not been involved")
-            l = []
-            for i in range(len(tups)):
-                if i in parts:
-                    l.append(dict_partitions[i])
-                else:
-                    l.append([[-1] * len(dict_partitions[i][0])])
-            local_bool_timeout = False
-            while reduce(mul, [len(x) for x in l]) > max_nbr_partition:  # timeout
-                bool_timeout, local_bool_timeout = True, True
-                bound = max([len(x) for x in l])
-                l = [x[: bound - 1] for x in l]
-            if local_bool_timeout:
-                print("T I M E O U T.", [len(x) for x in l])
-            l = np.array([list(itertools.chain(*x)) for x in itertools.product(*l)])
-        if verbose:
-            print(f"Local solutions len: {l.shape[0]}")
-        if verbose:
-            print("We restrict local solutions by the current line")
-        if parity_indices[j]:
-            indices_tmp = np.where(
-                blas.dgemm(alpha=1.0, a=l, b=np.transpose(C[j, :])) % 2 == 0
-            )[0]
-        else:
-            indices_tmp = np.where(
-                blas.dgemm(alpha=1.0, a=l, b=np.transpose(C[j, :])) == 0
-            )[0]
-        l = l[indices_tmp, :]
-        if l.shape[0] == 0:
-            return dict(), dict(), bool_timeout
-        if verbose:
-            print("We clean partitions of dict_partitions by the local solutions")
-        for i in parts:
-            l_proj = l[:, tups[i][0] : (tups[i][1])].tolist()
-            l_proj.sort()
-            l_proj = list(k for k, _ in itertools.groupby(l_proj))
-            if verbose:
-                print(
-                    f"part {i}. dict_partitions[part] x S_proj: {len(dict_partitions[i])} x {len(l_proj)}"
-                )
-            dict_partitions[i] = intersection_of_lists_of_lists(
-                dict_partitions[i], l_proj
-            )
-            if verbose:
-                print(f"after inter: {len(dict_partitions[i])}")
-        dict_sols_per_eq[parts] = l.tolist()
-    return dict_sols_per_eq, dict_partitions, bool_timeout
-
-
-def clean_local_solutions(tups, dict_sols_per_eq, dict_partitions):
-    """
-    Clean local solutions stored in dict_sols_per_eq.
-
-    Parameters
-    ----------
-    tups : list of tuples
-        List of tuples representing indices of partitions.
-    dict_sols_per_eq : dict
-        Dictionary containing solutions per line.
-    dict_partitions : dict
-        Dictionary containing partitions.
-
-    Returns
-    -------
-    dict_sols_per_eq : dict
-        Dictionary containing cleaned local solutions.
-    """
-
-    for parts in dict_sols_per_eq:
-        l = []
-        for i in range(len(tups)):
-            if i in parts:
-                l.append(dict_partitions[i])
-            else:
-                l.append([[-1] * len(dict_partitions[i][0])])
-        l = [list(itertools.chain(*x)) for x in itertools.product(*l)]
-        dict_sols_per_eq[parts] = intersection_of_lists_of_lists(
-            dict_sols_per_eq[parts], l
-        )
-    return dict_sols_per_eq
-
-
-def partitions_groups(partitions_involved):
-    """
-    Compute the groups of partitions involved in solutions.
-
-    This function computes the groups of partitions involved in solutions, where a group is a set of partitions
-    that are interconnected through their involvement in solutions.
-
-    Parameters
-    ----------
-    dict_sols_per_eq : dict
-        Dictionary containing the solutions for each line.
-
-    Returns
-    -------
-    list
-        List of sets representing the groups of partitions involved in solutions.
-    """
-
-    parts_groups = []
-    while len(partitions_involved) > 0:
-        group = set(partitions_involved[0])
-        partitions_involved.remove(partitions_involved[0])
-        find_one = True
-        while find_one:
-            find_one = False
-            i = 0
-            while i < len(partitions_involved):
-                if len(set.intersection(set(partitions_involved[i]), group)) > 0:
-                    group = group | set(partitions_involved[i])
-                    partitions_involved.remove(partitions_involved[i])
-                    find_one = True
-                else:
-                    i = i + 1
-        parts_groups.append(group)
-    return parts_groups
 
 
 def compatibility(sol1, sol2):
@@ -504,10 +142,10 @@ def intersection_of_solutions(S1, S2, test_compatibility):
 
     Parameters
     ----------
-    S : list
+    S1 : list
         List of solutions.
-    S_group : list
-        List of solutions for a specific group.
+    S2 : list
+        List of solutions.
     test_compatibility : bool
         If True, test compatibility between solutions.
 
@@ -518,96 +156,491 @@ def intersection_of_solutions(S1, S2, test_compatibility):
     """
 
     if test_compatibility:
-        S_inter = [
-            list(np.maximum(sol1, sol2))
-            for sol1 in S1
-            for sol2 in S2
-            if compatibility(sol1, sol2)
-        ]
+        S_inter = [list(np.maximum(sol1, sol2)) for sol1 in S1 for sol2 in S2 if compatibility(sol1, sol2)]
     else:
         S_inter = [list(np.maximum(sol1, sol2)) for sol1 in S1 for sol2 in S2]
     return S_inter
 
 
-def sort_group_of_partitions(dict_sols_per_eq, group):
+def partitions_groups(partitions):
     """
-    Sort the group of partitions based on the number of solutions per partition.
+    Compute groups of partitions.
+
+    This function computes the groups of partitions, where a group is a set of partitions that are interconnected through their positions of non-negative numbers.
 
     Parameters
     ----------
-    dict_sols_per_eq : dict
-        Dictionary containing the solutions for each equation.
-    group : set
-        Set representing the group of partitions to be sorted.
+    partitions : list
+        List of partitions.
 
     Returns
     -------
-    group_sorted : list
-        List of partitions sorted based on the number of solutions per partition.
+    list
+        List of sets representing the groups of partitions.
     """
 
-    dtmp = dict()
-    for parts in dict_sols_per_eq:
-        if parts[0] in group:
-            dtmp[parts] = len(dict_sols_per_eq[parts])
-    dtmp = {k: v for k, v in sorted(dtmp.items(), key=lambda item: item[1])}
-    group_sorted = list(dtmp.keys())
-    return group_sorted
+    parts_groups = []
+    while len(partitions) > 0:
+        group = set(partitions[0])
+        partitions.remove(partitions[0])
+        find_one = True
+        while find_one:
+            find_one = False
+            i = 0
+            while i < len(partitions):
+                if len(set.intersection(set(partitions[i]), group)) > 0:
+                    group = group | set(partitions[i])
+                    partitions.remove(partitions[i])
+                    find_one = True
+                else:
+                    i = i + 1
+        parts_groups.append(group)
+    return parts_groups
 
 
-def groups_of_solutions(dict_sols_per_eq, parts_groups, verbose=False):
+def partition_to_local_sol(partition, part_line_of_P, nb_lin):
     """
-    Compute the product of solutions in each group.
+    Map partition identifiers to a local solution list.
+
+    This function takes a list of partition identifiers and a corresponding list
+    of indices, and maps them to a local solution list of fixed length. The local
+    solution list (`local_sol`) is initialized with -1, and is updated such that
+    each position specified in `part_line_of_P` is assigned the corresponding
+    partition identifier from `partition`.
+
+    Parameters
+    ----------
+    partition : list
+        List of partition identifiers. Each element represents the partition or
+        group assignment of an item.
+    part_line_of_P : list
+        List of indices mapping each element in `partition` to a specific position
+        in the `local_sol` list.
+    nb_lin : int
+        The total number of lines or elements in the `local_sol` list.
+
+    Returns
+    -------
+    list
+        A list of length `nb_lin` where each element is either the corresponding
+        partition identifier from `partition` or -1 if not assigned.
+    """
+
+    local_sol = [-1] * nb_lin
+    for ind in range(len(part_line_of_P)):
+        indice = part_line_of_P[ind]
+        part = partition[ind]
+        local_sol[indice] = part
+    return local_sol
+
+
+def update_C(C, nb_col, graph=False):
+    """
+    Update the matrix C by trimming columns and optionally separating the last row for graphicality.
+
+    This function processes the matrix `C` by identifying rows with non-zero elements in
+    columns beyond `nb_col`. It then trims `C` to include only the first `nb_col` columns.
+    If the `graph` flag is set to True, the last row of `C` is separated out as `graph_line`,
+    and its index is returned.
+
+    Parameters
+    ----------
+    C : numpy.ndarray
+        The input matrix.
+    nb_col : int
+        The number of columns to retain in the matrix.
+    graph : bool, optional
+        If True, the last row of the matrix is separated and returned along with its index.
+        Default is False.
+
+    Returns
+    -------
+    tuple
+        If `graph` is False:
+            - C (numpy.ndarray): The trimmed matrix with only the first `nb_col` columns.
+            - parity_indices (list): A list of indices of rows in the original matrix that
+              contain non-zero elements in the columns beyond `nb_col`.
+        If `graph` is True:
+            - C (numpy.ndarray): The trimmed matrix without the last row, and with only the first
+              `nb_col` columns.
+            - parity_indices (list): A list of indices of rows in the original matrix that
+              contain non-zero elements in the columns beyond `nb_col`.
+            - graph_line (numpy.ndarray): The graphicality row of the original matrix.
+            - graph_index (int): The index of the graphicality row in the original matrix.
+    """
+
+    parity_indices = [i for i in range(C.shape[0]) if all(x == 0 for x in list(C[i, nb_col:])) == False]
+    C = C[:, :nb_col]
+    if graph:
+        graph_line = C[-1:, :]
+        graph_index = C.shape[0] - 1
+        C = C[:-1, :]
+        return C, parity_indices, graph_line, graph_index
+    else:
+        return C, parity_indices
+
+
+def restrict_sol_by_C(S, C, i, parity_indices):
+    """
+    Restrict the solution set S based on constraints defined by a row in matrix C.
+
+    This function filters the rows of the solution set `S` based on a specific row `i`
+    of the matrix `C`. The filtering condition depends on whether the index `i` is in
+    the `parity_indices` list. If `i` is in `parity_indices`, the function keeps rows
+    in `S` that satisfy an even parity condition; otherwise, it keeps rows where the
+    matrix product with the row `i` of `C` equals zero.
+
+    Parameters
+    ----------
+    S : numpy.ndarray or list of numpy.ndarray
+        The solution set, represented as a matrix or a list of vectors.
+    C : numpy.ndarray
+        The matrix containing constraints for filtering `S`.
+    i : int
+        The index of the row in `C` used to filter the solutions.
+    parity_indices : list of int
+        A list of indices indicating which rows in `C` correspond to parity constraints.
+
+    Returns
+    -------
+    numpy.ndarray or list of numpy.ndarray
+        The filtered solution set, containing only the rows that meet the specified
+        conditions.
+    """
+
+    if i in parity_indices:
+        indices_tmp = np.where(blas.dgemm(alpha=1.0, a=S, b=np.transpose(C[i, :])) % 2 == 0)[0]
+    else:
+        indices_tmp = np.where(blas.dgemm(alpha=1.0, a=S, b=np.transpose(C[i, :])) == 0)[0]
+    S = [S[ind] for ind in indices_tmp]
+    return S
+
+
+def partitions_on_non_constant(v, target_sum, max_nbr_partition_non_constant=int(1e3)):
+    """
+    Generate partitions of a target sum over a vector with constraints on non-constant elements.
+
+    This function generates partitions of a given `target_sum` across the indices of the vector `v`.
+    The partitions are constrained such that no subset corresponding to a non-constant section in `v`
+    (where elements are not all 1) has uniform values in the partition. It also limits the number of
+    unique partitions returned to `max_nbr_partition_non_constant` to avoid excessive computation.
+
+    Parameters
+    ----------
+    v : list of int
+        A vector representing the number of positions available for each index.
+        For example, if v = [2, 1, 3], it implies there are 2 positions for the first index, 1 for the second, and 3 for the third.
+    target_sum : int
+        The target sum that the partitioning should achieve.
+    max_nbr_partition_non_constant : int, optional
+        The maximum number of partitions to generate for non-constant sections, default is 1000.
+
+    Returns
+    -------
+    tuple
+        - partitions_3 (list of list of int): The list of valid partitions that meet the criteria.
+        - bool_timeout_loc (bool): A flag indicating if the partitioning process was truncated due to reaching `max_nbr_partition_non_constant`.
+    """
+
+    bool_timeout_loc = False
+    if target_sum == 0:
+        return [[0] * len(v)]
+    v2 = []
+    for i in range(len(v)):
+        v2 = v2 + [1] * v[i]
+    k = len(v2)
+    partitions_1 = list(partitions(target_sum, k))
+    partitions_1 = [x + [0] * (k - len(x)) for x in partitions_1]
+
+    ind = []
+    for i in range(len(partitions_1)):
+        x = partitions_1[i]
+        x_counter = Counter(x)
+        x_max_count = max(x_counter.values())
+        if max(v) <= x_max_count:
+            ind.append(i)
+    partitions_1 = [partitions_1[i] for i in ind]
+
+    partitions_2 = []
+    for x in partitions_1:
+        nb_perm = nb_permutations(x)
+        if nb_perm > max_nbr_partition_non_constant:
+            bool_timeout_loc = True
+            partitions_2 = partitions_2 + list(
+                itertools.islice(
+                    multiset_permutations(x),
+                    max_nbr_partition_non_constant,
+                )
+            )
+        else:
+            partitions_2 = partitions_2 + list(multiset_permutations(x))
+
+    ind = []
+    for i in range(len(v)):
+        if v[i] != 1:
+            for j in range(len(partitions_2)):
+                sol = partitions_2[j]
+                sol2 = sol[sum(v[:i]) : sum(v[:i]) + v[i]]
+                if len(set(sol2)) != 1:
+                    ind.append(j)
+    ind = list(set(ind))
+    partitions_2 = list(filter(lambda x: partitions_2.index(x) not in ind, partitions_2))
+
+    partitions_3 = []
+    for sol in partitions_2:
+        sol2 = []
+        for i in range(len(v)):
+            sol2.append(sol[sum(v[:i])])
+        partitions_3.append(sol2)
+
+    return partitions_3, bool_timeout_loc
+
+
+def groups_of_solutions(
+    dict_sols_per_eq,
+    parts_groups,
+    C,
+    partitions_involved_for_C,
+    parity_indices,
+    lines_of_C_already_satisfied,
+    verbose=False,
+):
+    """
+    Group solutions based on partitions and constraints.
+
+    This function processes solutions for different equations or partitions (`dict_sols_per_eq`)
+    by grouping them according to specified partition groups (`parts_groups`). It applies constraints
+    from matrix `C`, using the list of involved partitions and parity indices. It also updates the list
+    of lines in `C` that have been satisfied. The function returns the grouped solutions and the updated
+    list of satisfied lines.
 
     Parameters
     ----------
     dict_sols_per_eq : dict
-        Dictionary containing the solutions for each line of the matrix C.
-    parts_groups : list
-        List of sets representing the disjoint groups of partitions.
+        A dictionary where keys are tuples representing partitions and values are lists of solutions
+        corresponding to those partitions.
+    parts_groups : list of sets
+        A list of sets, where each set contains the partitions that form a group.
+    C : numpy.ndarray
+        The matrix containing constraints that need to be satisfied by the solutions.
+    partitions_involved_for_C : list of int
+        Indices of partitions involved in matrix `C`.
+    parity_indices : list of int
+        Indices indicating which rows in `C` correspond to parity constraints.
+    lines_of_C_already_satisfied : set of int
+        A set of line indices in `C` that have already been satisfied by previous groups of solutions.
     verbose : bool, optional
-        If True, print verbose output (default is False).
+        If True, print detailed information about the processing of each group. Default is False.
 
     Returns
     -------
-    S_groups : list of lists
-        List of numpy.ndarray representing the product of solutions in each group.
+    tuple
+        - S_groups (list of list): A list of lists, where each sublist contains the solutions for a specific group.
+        - lines_of_C_already_satisfied (set of int): Updated set of line indices in `C` that are satisfied.
     """
 
     S_groups = []
     for group in parts_groups:
         if verbose:
             print(
-                f"Group {group}\n{[parts for parts in sorted(dict_sols_per_eq, key=lambda parts: len(dict_sols_per_eq[parts]), reverse=False) if parts[0] in group]}"
+                f"Group {group}\nList of parts {[parts for parts in sorted(dict_sols_per_eq, key=lambda parts: len(dict_sols_per_eq[parts]), reverse=False) if parts[0] in group]}"
             )
-        group_sorted = sort_group_of_partitions(dict_sols_per_eq, group)
-        if verbose:
-            print(f"Group sorted {group_sorted}")
-        group_involved = []
-        S_group = [[-1] * len(list(dict_sols_per_eq.values())[0][0])]
-        while len(group_sorted) > 0:
-            find_one = False
-            j = 0
-            while find_one is False:
-                parts = group_sorted[j]
-                if (
-                    group_involved == []
-                    or len(set.intersection(set(parts), set(group_involved))) > 0
-                ):
-                    find_one = True
-                    group_involved = group_involved + list(parts)
-                    group_sorted.remove(parts)
-                else:
-                    j = j + 1
-            if verbose:
-                print(
-                    f"Parts {parts}.\ndict_sols[parts] x S_tmp: {len(dict_sols_per_eq[parts])} x {len(S_group)}"
-                )
-            S_group = intersection_of_solutions(
-                dict_sols_per_eq[parts], S_group, test_compatibility=True
-            )
+        dict_sols_per_eq_loc = {}
+        for parts in dict_sols_per_eq:
+            if parts[0] in group:
+                dict_sols_per_eq_loc[parts] = dict_sols_per_eq[parts]
+        S_group, lines_of_C_already_satisfied = solution_of_one_group(
+            dict_sols_per_eq_loc,
+            C,
+            partitions_involved_for_C,
+            parity_indices,
+            lines_of_C_already_satisfied,
+            verbose=verbose,
+        )
+        if len(S_group) == 0:
+            return [], []
         S_groups.append(S_group)
-    return S_groups
+    return S_groups, lines_of_C_already_satisfied
+
+
+def solution_of_one_group(
+    dict_sols_per_eq, C, partitions_involved_for_C, parity_indices, lines_of_C_already_satisfied, verbose=False
+):
+    """
+    Merge and filter solutions for a group based on compatibility and constraints.
+
+    This function iteratively merges solution sets from `dict_sols_per_eq` that share common elements.
+    The merging process continues until a single solution set remains. During each merge, the function
+    checks for compatibility between solutions, and applies constraints from the matrix `C` when applicable.
+    The lines of `C` that have been satisfied by the merged solutions are tracked.
+
+    Parameters
+    ----------
+    dict_sols_per_eq : dict
+        A dictionary where keys are tuples representing partitions and values are lists of solutions
+        corresponding to those partitions.
+    C : numpy.ndarray
+        The matrix containing constraints that need to be satisfied by the solutions.
+    partitions_involved_for_C : list of int
+        Indices of partitions involved in matrix `C`.
+    parity_indices : list of int
+        Indices indicating which rows in `C` correspond to parity constraints.
+    lines_of_C_already_satisfied : list of int
+        A list of line indices in `C` that have already been satisfied by previous groups of solutions.
+    verbose : bool, optional
+        If True, print detailed information about the merging and filtering process. Default is False.
+
+    Returns
+    -------
+    tuple
+        - list: The merged and filtered solution set for the group.
+        - list: Updated list of line indices in `C` that are satisfied.
+    """
+
+    while len(dict_sols_per_eq.keys()) > 1:
+        d_prod_len = {}
+        for i in range(len(dict_sols_per_eq.keys()) - 1):
+            part_i = list(dict_sols_per_eq.keys())[i]
+            for j in range(i + 1, len(dict_sols_per_eq.keys())):
+                part_j = list(dict_sols_per_eq.keys())[j]
+                tup = (part_i, part_j)
+                if len(set.intersection(set(part_i), set(part_j))) > 0:
+                    d_prod_len[tup] = len(dict_sols_per_eq[part_i]) * len(dict_sols_per_eq[part_j])
+        min_key = min(d_prod_len, key=d_prod_len.get)
+        merged_parts = tuple(dict.fromkeys(min_key[0] + min_key[1]))
+        if verbose:
+            print("Intersection", min_key, "merged part", merged_parts)
+        merged_sol = intersection_of_solutions(
+            dict_sols_per_eq[min_key[0]], dict_sols_per_eq[min_key[1]], test_compatibility=True
+        )
+        if verbose:
+            print("Merged sol", len(merged_sol), "max possible was", d_prod_len[min_key])
+        del dict_sols_per_eq[min_key[0]]
+        del dict_sols_per_eq[min_key[1]]
+        if len(merged_sol) == 0:
+            return [], []
+        # We restrict the solutions to C when it is possible
+        for j in partitions_involved_for_C:
+            part_C = partitions_involved_for_C[j]
+            if all(item in merged_parts for item in part_C):
+                merged_sol = restrict_sol_by_C(merged_sol, C, j, parity_indices)
+                if len(merged_sol) == 0:
+                    return [], []
+                if merged_parts == part_C:
+                    lines_of_C_already_satisfied.append(j)
+        dict_sols_per_eq[merged_parts] = merged_sol
+    return dict_sols_per_eq[list(dict_sols_per_eq.keys())[0]], lines_of_C_already_satisfied
+
+
+def solutions_of_P(
+    P,
+    morgan,
+    C,
+    parity_indices,
+    partitions_involved_for_C,
+    lines_of_C_already_satisfied,
+    max_nbr_partition=int(1e5),
+    verbose=False,
+):
+    """
+    Compute all possible solutions for a matrix P given constraints.
+
+    This function computes solutions for each row in the matrix `P`, based on the `morgan` values,
+    with constraints applied from matrix `C`. The function generates partitions for each row's
+    non-zero elements and checks for compatibility with `C`, considering parity constraints and
+    already satisfied lines. It limits the number of partitions to avoid excessive computation.
+
+    Parameters
+    ----------
+    P : numpy.ndarray
+        The matrix representing the system for which solutions are computed. Rows with non-zero
+        elements indicate parts that need to be partitioned according to the corresponding `morgan` value.
+    morgan : list of int
+        A list of integers representing the values that each row in `P` should sum to when partitions
+        are considered.
+    C : numpy.ndarray
+        The matrix containing constraints that solutions must satisfy.
+    parity_indices : list of int
+        Indices indicating which rows in `C` correspond to parity constraints.
+    partitions_involved_for_C : list of list of int
+        A list where each element is a list of indices involved in a specific row of `C`.
+    lines_of_C_already_satisfied : list of int
+        A list of line indices in `C` that have already been satisfied by previous computations.
+    max_nbr_partition : int, optional
+        The maximum number of partitions to generate, default is 100,000.
+    verbose : bool, optional
+        If True, print detailed information about the processing steps. Default is False.
+
+    Returns
+    -------
+    tuple
+        - dict_sols (dict): A dictionary where keys are tuples representing partitions, and values
+          are lists of possible solutions for each partition.
+        - lines_of_C_already_satisfied (list of int): Updated list of line indices in `C` that are satisfied.
+    """
+
+    nb_lin, nb_col = P.shape[0], P.shape[1]
+    dict_sols = {}
+    for i in range(nb_lin):
+        # For each line we compute all the partitions of the corresponding morgan bit
+        part_line_of_P = tuple([j for j in range(nb_col) if P[i, j] != 0])
+        counts = [P[i, j] for j in part_line_of_P]
+        if len(set(counts)) != 1 or (morgan[i] / counts[0]).is_integer() == False:
+            All_parts_morgan_in_k2, bool_timeout = partitions_on_non_constant(
+                counts, morgan[i], max_nbr_partition_non_constant=int(max_nbr_partition / 100)
+            )
+        else:
+            k = len(part_line_of_P)
+            morgan_normed = int(morgan[i] / counts[0])
+            All_parts_morgan_in_k = list(partitions(morgan_normed, k))
+            All_parts_morgan_in_k2 = []
+            local_bound = int(max_nbr_partition / 100)
+            if len(All_parts_morgan_in_k) > local_bound:
+                bool_timeout = True
+                All_parts_morgan_in_k = All_parts_morgan_in_k[:local_bound]
+            for x in All_parts_morgan_in_k:
+                nb_perm = nb_permutations(x + [0] * (sum(P[i, :]) - len(x)))
+                if nb_perm > max_nbr_partition:
+                    bool_timeout = True
+                    All_parts_morgan_in_k2 = All_parts_morgan_in_k2 + list(
+                        itertools.islice(
+                            multiset_permutations(x + [0] * (k - len(x))),
+                            max_nbr_partition,
+                        )
+                    )
+                else:
+                    All_parts_morgan_in_k2 = All_parts_morgan_in_k2 + list(
+                        multiset_permutations(x + [0] * (k - len(x)))
+                    )
+        # We complete the solutions with -1 for all zeros in the line
+        local_sols = [partition_to_local_sol(part, part_line_of_P, nb_col) for part in All_parts_morgan_in_k2]
+        # We restrict the solutions to C when it is possible
+        for j in partitions_involved_for_C:
+            part_C = partitions_involved_for_C[j]
+            if all(item in part_line_of_P for item in part_C):
+                if verbose:
+                    print("Restriction of the local sol of P with part", part_line_of_P, "with the C part", part_C)
+                    print("Bef rest", len(local_sols))
+                local_sols = restrict_sol_by_C(local_sols, C, j, parity_indices)
+                if len(local_sols) == 0:
+                    return [], bool_timeout
+                if verbose:
+                    print("Aft rest", len(local_sols))
+                if part_line_of_P == part_C:
+                    if verbose:
+                        print("Suppression of the C line", j)
+                    lines_of_C_already_satisfied.append(j)
+        # We add the solutions of this line to the dictionary of solutions
+        if part_line_of_P in dict_sols:
+            dict_sols[part_line_of_P] = intersection_of_solutions(
+                dict_sols[part_line_of_P], local_sols, test_compatibility=True
+            )
+        else:
+            dict_sols[part_line_of_P] = local_sols
+    if verbose:
+        if bool_timeout:
+            print("T I M E O U T")
+    return dict_sols, lines_of_C_already_satisfied
 
 
 ########################################################################################################################
@@ -615,142 +648,113 @@ def groups_of_solutions(dict_sols_per_eq, parts_groups, verbose=False):
 ########################################################################################################################
 
 
-def solve_by_partitions(A, b, max_nbr_partition=int(1e5), verbose=False):
+def solve_by_partitions(P, morgan, C, max_nbr_partition=int(1e5), verbose=False):
     """
-    Solve the diophantine system AX=b on N with the partitions algorithm.
+    Solve the system defined by matrix P, morgan, and constraints matrix C using partitions.
+
+    This function attempts to find solutions to a system where each row of `P` corresponds to a
+    partitioned set of the `morgan` values, while satisfying constraints from matrix `C`. The
+    solution process includes updating `C`, computing partitions, forming groups of partitions,
+    and intersecting groups to obtain the final set of solutions.
 
     Parameters
     ----------
-    A : np.array
-        Matrix of shape (m,n).
-    b : np.array
-        Vector of shape (m,1).
+    P : numpy.ndarray
+        The matrix defining the system to solve, with non-zero elements indicating parts to partition
+        according to `morgan`.
+    morgan : list of int
+        A list of target sums for each row in `P`, dictating how the parts should sum.
+    C : numpy.ndarray
+        The constraint matrix, where each row represents a constraint that the solution must satisfy.
     max_nbr_partition : int, optional
-        A bound integer for the number of partitions to use (default is 100000).
-    verbose : bool, optional
-        If True, print verbose output (default is False).
+        The maximum number of partitions to generate per partitioning, default is 100,000.
+    verbose : bool or int, optional
+        If True or set to 1, print general progress information. If set to 2, print detailed
+        debug information including matrices. Default is False.
 
     Returns
     -------
-    S : np.array
-        A list of all the solutions of AX=b.
-    bool_timeout : bool
-        True if the max_nbr_partition has been reached, False otherwise.
+    tuple
+        - S (list): The list of solutions that satisfy both the partitioning and the constraints in `C`.
+        - bool_timeout (bool): A flag indicating whether a timeout occurred during partition generation.
     """
 
-    if 1 == 0:
-        print(f"A\n {repr(A)}")
-        print(f"b\n {repr(b)}")
+    if verbose:
+        print(f"P {P.shape}, C {C.shape}, morgan {len(morgan)}")
+    if verbose == 2:
+        print(f"P\n {repr(P)}")
+        print(f"morgan\n {repr(morgan)}")
+        print(f"C\n {repr(C)}")
     bool_timeout = False
-    # We start by extracting the matrices P, C and the N vector
-    C, P, N, parity_indices, graph_line, graph_index = extract_matrices_C_P(A, b)
-    # We compute the partitions of each element of N wrt P
+    nb_col = P.shape[1]
+    # We update C and compute its partitions
+    C, parity_indices = update_C(C, nb_col)
+    partitions_involved_for_C = {}
+    for i in range(C.shape[0]):
+        parts = tuple([j for j in range(C.shape[1]) if C[i, j] != 0])
+        partitions_involved_for_C[i] = parts
     if verbose:
-        print("We compute the partitions of each Ni")
-    dict_partitions, tups, bool_timeout = partitions_P_N(
-        P, N, max_nbr_partition, bool_timeout
-    )
-    if verbose:
-        for i in range(P.shape[0]):
-            print(
-                f"Part {i}. Nb parts of {N[i]} in {tups[i][1]-tups[i][0]} parts: {len(dict_partitions[i])}"
-            )
-        if bool_timeout:
-            print("T I M E O U T.")
-    # We suppress eqs trivially satisfied since constants on partitions
-    indices, graph = equations_trivially_satisfied(
-        C, N, tups, parity_indices, graph_index
-    )
-    if verbose:
-        print(
-            f"Nb of lines deleted since trivially satisfied: {C.shape[0]-len(indices)}"
-        )
-        print(f"\nGraphicality satisfied directly? {graph}")
-    C = C[indices, :]
-    parity_indices = [parity_indices[i] for i in indices]
-    # If all equations where trivially satisfied, we can return the solutions
-    if C.shape[0] == 0:
-        l = [dict_partitions[i] for i in dict_partitions]
-        l = [list(itertools.chain(*x)) for x in itertools.product(*l)]
-        S = np.array(l)
-        if graph is False:
-            indices_tmp = np.where(np.dot(S, np.transpose(graph_line)) % 2 == 0)[0]
-            S = S[indices_tmp, :]
-        # return S, percent_parts_used
-        return S, bool_timeout
-    # We compute partitions involved in each eq and sort the lines of C following the number of partitions involved
-    C, parity_indices, partitions_involved = sort_C_wrt_partitions_involved(
-        C, tups, parity_indices
-    )
-    if verbose:
-        print(f"The couple of partitions involved: {partitions_involved} \n")
-    # We compute the solutions for each equation in C
-    if verbose:
-        print("We compute the solutions of each equation")
-    dict_sols_per_eq, dict_partitions, bool_timeout = solutions_per_line(
+        print("Partitions involved for C:", list(partitions_involved_for_C.values()))
+    lines_of_C_already_satisfied = []
+    # We compute the solutions for each line of P
+    dict_sols, lines_of_C_already_satisfied = solutions_of_P(
+        P,
+        morgan,
         C,
-        tups,
         parity_indices,
-        dict_partitions,
-        partitions_involved,
+        partitions_involved_for_C,
+        lines_of_C_already_satisfied,
         max_nbr_partition,
-        bool_timeout,
         verbose,
     )
-    # If timeout has been reached, it is possible that no solution has been found
-    if len(dict_sols_per_eq) == 0:
-        return np.array([]), bool_timeout
-    # We clean local solutions
+    # We compute the partitions of each line of P
+    partitions_involved = list(dict_sols.keys())
     if verbose:
-        print(
-            "\nWe clean each local sol with the partitions cleaned during the process"
-        )
-    dict_sols_per_eq = clean_local_solutions(tups, dict_sols_per_eq, dict_partitions)
-    if [] in dict_sols_per_eq.values():
-        return np.array([]), bool_timeout
-    # We add missing partitions
-    if verbose:
-        print(
-            f"All the partitions involved: {set(itertools.chain.from_iterable(partitions_involved))}"
-        )
-    missing_parts = set(range(len(tups))) - set(
-        itertools.chain.from_iterable(partitions_involved)
-    )
-    for j in missing_parts:
-        l = []
-        for i in range(len(tups)):
-            if i == j:
-                l.append(dict_partitions[i])
-            else:
-                l.append([[-1] * len(dict_partitions[i][0])])
-        l = np.array([list(itertools.chain(*x)) for x in itertools.product(*l)])
-        dict_sols_per_eq[tuple([j])] = l.tolist()
-    if verbose:
-        print(f"We add {len(missing_parts)} missing partitions")
-    # We compute solutions per group
-    partitions_involved = list(dict_sols_per_eq.keys())
+        print("Partitions involved for P:", partitions_involved)
+    # We compute the groups of partitions
     parts_groups = partitions_groups(partitions_involved)
     if verbose:
-        print(f"The disjoint groups of partitions: {parts_groups}\n")
-    # We compute the product of solutions in each group
+        print("Groups of partitions:", parts_groups)
+    # We compute the groups of solutions for each partition group
+    S_groups, lines_of_C_already_satisfied = groups_of_solutions(
+        dict_sols,
+        parts_groups,
+        C,
+        partitions_involved_for_C,
+        parity_indices,
+        lines_of_C_already_satisfied,
+        verbose=verbose,
+    )
+    if len(S_groups) == 0:
+        return [], bool_timeout
+    # We compute the intersection between the groups of partitions
     if verbose:
-        print("We compute solutions per group (compatibility + intersection)")
-    S_groups = groups_of_solutions(dict_sols_per_eq, parts_groups, verbose)
-    # We compute the product of solutions between groups
-    if verbose:
-        print("\nWe compute sol between the distinct groups (intersection)")
-    S = [[-1] * C.shape[1]]
-    for S_group in S_groups:
+        print("We compute the sol between the distinct groups (intersection)")
+    S = S_groups[0]
+    for i in range(1, len(S_groups)):
+        S_group = S_groups[i]
         if verbose:
             print(f"S_tmp x S_group: {len(S)} x {len(S_group)}")
         S = intersection_of_solutions(S, S_group, test_compatibility=False)
         if verbose:
             print(f"after inter: {len(S)}")
-    S = np.array(S)
-    # We restrict by the graphicality if necessary
-    if S.shape[0] != 0 and graph is False:
-        indices_tmp = np.where(np.dot(S, np.transpose(graph_line)) % 2 == 0)[0]
-        S = S[indices_tmp, :]
-
+    if len(S) == 0:
+        return [], bool_timeout
+    # We now restrict of the solutions of P with the remaining lines of C
+    if verbose:
+        print(
+            "before C, S len",
+            len(S),
+            "C shape",
+            C.shape,
+            "len(lines_of_C_already_satisfied)",
+            len(lines_of_C_already_satisfied),
+        )
+    for i in range(C.shape[0]):
+        if i not in lines_of_C_already_satisfied:
+            S = restrict_sol_by_C(S, C, i, parity_indices)
+            if len(S) == 0:
+                return [], bool_timeout
+    if verbose:
+        print("Finally, S len", len(S))
     return S, bool_timeout
-    # return S, percent_parts_used
