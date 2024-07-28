@@ -11,26 +11,17 @@ import copy
 import time
 from itertools import chain, combinations
 
-import diophantine
 import networkx as nx
 import numpy as np
 from rdkit import Chem
-from sympy import Matrix
-
-from signature.enumerate_utils import (
-    atomic_num_charge,
-    get_constraint_matrices,
-    signature_bond_type,
-    update_constraint_matrices,
-)
-from signature.Signature import MoleculeSignature
-from signature.signature_alphabet import (
-    sanitize_molecule,
-    signature_alphabet_from_morgan_bit,
-    signature_vector_to_string,
-)
-from signature.solve_partitions import solve_by_partitions
-
+from src.signature.enumerate_utils import (atomic_num_charge,
+                                           get_constraint_matrices,
+                                           signature_bond_type,
+                                           update_constraint_matrices)
+from src.signature.Signature import MoleculeSignature
+from src.signature.signature_alphabet import (sanitize_molecule,
+                                              signature_vector_to_string)
+from src.signature.solve_partitions import solve_by_partitions
 
 ########################################################################################################################
 # MolecularGraph class used for smiles enumeration from signature.
@@ -295,17 +286,22 @@ class MolecularGraph:
         """
 
         mol = self.mol.GetMol()
-        mol, smi = sanitize_molecule(
-            mol,
-            kekuleSmiles=self.Alphabet.kekuleSmiles,
-            allHsExplicit=self.Alphabet.allHsExplicit,
-            isomericSmiles=self.Alphabet.isomericSmiles,
-            formalCharge=self.Alphabet.formalCharge,
-            atomMapping=self.Alphabet.atomMapping,
-            verbose=verbose,
-        )
+        # We correct the [nH] for aromatic nitrogen atoms
         smis = correction_nitrogen(mol, self.Alphabet, verbose=verbose)
-        return set(smis)
+        smis_san = []
+        for smi in smis:
+            mol = Chem.MolFromSmiles(smi)
+            _, smi_san = sanitize_molecule(
+                mol,
+                kekuleSmiles=self.Alphabet.kekuleSmiles,
+                allHsExplicit=self.Alphabet.allHsExplicit,
+                isomericSmiles=self.Alphabet.isomericSmiles,
+                formalCharge=self.Alphabet.formalCharge,
+                atomMapping=self.Alphabet.atomMapping,
+                verbose=verbose,
+            )
+            smis_san.append(smi_san)
+        return set(smis_san)
 
     def end(self, i, enum_graph_dict, node_current, j_current, verbose):
         """
@@ -359,22 +355,15 @@ class MolecularGraph:
 ########################################################################################################################
 
 
-def correction_nitrogen(mol, Alphabet, verbose=False):
+def correction_nitrogen(mol):
     """
-    Perform correction of the [nH] valence problems on a molecule by increasing 
+    Perform correction of the [nH] valence problems on a molecule by increasing
     the number of explicit hydrogens on aromatic nitrogen atoms.
 
     Parameters
     ----------
     mol : rdkit.Chem.Mol
         The molecule object that needs correction.
-
-    Alphabet : object
-        Object containing various settings for molecule sanitization (from an
-        external library or module).
-
-    verbose : bool, optional
-        If True, print verbose output during the correction process.
 
     Returns
     -------
@@ -385,9 +374,9 @@ def correction_nitrogen(mol, Alphabet, verbose=False):
     smi = Chem.MolToSmiles(mol)
     smis = [smi]
     list_N = []
-    # Identify aromatic nitrogen atoms with incorrect valence
+    # Identify aromatic nitrogen atoms
     for atom in mol.GetAtoms():
-        if atom.GetSymbol() == "N" and atom.GetIsAromatic() and atom.GetTotalDegree() != 3:
+        if atom.GetSymbol() == "N" and atom.GetIsAromatic():
             list_N.append(atom.GetIdx())
     # Generate all possible corrections by incrementing explicit hydrogens on identified atoms
     if len(list_N) > 0:
@@ -401,21 +390,7 @@ def correction_nitrogen(mol, Alphabet, verbose=False):
                     atom.SetNumExplicitHs(atom.GetNumExplicitHs() + 1)
             new_mol_smi = Chem.MolToSmiles(new_mol)
             smis.append(new_mol_smi)
-    smis_san = []
-    # Sanitize each corrected molecule and return canonical SMILES strings
-    for smi in smis:
-        mol = Chem.MolFromSmiles(smi)
-        mol, smi_san = sanitize_molecule(
-            mol,
-            kekuleSmiles=Alphabet.kekuleSmiles,
-            allHsExplicit=Alphabet.allHsExplicit,
-            isomericSmiles=Alphabet.isomericSmiles,
-            formalCharge=Alphabet.formalCharge,
-            atomMapping=Alphabet.atomMapping,
-            verbose=verbose
-            )
-        smis_san.append(smi_san)
-    return smis_san
+    return smis
 
 
 def enumeration(MG, index, enum_graph, enum_graph_dict, node_previous, j_current, verbose=False):
@@ -573,9 +548,9 @@ def enumerate_molecule_from_signature(
     Alphabet.nBits = 0
     SMIsig = set()
     S = [smi for smi in S if smi != "" and "." not in smi and Chem.MolFromSmiles(smi) is not None]
-    if len(S) > int(max_nbr_solution/10):
+    if len(S) > int(max_nbr_solution / 10):
         recursion_timeout = True
-    S = S[:int(max_nbr_solution/10)]
+    S = S[: int(max_nbr_solution / 10)]
     for smi in S:
         mol = Chem.MolFromSmiles(smi)
         ms = MoleculeSignature(
@@ -584,7 +559,7 @@ def enumerate_molecule_from_signature(
             use_smarts=Alphabet.use_smarts,
             nbits=False,
             boundary_bonds=Alphabet.boundary_bonds,
-            map_root=True
+            map_root=True,
         )
         sigsmi = ms.as_deprecated_string(morgan=False, root=False, neighbors=True)
         if sigsmi == sig:
@@ -626,7 +601,7 @@ def signature_set(sig, occ):
     return S
 
 
-def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5), method="partitions", verbose=False):
+def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5), verbose=False):
     """
     Compute all possible signatures having the same Morgan vector as the provided one.
 
@@ -638,9 +613,6 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
         The alphabet dictionary.
     max_nbr_partition : int, optional
         Maximum number of partitions. Defaults to 1e5.
-    method : str
-        The method used to solve the diophantine system. Can be either "partitions" for the method by partitions, or
-        "diophantine" to use the package diophantine. Defaults to "partitions".
     verbose : bool, optional
         If True, print detailed information during the operation. Defaults to False.
 
@@ -654,62 +626,42 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
         Time taken to solve the problem.
     """
 
+    morgan_indices = [i for i in range(len(morgan)) if morgan[i] != 0]
+    morgan_non_zero = [morgan[i] for i in morgan_indices]
+    # Selection of the atomic signatures of the alphabet having morgan bits included in the morgan vector input
     AS, MIN, MAX, IDX, I = {}, {}, {}, {}, 0
-    indices = [i for i in range(len(morgan)) if morgan[i] != 0]
-    for i in indices:
-        # get all signature neighbor in Alphabet having MorganBit = i
-        sig = signature_alphabet_from_morgan_bit(i, Alphabet)
-        if verbose:
-            print(f"MorganBit {i}:{int(morgan[i])}, Nbr in alphabet {len(sig)}")
-        maxi = morgan[i]
-        mini = 0 if len(sig) > 1 else maxi
-        for j in range(len(sig)):
-            AS[I], MIN[I], MAX[I], IDX[I] = sig[j], mini, maxi, i
+    for sig in Alphabet.Dict.keys():
+        mbits, sa = sig.split(",")[0], sig.split(",")[1]
+        mbits = [int(x) for x in mbits.split("--")]
+        if set(mbits).issubset(morgan_indices):
+            mbit = mbits[-1]
+            maxi = morgan[mbit]
+            mini = 0 if len(sig) > 1 else maxi
+            AS[I], MIN[I], MAX[I], IDX[I] = sa, mini, maxi, mbits
             I += 1
     # Get Matrices for enumeration
     AS = np.asarray(list(AS.values()))
-    IDX = np.asarray(list(IDX.values()))
     MIN = np.asarray(list(MIN.values()))
     MAX = np.asarray(list(MAX.values()))
     Deg = np.asarray([len(AS[i].split(".")) - 1 for i in range(AS.shape[0])])
-    n1 = AS.shape[0]
     AS, IDX, MIN, MAX, Deg, C = update_constraint_matrices(AS, IDX, MIN, MAX, Deg, verbose=verbose)
+    C = C.astype(int)
     if AS.shape[0] == 0:
         return [], False, 0
-    n2 = AS.shape[0]
-    if verbose:
-        print(f"AS reduction {n1}, {n2}")
-    # Get matrix A and vector b for diophantine solver
-    A, b, m = C, np.zeros(C.shape[0]), -1
-    for i in range(AS.shape[0]):
-        mi = IDX[i]
-        if mi != m:
-            A = np.concatenate((A, P), axis=0) if m != -1 else A
-            b = np.concatenate((b, [morgan[m]]), axis=0) if m != -1 else b
-            P, m = np.zeros(A.shape[1]).reshape(1, A.shape[1]), mi
-        P[0, i] = 1
-    A = np.concatenate((A, P), axis=0) if m != -1 else A
-    b = np.concatenate((b, [morgan[m]]), axis=0) if m != -1 else b
-    A = A.astype("int")
-    b = b.astype("int")
-    if verbose:
-        print(f"A: {A.shape} b: {b.shape}")
-    if verbose == 2:
-        print(f"A = {A}\nb = {b}")
-    # Solve
-    if sum(list(morgan)) != sum(list(b)):
-        return [], False, 0
+    # Creation of the diophantine system
+    P = np.zeros((len(morgan_indices), len(AS)), dtype=int)
+    for i in range(len(IDX)):
+        mbits = IDX[i]
+        for mbit in mbits:
+            mbit_index = morgan_indices.index(mbit)
+            P[mbit_index, i] += 1
+    # Solving the diophantine system
     st = time.time()
-    if method == "diophantine":  # diophantine
-        A, b = Matrix(A.astype(int)), Matrix(b.astype(int))
-        occ = np.asarray(list(diophantine.solve(A, b)))
-        bool_timeout = False
-    else:
-        occ, bool_timeout = solve_by_partitions(A, b, verbose=verbose, max_nbr_partition=max_nbr_partition)
+    S, bool_timeout = solve_by_partitions(P, morgan_non_zero, C, max_nbr_partition=max_nbr_partition, verbose=verbose)
     ct_solve = time.time() - st
+    occ = np.array(S)
     if occ.shape[0] == 0:
         return [], bool_timeout, ct_solve
-    occ = occ.reshape(occ.shape[0], occ.shape[1])
     occ = occ[:, : AS.shape[0]]
     sol = signature_set(AS, occ)
     return list(sol), bool_timeout, ct_solve
