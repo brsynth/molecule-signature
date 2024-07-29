@@ -426,7 +426,7 @@ class AtomSignature:
     def atom_signature_neighbors(
         cls,
         atom: Chem.Atom,
-        radius: int = 2,
+        radius: int = 1,
         use_smarts: bool = True,
         boundary_bonds: bool = False,
         map_root: bool = True,
@@ -450,7 +450,7 @@ class AtomSignature:
         for neighbor_atom in atom.GetNeighbors():
             neighbor_sig = cls.atom_signature(
                 neighbor_atom,
-                radius - 1,
+                radius,
                 use_smarts,
                 boundary_bonds,
                 map_root,
