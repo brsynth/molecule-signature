@@ -2,6 +2,12 @@
 
 ### Fix
 
+- **AtomSignature**: wrong radius for generation of neighbors
+
+## 1.3.1 (2024-07-16)
+
+### Fix
+
 - **AtomSignature**: always use tuple for morgans
 - **MoleculeSignature**: wrong attribute name
 
