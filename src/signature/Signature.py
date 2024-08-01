@@ -661,6 +661,39 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
     return smarts
 
 
+def canonical_map_fragment(
+    mol: Chem.Mol,
+    atoms_to_use: list,
+    atoms_symbols: list = None,
+) -> None:
+    """Canonize the atom map numbers of a molecule fragment
+
+    This function canonizes the atom map numbers of a molecule fragment.
+
+    Parameters
+    ----------
+    mol : Chem.Mol
+        The molecule to canonicalize the atom map numbers for.
+    atoms_to_use : list
+        The list of atom indexes to use in the fragment.
+
+    Returns
+    -------
+    None
+    """
+    ranks = list(
+        Chem.CanonicalRankAtomsInFragment(
+            mol,
+            atomsToUse=atoms_to_use,
+            atomSymbols=atoms_symbols,
+            includeAtomMaps=False
+        )
+    )
+    for j, i in enumerate(ranks):
+        if j in atoms_to_use:
+            mol.GetAtomWithIdx(j).SetIntProp('molAtomMapNumber', i+1)
+
+
 # =====================================================================================================================
 # Molecule Signature
 # =====================================================================================================================
