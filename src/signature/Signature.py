@@ -506,6 +506,7 @@ class AtomSignature:
 # =====================================================================================================================
 
 
+def get_smarts_features(qatom: Chem.Atom, wish_list=None) -> dict:
 def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
     """Generate a SMARTS string for an atom
 
