@@ -507,6 +507,97 @@ class AtomSignature:
 
 
 def get_smarts_features(qatom: Chem.Atom, wish_list=None) -> dict:
+    """Get the features of a SMARTS query atom
+
+    Parameters
+    ----------
+    qatom : Chem.Atom
+        The SMARTS query atom
+    wish_list : list
+        The list of features to extract. If None, all features are extracted. The list of features is:
+        - # : Atomic number
+        - A : Aliphatic
+        - a : Aromatic
+        - H : Number of hydrogens
+        - D : Degree
+        - X : Connectivity
+        - +-: Charge
+
+    Returns
+    -------
+    dict
+        The features of the SMARTS query atom
+    """
+    # Get the atom properties from the descriptor
+    feats = {}
+    _descriptors = qatom.DescribeQuery()
+
+    if wish_list is None:
+        wish_list = ["#", "A", "a", "H", "D", "X", "+-"]
+
+    # Atomic number and atom type
+    if "#" in wish_list:
+
+        # Atomic number
+        _match = re.search(r"AtomAtomicNum (?P<value>\d+) = val", _descriptors)
+        if _match:
+            feats["#"] = int(_match.group("value"))
+
+        # Atom Type (see getAtomListQueryVals from rdkit/Code/GraphMol/QueryOps.cpp)
+        _match = re.search(r"AtomType (?P<value>\d+) = val", _descriptors)
+        if _match:
+            if int(_match.group("value")) > 1000:  # Atom is aromatic
+                _atom_number = int(_match.group("value")) - 1000
+                if "#" in feats:
+                    assert feats["#"] == _atom_number
+                feats["#"] = _atom_number
+                feats["a"] = 1
+            else:  # Atom is aliphatic
+                _atom_number = int(_match.group("value"))
+                if "#" in feats:
+                    assert feats["#"] == _atom_number
+                feats["#"] = int(_match.group("value"))
+                feats["A"] = 1
+
+    # Hydrogens
+    if "H" in wish_list:
+        _match = re.search(r"AtomHCount (?P<value>\d) = val", _descriptors)
+        if _match:
+            feats["H"] = int(_match.group("value"))
+
+    # # Aromatic
+    if "a" in wish_list and "a" not in feats:
+        _match = re.search(r"AtomIsAromatic (?P<value>\d) = val", _descriptors)
+        if _match:
+            feats["a"] = int(_match.group("value"))
+
+    # Aliphatic
+    if "A" in wish_list and "A" not in feats:
+        _match = re.search(r"AtomIsAliphatic (?P<value>\d) = val", _descriptors)
+        if _match:
+            feats["A"] = int(_match.group("value"))
+
+    # Degree
+    if "D" in wish_list:
+        _match = re.search(r"AtomExplicitDegree (?P<value>\d) = val", _descriptors)
+        if _match:
+            feats["D"] = int(_match.group("value"))
+
+    # Connectivity
+    if "X" in wish_list:
+        _match = re.search(r"AtomTotalDegree (?P<value>\d) = val", _descriptors)
+        if _match:
+            feats["X"] = int(_match.group("value"))
+
+    # Charge
+    if "+-" in wish_list:
+        _match = re.search(r"AtomFormalCharge (?P<value>-?\d) = val", _descriptors)
+        if _match:
+            feats["+-"] = int(_match.group("value"))
+
+    return feats
+
+
 def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
     """Generate a SMARTS string for an atom
 
