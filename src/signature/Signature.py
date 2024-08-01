@@ -794,7 +794,7 @@ class MoleculeSignature:
                 morgan_vect = morgan_vect.tolist()
 
         else:
-            morgan_vect = [None] * nbits
+            morgan_vect = [None] * mol.GetNumAtoms()
 
         # Compute the signatures of all atoms
         for atom in mol.GetAtoms():
