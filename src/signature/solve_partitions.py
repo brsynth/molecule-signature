@@ -506,8 +506,22 @@ def solution_of_one_group(
                 tup = (part_i, part_j)
                 if len(set.intersection(set(part_i), set(part_j))) > 0:
                     d_prod_len[tup] = len(dict_sols_per_eq[part_i]) * len(dict_sols_per_eq[part_j])
-        min_key = min(d_prod_len, key=d_prod_len.get)
-        merged_parts = tuple(dict.fromkeys(min_key[0] + min_key[1]))
+        
+        # Step 1: Find the minimum value and keys with this value in a single pass
+        min_value = float('inf')
+        min_keys = []
+        for key, value in d_prod_len.items():
+            if value < min_value:
+                min_value = value
+                min_keys = [key]
+            elif value == min_value:
+                min_keys.append(key)
+        # Step 2: Calculate the length of the union of sets for the keys with the minimum value
+        d_tmp = {min_key_tmp: len(set(min_key_tmp[0]) | set(min_key_tmp[1])) for min_key_tmp in min_keys}
+        # Step 3: Find the key with the minimum value in d_tmp
+        min_key = min(d_tmp, key=d_tmp.get)
+
+        merged_parts = tuple(dict.fromkeys(min_key[0] + min_key[1]))        
         if verbose:
             print("Intersection", min_key, "merged part", merged_parts)
         merged_sol = intersection_of_solutions(
@@ -528,7 +542,12 @@ def solution_of_one_group(
                     return [], []
                 if merged_parts == part_C:
                     lines_of_C_already_satisfied.append(j)
-        dict_sols_per_eq[merged_parts] = merged_sol
+        if merged_parts in dict_sols_per_eq:
+            dict_sols_per_eq[merged_parts] = intersection_of_solutions(
+                dict_sols_per_eq[merged_parts], merged_sol, test_compatibility=True
+                )
+        else:
+            dict_sols_per_eq[merged_parts] = merged_sol
     return dict_sols_per_eq[list(dict_sols_per_eq.keys())[0]], lines_of_C_already_satisfied
 
 
