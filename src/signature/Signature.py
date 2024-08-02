@@ -27,6 +27,7 @@ signature-neighbor = C:C(:C)[OH:1]&C[OH:1].SINGLE|C:[C:1](:C)O
 Authors:
   - Jean-loup Faulon <jfaulon@gmail.com>
   - Thomas Duigou <thomas.duigou@inrae.fr>
+  - Philippe Meyer <philippe.meyer@inrae.fr>
 """
 import numpy as np
 import logging
@@ -256,30 +257,9 @@ class AtomSignature:
         Chem.Mol
             The atom signature as a molecule
         """
-        mol = Chem.MolFromSmarts(self.root)
+        smarts = self.root.replace(";", "")  # RDkit does not like semicolons in SMARTS
 
-        # Fix atom properties
-        for _atom in mol.GetAtoms():
-            _description = _atom.DescribeQuery()
-
-            # Total H count
-            try:
-                _total_h_count = re.search(r"AtomHCount (\d+)", _description).group(1)
-                _total_h_count = int(_total_h_count)
-            except AttributeError:
-                _total_h_count = 0
-            finally:
-                _atom.SetNumExplicitHs(_total_h_count)
-                _atom.SetNoImplicit(True)
-
-            # Formal charge
-            try:
-                _atom_formal_charge = re.search(r"AtomFormalCharge (-?\d+)", _description).group(1)
-                _atom_formal_charge = int(_atom_formal_charge)
-            except AttributeError:
-                _atom_formal_charge = 0
-            finally:
-                _atom.SetFormalCharge(_atom_formal_charge)
+        mol = Chem.MolFromSmarts(smarts)
 
         # Update properties
         if mol.NeedsUpdatePropertyCache():
@@ -309,7 +289,7 @@ class AtomSignature:
             The atom to generate the signature for.
         radius : int
             The radius of the environment to consider. If negative, the whole molecule is considered.
-        smarts : bool
+        use_smarts : bool
             Whether to use SMARTS syntax for the signature.
         boundary_bonds : bool
             Whether to use boundary bonds at the border of the radius. This option is only available for SMILES syntax.
@@ -332,6 +312,17 @@ class AtomSignature:
         if radius < 0:
             radius = mol.GetNumAtoms()
 
+        # Generate atom symbols
+        if use_smarts:
+            for _atom in mol.GetAtoms():
+                _atom_symbol = atom_to_smarts(
+                    _atom,
+                    atom_map=1 if _atom.GetIdx() == atom.GetIdx() and map_root else 0,
+                )
+                _atom.SetProp("atom_symbol", _atom_symbol)
+        else:
+            raise NotImplementedError("SMILES syntax not implemented yet.")
+
         # Get the bonds at the border of the radius
         bonds_radius = Chem.FindAtomEnvironmentOfRadiusN(mol, radius, atom.GetIdx())
         bonds_radius_plus = Chem.FindAtomEnvironmentOfRadiusN(mol, radius + 1, atom.GetIdx())
@@ -343,7 +334,7 @@ class AtomSignature:
             fragmented_mol = Chem.FragmentOnBonds(
                 mol,
                 bonds,
-                addDummies=True,
+                addDummies=True if boundary_bonds else False,
                 dummyLabels=[(0, 0) for _ in bonds],  # Do not label the dummies
             )
         else:  # No bonds to cut
@@ -365,30 +356,56 @@ class AtomSignature:
                 atom_in_frag_index = frag_to_mol_atom_mapping.index(atom.GetIdx())  # Atom index in the fragment
                 break
 
-        # Get the SMARTS / SMILES
         if use_smarts:  # Get the SMARTS
 
             # Set a canonical atom mapping
             if fragment.NeedsUpdatePropertyCache():
                 fragment.UpdatePropertyCache(strict=False)
-            canonical_map(fragment)
 
-            # Build with / without the dummies
-            if boundary_bonds:
-                _atoms_to_use = list(range(fragment.GetNumAtoms()))
-            else:
-                _atoms_to_use = [atom.GetIdx() for atom in fragment.GetAtoms() if atom.GetAtomicNum() != 0]
-            _atom_symbols = [
-                atom_to_smarts(
-                    atom=_atom,
-                    atom_map=1 if _atom.GetIdx() == atom_in_frag_index and map_root else 0,
+            # Build the SMARTS
+            _atoms_to_use = list(range(fragment.GetNumAtoms()))
+            _atoms_symbols = [atom.GetProp("atom_symbol") for atom in fragment.GetAtoms()]
+
+            # Set a canonical atom mapping
+            if fragment.NeedsUpdatePropertyCache():
+                fragment.UpdatePropertyCache(strict=False)
+            canonical_map_fragment(fragment, _atoms_to_use, _atoms_symbols)
+
+            # Rebuild the fragment using the computed atom symbols
+            _fragment = Chem.RWMol(fragment)
+            for _atom_idx in range(_fragment.GetNumAtoms()):
+                _atom = _fragment.GetAtomWithIdx(_atom_idx)
+                _atom_symbol = _atom.GetProp("atom_symbol")
+                _fragment.ReplaceAtom(
+                    _atom_idx,
+                    Chem.AtomFromSmarts(_atom_symbol),
+                    updateLabel=False,
+                    preserveProps=False,
                 )
-                for _atom in fragment.GetAtoms()
-            ]
+                _fragment.GetAtomWithIdx(_atom_idx).SetProp("atom_symbol", _atom_symbol)  # Restore the atom symbol
+            fragment = _fragment.GetMol()
+
+            if fragment.NeedsUpdatePropertyCache():
+                fragment.UpdatePropertyCache(strict=False)
+
+            # DEBUG
+            for idx in range(fragment.GetNumAtoms()):
+                _atom = fragment.GetAtomWithIdx(idx)
+                logging.debug(
+                    f"idx: {_atom.GetIdx():2}",
+                    f"symbol: {_atom.GetSymbol():2}",
+                    f"map: {_atom.GetAtomMapNum():2}",
+                    f"degree: {_atom.GetDegree():1}",
+                    f"connec: {_atom.GetTotalDegree():1}",
+                    f"arom: {_atom.GetIsAromatic():1}",
+                    f"smarts: {_atom.GetSmarts():20}",
+                    f"stored smarts: {_atom.GetProp('atom_symbol'):20}",
+                )
+
             smarts = Chem.MolFragmentToSmiles(
                 fragment,
                 atomsToUse=_atoms_to_use,
-                atomSymbols=_atom_symbols,
+                atomSymbols=_atoms_symbols,
                 isomericSmiles=kwargs.get("isomericSmiles", True),
                 allBondsExplicit=kwargs.get("allBondsExplicit", True),
                 allHsExplicit=kwargs.get("allHsExplicit", False),
@@ -426,7 +443,7 @@ class AtomSignature:
     def atom_signature_neighbors(
         cls,
         atom: Chem.Atom,
-        radius: int = 2,
+        radius: int = 1,
         use_smarts: bool = True,
         boundary_bonds: bool = False,
         map_root: bool = True,
@@ -450,7 +467,7 @@ class AtomSignature:
         for neighbor_atom in atom.GetNeighbors():
             neighbor_sig = cls.atom_signature(
                 neighbor_atom,
-                radius - 1,
+                radius,
                 use_smarts,
                 boundary_bonds,
                 map_root,
@@ -506,6 +523,98 @@ class AtomSignature:
 # =====================================================================================================================
 
 
+def get_smarts_features(qatom: Chem.Atom, wish_list=None) -> dict:
+    """Get the features of a SMARTS query atom
+
+    Parameters
+    ----------
+    qatom : Chem.Atom
+        The SMARTS query atom
+    wish_list : list
+        The list of features to extract. If None, all features are extracted. The list of features is:
+        - # : Atomic number
+        - A : Aliphatic
+        - a : Aromatic
+        - H : Number of hydrogens
+        - D : Degree
+        - X : Connectivity
+        - +-: Charge
+
+    Returns
+    -------
+    dict
+        The features of the SMARTS query atom
+    """
+    # Get the atom properties from the descriptor
+    feats = {}
+    _descriptors = qatom.DescribeQuery()
+
+    if wish_list is None:
+        wish_list = ["#", "A", "a", "H", "D", "X", "+-"]
+
+    # Atomic number and atom type
+    if "#" in wish_list:
+
+        # Atomic number
+        _match = re.search(r"AtomAtomicNum (?P<value>\d+) = val", _descriptors)
+        if _match:
+            feats["#"] = int(_match.group("value"))
+
+        # Atom Type (see getAtomListQueryVals from rdkit/Code/GraphMol/QueryOps.cpp)
+        _match = re.search(r"AtomType (?P<value>\d+) = val", _descriptors)
+        if _match:
+            if int(_match.group("value")) > 1000:  # Atom is aromatic
+                _atom_number = int(_match.group("value")) - 1000
+                if "#" in feats:
+                    assert feats["#"] == _atom_number
+                feats["#"] = _atom_number
+                feats["a"] = 1
+            else:  # Atom is aliphatic
+                _atom_number = int(_match.group("value"))
+                if "#" in feats:
+                    assert feats["#"] == _atom_number
+                feats["#"] = int(_match.group("value"))
+                feats["A"] = 1
+
+    # Hydrogens
+    if "H" in wish_list:
+        _match = re.search(r"AtomHCount (?P<value>\d) = val", _descriptors)
+        if _match:
+            feats["H"] = int(_match.group("value"))
+
+    # # Aromatic
+    if "a" in wish_list and "a" not in feats:
+        _match = re.search(r"AtomIsAromatic (?P<value>\d) = val", _descriptors)
+        if _match:
+            feats["a"] = int(_match.group("value"))
+
+    # Aliphatic
+    if "A" in wish_list and "A" not in feats:
+        _match = re.search(r"AtomIsAliphatic (?P<value>\d) = val", _descriptors)
+        if _match:
+            feats["A"] = int(_match.group("value"))
+
+    # Degree
+    if "D" in wish_list:
+        _match = re.search(r"AtomExplicitDegree (?P<value>\d) = val", _descriptors)
+        if _match:
+            feats["D"] = int(_match.group("value"))
+
+    # Connectivity
+    if "X" in wish_list:
+        _match = re.search(r"AtomTotalDegree (?P<value>\d) = val", _descriptors)
+        if _match:
+            feats["X"] = int(_match.group("value"))
+
+    # Charge
+    if "+-" in wish_list:
+        _match = re.search(r"AtomFormalCharge (?P<value>-?\d) = val", _descriptors)
+        if _match:
+            feats["+-"] = int(_match.group("value"))
+
+    return feats
+
+
 def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
     """Generate a SMARTS string for an atom
 
@@ -521,18 +630,32 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
     str
         The SMARTS string
     """
+
+    _PROP_SEP = ";"
+
+    # Directly get features from the query atom
+    if isinstance(atom, Chem.QueryAtom):
+        feats = get_smarts_features(atom)
+        _number = feats.get("#", 0)
+        _symbol = Chem.GetPeriodicTable().GetElementSymbol(_number)
+        _H_count = feats.get("H", 0)
+        _connectivity = feats.get("X", 0)
+        _degree = feats.get("D", 0)
+        _formal_charge = feats.get("+-", 0)
+        # _is_aromatic = feats.get("a", 0)
+    else:
+        _symbol = atom.GetSymbol()
+        _H_count = atom.GetTotalNumHs()  # Total number of Hs, including implicit Hs
+        _connectivity = atom.GetTotalDegree()  # Total number of connections, including H
+        _degree = atom.GetDegree()  # Number of explicit connections, hence excluding H if Hs are implicits
+        _formal_charge = atom.GetFormalCharge()
+        # _is_aromatic = atom.GetIsAromatic()
+
     # Special case for dummies
     if atom.GetAtomicNum() == 0:
         return "*"
 
-    _symbol = atom.GetSymbol()
-    _total_h_count = atom.GetTotalNumHs()  # Total number of Hs, including implicit Hs
-    _connectivity = atom.GetTotalDegree()  # Missleading naming, but it's the total number of connections, including H
-    _degree = atom.GetDegree()  # Number of explicit connections, hence excluding H if Hs are not explicit
-    # _non_h_degree = _connectivity - _total_h_count
-    _formal_charge = atom.GetFormalCharge()
-
-    # Refine the symbol
+    # Refine symbols
     if atom.GetIsAromatic():
         _symbol = _symbol.lower()
     elif atom.GetAtomicNum() == 1:
@@ -540,33 +663,61 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
 
     # Assemble the SMARTS
     smarts = f"[{_symbol}"
-    if _total_h_count == 1:
-        smarts += "H"
-    else:
-        smarts += f"H{_total_h_count}"
-    if _degree == 1:
-        smarts += ";D"
-    else:
-        smarts += f";D{_degree}"
-    if _connectivity == 1:
-        smarts += ";X"
-    else:
-        smarts += f";X{_connectivity}"
+    smarts += f"{_PROP_SEP}H{_H_count}"
+    smarts += f"{_PROP_SEP}D{_degree}"
+    smarts += f"{_PROP_SEP}X{_connectivity}"
+    # if _is_aromatic:
+    #     smarts += f"{_PROP_SEP}a"
+    # else:
+    #     smarts += f"{_PROP_SEP}A"
     if _formal_charge > 0:
         if _formal_charge == 1:
-            smarts += ";+"
+            smarts += f"{_PROP_SEP}+"
         else:
-            smarts += f";+{_formal_charge}"
+            smarts += f"{_PROP_SEP}+{_formal_charge}"
     elif _formal_charge < 0:
         if _formal_charge == -1:
-            smarts += ";-"
+            smarts += f"{_PROP_SEP}-"
         else:
-            smarts += f";-{abs(_formal_charge)}"
+            smarts += f"{_PROP_SEP}-{abs(_formal_charge)}"
     if atom_map != 0:
         smarts += f":{atom_map}"
     smarts += "]"
 
     return smarts
+
+
+def canonical_map_fragment(
+    mol: Chem.Mol,
+    atoms_to_use: list,
+    atoms_symbols: list = None,
+) -> None:
+    """Canonize the atom map numbers of a molecule fragment
+
+    This function canonizes the atom map numbers of a molecule fragment.
+
+    Parameters
+    ----------
+    mol : Chem.Mol
+        The molecule to canonicalize the atom map numbers for.
+    atoms_to_use : list
+        The list of atom indexes to use in the fragment.
+
+    Returns
+    -------
+    None
+    """
+    ranks = list(
+        Chem.CanonicalRankAtomsInFragment(
+            mol,
+            atomsToUse=atoms_to_use,
+            atomSymbols=atoms_symbols,
+            includeAtomMaps=False
+        )
+    )
+    for j, i in enumerate(ranks):
+        if j in atoms_to_use:
+            mol.GetAtomWithIdx(j).SetIntProp('molAtomMapNumber', i+1)
 
 
 # =====================================================================================================================
@@ -669,7 +820,7 @@ class MoleculeSignature:
                 morgan_vect = morgan_vect.tolist()
 
         else:
-            morgan_vect = [None] * nbits
+            morgan_vect = [None] * mol.GetNumAtoms()
 
         # Compute the signatures of all atoms
         for atom in mol.GetAtoms():
@@ -838,25 +989,6 @@ class MoleculeSignature:
 # =====================================================================================================================
 # Overall helper functions
 # =====================================================================================================================
-
-
-def canonical_map(mol: Chem.Mol) -> None:
-    """Canonize the atom map numbers of a molecule
-
-    This function canonizes the atom map numbers of a molecule.
-
-    Parameters
-    ----------
-    mol : Chem.Mol
-        The molecule to canonicalize the atom map numbers for.
-
-    Returns
-    -------
-    None
-    """
-    ranks = list(Chem.CanonicalRankAtoms(mol, breakTies=True, includeAtomMaps=False))
-    for j, i in enumerate(ranks):
-        mol.GetAtomWithIdx(j).SetIntProp('molAtomMapNumber', i+1)
 
 
 def clean_kwargs(kwargs: dict) -> dict:

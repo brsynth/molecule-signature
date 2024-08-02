@@ -1,5 +1,35 @@
 ## Unreleased
 
+### Feat
+
+- **Signature**: function to set canonic aam for fragment
+- **Signature**: add function to extract features from a SMARTS
+- **Signature**: add function to extract features from a SMARTS
+- **solve_partitions**: new solving method for diophantine systems coming from full ecfp
+- **enumerate_signature**: reduced ecfp changed to full ecfp
+
+### Fix
+
+- **AtomSignature**: Ensure canonic SMARTS whatever the input
+- **AtomSignature**: stop trying to fix MolFromSmarts
+- **atom_to_smarts**: when possible direct extraction from SMARTS of query features
+- **MoleculeSignature**: vector of morgan bits
+- **enumerate_signature**: import correction
+
+### Refactor
+
+- **Signature**: sweep unused code
+- **atom_signature**: better handle radius cuts
+- **atom_to_smarts**: SMARTS feature separator as a variable
+
+## 1.3.2 (2024-07-29)
+
+### Fix
+
+- **AtomSignature**: wrong radius for generation of neighbors
+
+## 1.3.1 (2024-07-16)
+
 ### Fix
 
 - **AtomSignature**: always use tuple for morgans
