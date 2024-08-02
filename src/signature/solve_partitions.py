@@ -577,11 +577,14 @@ def solutions_of_P(
         - dict_sols (dict): A dictionary where keys are tuples representing partitions, and values
           are lists of possible solutions for each partition.
         - lines_of_C_already_satisfied (list of int): Updated list of line indices in `C` that are satisfied.
+        - bool_timeout: A flag indicating if the partitioning process was truncated due to reaching `max_nbr_partition`.
     """
 
     nb_lin, nb_col = P.shape[0], P.shape[1]
     dict_sols = {}
+    bool_timeout = False
     for i in range(nb_lin):
+        local_time_out = False
         # For each line we compute all the partitions of the corresponding morgan bit
         part_line_of_P = tuple([j for j in range(nb_col) if P[i, j] != 0])
         counts = [P[i, j] for j in part_line_of_P]
@@ -597,11 +600,13 @@ def solutions_of_P(
             local_bound = int(max_nbr_partition / 100)
             if len(All_parts_morgan_in_k) > local_bound:
                 bool_timeout = True
+                local_time_out = True
                 All_parts_morgan_in_k = All_parts_morgan_in_k[:local_bound]
             for x in All_parts_morgan_in_k:
                 nb_perm = nb_permutations(x + [0] * (sum(P[i, :]) - len(x)))
                 if nb_perm > max_nbr_partition:
                     bool_timeout = True
+                    local_time_out = True
                     All_parts_morgan_in_k2 = All_parts_morgan_in_k2 + list(
                         itertools.islice(
                             multiset_permutations(x + [0] * (k - len(x))),
@@ -612,6 +617,8 @@ def solutions_of_P(
                     All_parts_morgan_in_k2 = All_parts_morgan_in_k2 + list(
                         multiset_permutations(x + [0] * (k - len(x)))
                     )
+            if local_time_out and verbose:
+                print("T I M E O U T, part of P", part_line_of_P, "P values", counts, "morgan", morgan[i])
         # We complete the solutions with -1 for all zeros in the line
         local_sols = [partition_to_local_sol(part, part_line_of_P, nb_col) for part in All_parts_morgan_in_k2]
         # We restrict the solutions to C when it is possible
@@ -623,7 +630,7 @@ def solutions_of_P(
                     print("Bef rest", len(local_sols))
                 local_sols = restrict_sol_by_C(local_sols, C, j, parity_indices)
                 if len(local_sols) == 0:
-                    return [], bool_timeout
+                    return [], lines_of_C_already_satisfied, bool_timeout
                 if verbose:
                     print("Aft rest", len(local_sols))
                 if part_line_of_P == part_C:
@@ -637,10 +644,7 @@ def solutions_of_P(
             )
         else:
             dict_sols[part_line_of_P] = local_sols
-    if verbose:
-        if bool_timeout:
-            print("T I M E O U T")
-    return dict_sols, lines_of_C_already_satisfied
+    return dict_sols, lines_of_C_already_satisfied, bool_timeout
 
 
 ########################################################################################################################
@@ -697,7 +701,7 @@ def solve_by_partitions(P, morgan, C, max_nbr_partition=int(1e5), verbose=False)
         print("Partitions involved for C:", list(partitions_involved_for_C.values()))
     lines_of_C_already_satisfied = []
     # We compute the solutions for each line of P
-    dict_sols, lines_of_C_already_satisfied = solutions_of_P(
+    dict_sols, lines_of_C_already_satisfied, bool_timeout = solutions_of_P(
         P,
         morgan,
         C,
