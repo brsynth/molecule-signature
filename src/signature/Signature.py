@@ -355,23 +355,12 @@ class AtomSignature:
                 atom_in_frag_index = frag_to_mol_atom_mapping.index(atom.GetIdx())  # Atom index in the fragment
                 break
 
-        # Get the SMARTS / SMILES
         if use_smarts:  # Get the SMARTS
 
             # Set a canonical atom mapping
             if fragment.NeedsUpdatePropertyCache():
                 fragment.UpdatePropertyCache(strict=False)
-            canonical_map(fragment)
 
-            # Build with / without the dummies
-            if boundary_bonds:
-                _atoms_to_use = list(range(fragment.GetNumAtoms()))
-            else:
-                _atoms_to_use = [atom.GetIdx() for atom in fragment.GetAtoms() if atom.GetAtomicNum() != 0]
-            _atom_symbols = [
-                atom_to_smarts(
-                    atom=_atom,
-                    atom_map=1 if _atom.GetIdx() == atom_in_frag_index and map_root else 0,
             # Build the SMARTS
             _atoms_to_use = list(range(fragment.GetNumAtoms()))
             _atoms_symbols = [atom.GetProp("atom_symbol") for atom in fragment.GetAtoms()]
@@ -999,25 +988,6 @@ class MoleculeSignature:
 # =====================================================================================================================
 # Overall helper functions
 # =====================================================================================================================
-
-
-def canonical_map(mol: Chem.Mol) -> None:
-    """Canonize the atom map numbers of a molecule
-
-    This function canonizes the atom map numbers of a molecule.
-
-    Parameters
-    ----------
-    mol : Chem.Mol
-        The molecule to canonicalize the atom map numbers for.
-
-    Returns
-    -------
-    None
-    """
-    ranks = list(Chem.CanonicalRankAtoms(mol, breakTies=True, includeAtomMaps=False))
-    for j, i in enumerate(ranks):
-        mol.GetAtomWithIdx(j).SetIntProp('molAtomMapNumber', i+1)
 
 
 def clean_kwargs(kwargs: dict) -> dict:
