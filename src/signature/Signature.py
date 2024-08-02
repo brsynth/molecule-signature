@@ -613,6 +613,8 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
     str
         The SMARTS string
     """
+
+    _PROP_SEP = ";"
     # Special case for dummies
     if atom.GetAtomicNum() == 0:
         return "*"
@@ -623,8 +625,7 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
     _degree = atom.GetDegree()  # Number of explicit connections, hence excluding H if Hs are not explicit
     # _non_h_degree = _connectivity - _total_h_count
     _formal_charge = atom.GetFormalCharge()
-
-    # Refine the symbol
+    # Refine symbols
     if atom.GetIsAromatic():
         _symbol = _symbol.lower()
     elif atom.GetAtomicNum() == 1:
@@ -632,28 +633,23 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
 
     # Assemble the SMARTS
     smarts = f"[{_symbol}"
-    if _total_h_count == 1:
-        smarts += "H"
-    else:
-        smarts += f"H{_total_h_count}"
-    if _degree == 1:
-        smarts += ";D"
-    else:
-        smarts += f";D{_degree}"
-    if _connectivity == 1:
-        smarts += ";X"
-    else:
-        smarts += f";X{_connectivity}"
+    smarts += f"{_PROP_SEP}H{_H_count}"
+    smarts += f"{_PROP_SEP}D{_degree}"
+    smarts += f"{_PROP_SEP}X{_connectivity}"
+    # if _is_aromatic:
+    #     smarts += f"{_PROP_SEP}a"
+    # else:
+    #     smarts += f"{_PROP_SEP}A"
     if _formal_charge > 0:
         if _formal_charge == 1:
-            smarts += ";+"
+            smarts += f"{_PROP_SEP}+"
         else:
-            smarts += f";+{_formal_charge}"
+            smarts += f"{_PROP_SEP}+{_formal_charge}"
     elif _formal_charge < 0:
         if _formal_charge == -1:
-            smarts += ";-"
+            smarts += f"{_PROP_SEP}-"
         else:
-            smarts += f";-{abs(_formal_charge)}"
+            smarts += f"{_PROP_SEP}-{abs(_formal_charge)}"
     if atom_map != 0:
         smarts += f":{atom_map}"
     smarts += "]"
