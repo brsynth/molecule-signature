@@ -149,14 +149,12 @@ class SignatureAlphabet:
                 boundary_bonds=self.boundary_bonds,
                 map_root=self.map_root
             )
-            signature = ms.as_deprecated_string(morgan=self.nBits, root=False, neighbors=True)
-            if len(signature) == 0:
+            if len(ms.to_list()) == 0:
                 if verbose:
                     print(f"WARNING no signature for molecule {i} {smi}")
                 continue
-            for sig in signature.split(" . "):  # separate molecules
-                for s in sig.split(" "):  # separate atom signatures
-                    Dict.add(s)
+            for _as in ms.to_list():
+                Dict.add(_as)
         self.Dict = vector_to_dic(list(Dict))
 
     def fill_from_signatures(self, signatures, verbose=False):
@@ -466,7 +464,7 @@ def signature_sorted_array(sig, Alphabet=None, unique=False, verbose=False):
     NAS, deg, M = {}, {}, 0
     for i in range(N):
         NAS[i] = LAS.count(AS[i]) if unique else 1
-        deg[i] = len(AS[i].split(".")) - 1
+        deg[i] = len(AS[i].split(" && ")) - 1
         M = M + deg[i]
     Ncycle = int(M / 2 - N + 1)
     NAS = np.asarray(list(NAS.values()))
