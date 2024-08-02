@@ -634,16 +634,29 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
     """
 
     _PROP_SEP = ";"
+
+    # Directly get features from the query atom
+    if isinstance(atom, Chem.QueryAtom):
+        feats = get_smarts_features(atom)
+        _number = feats.get("#", 0)
+        _symbol = Chem.GetPeriodicTable().GetElementSymbol(_number)
+        _H_count = feats.get("H", 0)
+        _connectivity = feats.get("X", 0)
+        _degree = feats.get("D", 0)
+        _formal_charge = feats.get("+-", 0)
+        # _is_aromatic = feats.get("a", 0)
+    else:
+        _symbol = atom.GetSymbol()
+        _H_count = atom.GetTotalNumHs()  # Total number of Hs, including implicit Hs
+        _connectivity = atom.GetTotalDegree()  # Total number of connections, including H
+        _degree = atom.GetDegree()  # Number of explicit connections, hence excluding H if Hs are implicits
+        _formal_charge = atom.GetFormalCharge()
+        # _is_aromatic = atom.GetIsAromatic()
+
     # Special case for dummies
     if atom.GetAtomicNum() == 0:
         return "*"
 
-    _symbol = atom.GetSymbol()
-    _total_h_count = atom.GetTotalNumHs()  # Total number of Hs, including implicit Hs
-    _connectivity = atom.GetTotalDegree()  # Missleading naming, but it's the total number of connections, including H
-    _degree = atom.GetDegree()  # Number of explicit connections, hence excluding H if Hs are not explicit
-    # _non_h_degree = _connectivity - _total_h_count
-    _formal_charge = atom.GetFormalCharge()
     # Refine symbols
     if atom.GetIsAromatic():
         _symbol = _symbol.lower()
