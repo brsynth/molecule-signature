@@ -27,6 +27,7 @@ signature-neighbor = C:C(:C)[OH:1]&C[OH:1].SINGLE|C:[C:1](:C)O
 Authors:
   - Jean-loup Faulon <jfaulon@gmail.com>
   - Thomas Duigou <thomas.duigou@inrae.fr>
+  - Philippe Meyer <philippe.meyer@inrae.fr>
 """
 import numpy as np
 import logging
