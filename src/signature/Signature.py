@@ -309,7 +309,7 @@ class AtomSignature:
             The atom to generate the signature for.
         radius : int
             The radius of the environment to consider. If negative, the whole molecule is considered.
-        smarts : bool
+        use_smarts : bool
             Whether to use SMARTS syntax for the signature.
         boundary_bonds : bool
             Whether to use boundary bonds at the border of the radius. This option is only available for SMILES syntax.
