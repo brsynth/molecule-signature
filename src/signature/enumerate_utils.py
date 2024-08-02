@@ -123,10 +123,10 @@ def bond_signature_occurence(bsig, asig):
 
     as1, as2 = bsig.split("|")[0], bsig.split("|")[2]
     btype = bsig.split("|")[1]
-    asig0, asign = atom_signature_root_neighbors(asig)
-    asig1, asig2 = btype + "|" + as1, btype + "|" + as2
+    asig0 = asig.split(" && ")[0]
+    asign = asig.split(" && ")[1:]
+    asig1, asig2 = btype + " <> " + as1, btype + " <> " + as2
     occ1, occ2 = asign.count(asig1), asign.count(asig2)
-
     return asig0, as1, as2, occ1, occ2
 
 
@@ -180,7 +180,7 @@ def constraint_matrix(AS, BS, deg, verbose=False):
     C[-1, -1] = 2
     C = np.concatenate((C, np.zeros((C.shape[0], 1))), axis=1)
     C[-1, -1] = -2
-    if verbose == 3:
+    if verbose == 2:
         print(f"Graphicality constraint: {C.shape},\n{C}")
 
     return C
@@ -217,15 +217,15 @@ def bond_matrices(AS, NAS, deg, unique=True, verbose=False):
     """
 
     N, K = AS.shape[0], np.max(deg)
-
     # Fill ABS, BBS (temp arrays used to find compatible bonds)
     ABS, BBS = [], []
     for i in range(N):
-        asig0, asign = atom_signature_root_neighbors(AS[i])
+        asig0 = AS[i].split(" && ")[0]
+        asign = AS[i].split(" && ")[1:]
         for k in range(K):
             if k < len(asign):
-                btype = asign[k].split("|")[0]  # bond type
-                asigk = asign[k].split("|")[1]  # neighbor signature
+                btype = asign[k].split(" <> ")[0]  # bond type
+                asigk = asign[k].split(" <> ")[1]  # neighbor signature
                 ABS.append(f"{btype}|{asig0}")  # type + root signature
                 BBS.append(f"{btype}|{asigk}")  # type + neighbor signature
             else:
@@ -254,11 +254,9 @@ def bond_matrices(AS, NAS, deg, unique=True, verbose=False):
                     sj = ABS[j].split("|")[1]
                     bs = f"{si}|{bt}|{sj}" if si < sj else f"{sj}|{bt}|{si}"
                     BS.append(bs)
-
     BS = list(set(BS)) if unique else BS
     BS.sort()
     BS = np.asarray(BS)
-
     return B, BS
 
 
@@ -362,7 +360,8 @@ def update_constraint_matrices(AS, IDX, MIN, MAX, deg, verbose=False):
                     break
             if keep:
                 I.append(i)
-        AS, IDX = AS[I], IDX[I]
+        AS = AS[I]
+        IDX = [IDX[j] for j in I]
         MIN, MAX, deg = MIN[I], MAX[I], deg[I]
 
     if AS.shape[0] == 0:
