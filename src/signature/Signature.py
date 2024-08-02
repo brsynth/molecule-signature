@@ -256,30 +256,9 @@ class AtomSignature:
         Chem.Mol
             The atom signature as a molecule
         """
-        mol = Chem.MolFromSmarts(self.root)
+        smarts = self.root.replace(";", "")  # RDkit does not like semicolons in SMARTS
 
-        # Fix atom properties
-        for _atom in mol.GetAtoms():
-            _description = _atom.DescribeQuery()
-
-            # Total H count
-            try:
-                _total_h_count = re.search(r"AtomHCount (\d+)", _description).group(1)
-                _total_h_count = int(_total_h_count)
-            except AttributeError:
-                _total_h_count = 0
-            finally:
-                _atom.SetNumExplicitHs(_total_h_count)
-                _atom.SetNoImplicit(True)
-
-            # Formal charge
-            try:
-                _atom_formal_charge = re.search(r"AtomFormalCharge (-?\d+)", _description).group(1)
-                _atom_formal_charge = int(_atom_formal_charge)
-            except AttributeError:
-                _atom_formal_charge = 0
-            finally:
-                _atom.SetFormalCharge(_atom_formal_charge)
+        mol = Chem.MolFromSmarts(smarts)
 
         # Update properties
         if mol.NeedsUpdatePropertyCache():
