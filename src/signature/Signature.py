@@ -398,7 +398,7 @@ class AtomSignature:
                     f"connec: {_atom.GetTotalDegree():1}",
                     f"arom: {_atom.GetIsAromatic():1}",
                     f"smarts: {_atom.GetSmarts():20}",
-                    f"stored smarts: {_atom.GetProp("atom_symbol"):20}",
+                    f"stored smarts: {_atom.GetProp('atom_symbol'):20}",
                 )
 
             smarts = Chem.MolFragmentToSmiles(
