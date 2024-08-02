@@ -18,7 +18,7 @@ from signature.enumerate_utils import (atomic_num_charge,
                                            get_constraint_matrices,
                                            signature_bond_type,
                                            update_constraint_matrices)
-from signature.Signature import MoleculeSignature
+from signature.Signature import AtomSignature, MoleculeSignature
 from signature.signature_alphabet import (sanitize_molecule,
                                               signature_vector_to_string)
 from signature.solve_partitions import solve_by_partitions
@@ -287,7 +287,7 @@ class MolecularGraph:
 
         mol = self.mol.GetMol()
         # We correct the [nH] for aromatic nitrogen atoms
-        smis = correction_nitrogen(mol, self.Alphabet, verbose=verbose)
+        smis = correction_nitrogen(mol)
         smis_san = []
         for smi in smis:
             mol = Chem.MolFromSmiles(smi)
@@ -574,13 +574,13 @@ def enumerate_molecule_from_signature(
 ########################################################################################################################
 
 
-def signature_set(sig, occ):
+def signature_set(AS, occ):
     """
     Generate a set of signature strings based on the provided signature and occurrence arrays.
 
     Parameters
     ----------
-    sig : numpy.ndarray
+    AS : numpy.ndarray
         An array containing atomic signatures.
     occ : numpy.ndarray
         An array containing occurrences.
@@ -591,14 +591,16 @@ def signature_set(sig, occ):
         A set containing unique signature strings.
     """
 
-    S = set()
-    for i in range(sig.shape[0]):  # get rid of Morgan bit
-        if "," in sig[i]:
-            sig[i] = sig[i].split(",")[1]
-    for i in range(occ.shape[0]):
-        if len(occ[i]):
-            S.add(signature_vector_to_string(occ[i], sig))
-    return S
+    sol = []
+    for v in occ:
+        s = []
+        for i in range(len(v)):
+            for count in range(v[i]):
+                s.append(AS[i])
+        s = sorted(s)
+        s2 = " ".join(s)
+        sol.append(s2)
+    return sol
 
 
 def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5), verbose=False):
@@ -631,19 +633,26 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
     # Selection of the atomic signatures of the alphabet having morgan bits included in the morgan vector input
     AS, MIN, MAX, IDX, I = {}, {}, {}, {}, 0
     for sig in Alphabet.Dict.keys():
-        mbits, sa = sig.split(",")[0], sig.split(",")[1]
-        mbits = [int(x) for x in mbits.split("--")]
+        mbits, sa = sig.split(" ## ")[0], sig.split(" ## ")[1]
+        mbits = [int(x) for x in mbits.split("-")]
         if set(mbits).issubset(morgan_indices):
             mbit = mbits[-1]
             maxi = morgan[mbit]
             mini = 0 if len(sig) > 1 else maxi
             AS[I], MIN[I], MAX[I], IDX[I] = sa, mini, maxi, mbits
             I += 1
+    # Compute neighbors of selected fragments
+    for i in range(len(AS)):
+        _as = AS[i]
+        _as_neigh = AtomSignature.from_string(_as)
+        _as_neigh.post_compute_neighbors()
+        _as_neigh_string = _as_neigh.to_string(True)
+        AS[i] = _as_neigh_string
     # Get Matrices for enumeration
     AS = np.asarray(list(AS.values()))
     MIN = np.asarray(list(MIN.values()))
     MAX = np.asarray(list(MAX.values()))
-    Deg = np.asarray([len(AS[i].split(".")) - 1 for i in range(AS.shape[0])])
+    Deg = np.asarray([len(AS[i].split(" && ")) - 1 for i in range(AS.shape[0])])
     AS, IDX, MIN, MAX, Deg, C = update_constraint_matrices(AS, IDX, MIN, MAX, Deg, verbose=verbose)
     C = C.astype(int)
     if AS.shape[0] == 0:
@@ -664,4 +673,4 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
         return [], bool_timeout, ct_solve
     occ = occ[:, : AS.shape[0]]
     sol = signature_set(AS, occ)
-    return list(sol), bool_timeout, ct_solve
+    return sol, bool_timeout, ct_solve
