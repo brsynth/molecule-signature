@@ -332,6 +332,17 @@ class AtomSignature:
         if radius < 0:
             radius = mol.GetNumAtoms()
 
+        # Generate atom symbols
+        if use_smarts:
+            for _atom in mol.GetAtoms():
+                _atom_symbol = atom_to_smarts(
+                    _atom,
+                    atom_map=1 if _atom.GetIdx() == atom.GetIdx() and map_root else 0,
+                )
+                _atom.SetProp("atom_symbol", _atom_symbol)
+        else:
+            raise NotImplementedError("SMILES syntax not implemented yet.")
+
         # Get the bonds at the border of the radius
         bonds_radius = Chem.FindAtomEnvironmentOfRadiusN(mol, radius, atom.GetIdx())
         bonds_radius_plus = Chem.FindAtomEnvironmentOfRadiusN(mol, radius + 1, atom.GetIdx())
@@ -343,7 +354,7 @@ class AtomSignature:
             fragmented_mol = Chem.FragmentOnBonds(
                 mol,
                 bonds,
-                addDummies=True,
+                addDummies=True if boundary_bonds else False,
                 dummyLabels=[(0, 0) for _ in bonds],  # Do not label the dummies
             )
         else:  # No bonds to cut
@@ -382,13 +393,21 @@ class AtomSignature:
                 atom_to_smarts(
                     atom=_atom,
                     atom_map=1 if _atom.GetIdx() == atom_in_frag_index and map_root else 0,
+            # Build the SMARTS
+            _atoms_to_use = list(range(fragment.GetNumAtoms()))
+            _atoms_symbols = [atom.GetProp("atom_symbol") for atom in fragment.GetAtoms()]
+
+            # Set a canonical atom mapping
+            if fragment.NeedsUpdatePropertyCache():
+                fragment.UpdatePropertyCache(strict=False)
+            canonical_map_fragment(fragment, _atoms_to_use, _atoms_symbols)
                 )
                 for _atom in fragment.GetAtoms()
             ]
             smarts = Chem.MolFragmentToSmiles(
                 fragment,
                 atomsToUse=_atoms_to_use,
-                atomSymbols=_atom_symbols,
+                atomSymbols=_atoms_symbols,
                 isomericSmiles=kwargs.get("isomericSmiles", True),
                 allBondsExplicit=kwargs.get("allBondsExplicit", True),
                 allHsExplicit=kwargs.get("allHsExplicit", False),
