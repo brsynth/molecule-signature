@@ -380,9 +380,38 @@ class AtomSignature:
             if fragment.NeedsUpdatePropertyCache():
                 fragment.UpdatePropertyCache(strict=False)
             canonical_map_fragment(fragment, _atoms_to_use, _atoms_symbols)
+
+            # Rebuild the fragment using the computed atom symbols
+            _fragment = Chem.RWMol(fragment)
+            for _atom_idx in range(_fragment.GetNumAtoms()):
+                _atom = _fragment.GetAtomWithIdx(_atom_idx)
+                _atom_symbol = _atom.GetProp("atom_symbol")
+                _fragment.ReplaceAtom(
+                    _atom_idx,
+                    Chem.AtomFromSmarts(_atom_symbol),
+                    updateLabel=False,
+                    preserveProps=False,
                 )
-                for _atom in fragment.GetAtoms()
-            ]
+                _fragment.GetAtomWithIdx(_atom_idx).SetProp("atom_symbol", _atom_symbol)  # Restore the atom symbol
+            fragment = _fragment.GetMol()
+
+            if fragment.NeedsUpdatePropertyCache():
+                fragment.UpdatePropertyCache(strict=False)
+
+            # DEBUG
+            for idx in range(fragment.GetNumAtoms()):
+                _atom = fragment.GetAtomWithIdx(idx)
+                logging.debug(
+                    f"idx: {_atom.GetIdx():2}",
+                    f"symbol: {_atom.GetSymbol():2}",
+                    f"map: {_atom.GetAtomMapNum():2}",
+                    f"degree: {_atom.GetDegree():1}",
+                    f"connec: {_atom.GetTotalDegree():1}",
+                    f"arom: {_atom.GetIsAromatic():1}",
+                    f"smarts: {_atom.GetSmarts():20}",
+                    f"stored smarts: {_atom.GetProp("atom_symbol"):20}",
+                )
+
             smarts = Chem.MolFragmentToSmiles(
                 fragment,
                 atomsToUse=_atoms_to_use,
