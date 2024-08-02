@@ -388,10 +388,7 @@ def partitions_on_non_constant(v, target_sum, max_nbr_partition_non_constant=int
 
     partitions_3 = []
     for sol in partitions_2:
-        sol2 = []
-        for i in range(len(v)):
-            sol2.append(sol[sum(v[:i])])
-        partitions_3.append(sol2)
+        partitions_3.append([sol[sum(v[:i])] for i in range(len(v))])
 
     return partitions_3, bool_timeout_loc
 
