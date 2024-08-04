@@ -455,7 +455,7 @@ def signature_sorted_array(sig, Alphabet=None, unique=False, verbose=False):
 
     if Alphabet is not None:
         sig = signature_vector_to_string(sigV, Alphabet.Dict, verbose=verbose)
-    LAS = sig.split(" ")
+    LAS = sig.split(" .. ")
     LAS.sort()
     AS = list(set(LAS)) if unique else LAS
     AS.sort()
