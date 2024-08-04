@@ -144,8 +144,8 @@ class MolecularGraph:
 
         ai = int(i / self.K)
         sai, iai = self.SA[ai], i % self.K
-        nai = sai.split(".")[iai + 1]  # the right neighbor
-        return str(nai.split("|")[0])
+        nai = sai.split(" && ")[iai + 1]  # the right neighbor
+        return str(nai.split(" <> ")[0])
 
     def get_component(self, ai, cc):
         """
@@ -553,15 +553,10 @@ def enumerate_molecule_from_signature(
     S = S[: int(max_nbr_solution / 10)]
     for smi in S:
         mol = Chem.MolFromSmiles(smi)
-        ms = MoleculeSignature(
-            mol,
-            radius=Alphabet.radius,
-            use_smarts=Alphabet.use_smarts,
-            nbits=False,
-            boundary_bonds=Alphabet.boundary_bonds,
-            map_root=True,
-        )
-        sigsmi = ms.as_deprecated_string(morgan=False, root=False, neighbors=True)
+        ms = MoleculeSignature(mol, radius=Alphabet.radius, use_smarts=Alphabet.use_smarts, nbits=0, boundary_bonds=Alphabet.boundary_bonds, map_root=True)
+        ms.post_compute_neighbors()
+        sigsmi = sorted([atom.to_string(neighbors=True) for atom in ms.atoms])
+        sigsmi = " .. ".join(sigsmi)
         if sigsmi == sig:
             SMIsig.add(smi)
     if verbose:
@@ -598,7 +593,7 @@ def signature_set(AS, occ):
             for count in range(v[i]):
                 s.append(AS[i])
         s = sorted(s)
-        s2 = " ".join(s)
+        s2 = " .. ".join(s)
         sol.append(s2)
     return sol
 
