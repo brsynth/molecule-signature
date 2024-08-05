@@ -427,13 +427,13 @@ def signature_vector_to_string(sigV, Dict, verbose=False):
     return signature_sorted_string(sig, verbose=verbose)
 
 
-def signature_sorted_array(sig, Alphabet=None, unique=False, verbose=False):
+def signature_sorted_array(LAS, Alphabet=None, unique=False, verbose=False):
     """
     Convert a signature into a sorted array of atom signatures along with occurrence numbers and degrees.
 
     Parameters
     ----------
-    sig : str
+    LAS : str
         A signature string.
     Alphabet : SignatureAlphabet, optional
         A SignatureAlphabet object. If provided, the signature is converted to a string using the dictionary
@@ -454,8 +454,7 @@ def signature_sorted_array(sig, Alphabet=None, unique=False, verbose=False):
     """
 
     if Alphabet is not None:
-        sig = signature_vector_to_string(sigV, Alphabet.Dict, verbose=verbose)
-    LAS = sig.split(" .. ")
+        LAS = signature_vector_to_string(sigV, Alphabet.Dict, verbose=verbose)
     LAS.sort()
     AS = list(set(LAS)) if unique else LAS
     AS.sort()
