@@ -556,7 +556,6 @@ def enumerate_molecule_from_signature(
         ms = MoleculeSignature(mol, radius=Alphabet.radius, use_smarts=Alphabet.use_smarts, nbits=0, boundary_bonds=Alphabet.boundary_bonds, map_root=True)
         ms.post_compute_neighbors()
         sigsmi = sorted([atom.to_string(neighbors=True) for atom in ms.atoms])
-        sigsmi = " .. ".join(sigsmi)
         if sigsmi == sig:
             SMIsig.add(smi)
     if verbose:
@@ -592,9 +591,7 @@ def signature_set(AS, occ):
         for i in range(len(v)):
             for count in range(v[i]):
                 s.append(AS[i])
-        s = sorted(s)
-        s2 = " .. ".join(s)
-        sol.append(s2)
+        sol.append(sorted(s))
     return sol
 
 
