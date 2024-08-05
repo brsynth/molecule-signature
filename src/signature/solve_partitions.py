@@ -280,7 +280,7 @@ def update_C(C, nb_col, graph=False):
         return C, parity_indices
 
 
-def restrict_sol_by_C(S, C, i, parity_indices):
+def restrict_sol_by_one_line_of_C(S, C, i, parity_indices):
     """
     Restrict the solution set S based on constraints defined by a row in matrix C.
 
@@ -314,6 +314,63 @@ def restrict_sol_by_C(S, C, i, parity_indices):
         indices_tmp = np.where(blas.dgemm(alpha=1.0, a=S, b=np.transpose(C[i, :])) == 0)[0]
     S = [S[ind] for ind in indices_tmp]
     return S
+
+
+def restrict_sol_by_C(S, part_P, C, parity_indices, partitions_involved_for_C, lines_of_C_already_satisfied, verbose=False):
+    """
+    Restrict the solution set by applying constraints based on specific partitions.
+
+    This function filters the solution set `S` by applying constraints defined in `C`. It focuses on 
+    partitions involved in `partitions_involved_for_C` and checks their presence in `part_P`. The 
+    solution set is updated by restricting it according to these partitions, and the indices of the 
+    constraints that have been satisfied are tracked.
+
+    Parameters
+    ----------
+    S : list
+        The current solution set that needs to be restricted.
+    part_P : tuple
+        The partition of the solution set that will be checked against the constraints.
+    C : list
+        A list of constraints to be applied to the solution set.
+    parity_indices : list
+        A list of indices indicating the positions of parity checks.
+    partitions_involved_for_C : dict
+        A dictionary where keys are partition indices and values are tuples representing the partitions 
+        involved in the constraints.
+    lines_of_C_already_satisfied : list
+        A list of constraint line indices that have already been satisfied.
+    verbose : bool, optional
+        If True, the function will print verbose output for debugging purposes. Default is False.
+
+    Returns
+    -------
+    tuple
+        - S (list): The updated solution set after applying the constraints.
+        - lines_of_C_already_satisfied (list): The updated list of constraint line indices that have been satisfied.
+    """
+
+    all_part_C_to_restrict_on = {}
+    for j in partitions_involved_for_C:
+        part_C = partitions_involved_for_C[j]
+        if all(item in part_P for item in part_C):
+            all_part_C_to_restrict_on[j] = part_C
+    all_part_C_to_restrict_on_sorted = dict(sorted(all_part_C_to_restrict_on.items(), key=lambda item: len(item[1]), reverse=True))
+    for j in all_part_C_to_restrict_on_sorted:
+        part_C = partitions_involved_for_C[j]
+        if verbose:
+            print("Restriction of the local sol of P with part", part_P, "with the C part", part_C)
+            print("Bef rest", len(S))
+        S = restrict_sol_by_one_line_of_C(S, C, j, parity_indices)
+        if len(S) == 0:
+            return [], lines_of_C_already_satisfied
+        if verbose:
+            print("Aft rest", len(S))
+        if part_P == part_C:
+            if verbose:
+                print("Suppression of the C line", j)
+            lines_of_C_already_satisfied.append(j)
+    return S, lines_of_C_already_satisfied
 
 
 def partitions_on_non_constant(v, target_sum, max_nbr_partition_non_constant=int(1e3)):
@@ -526,30 +583,23 @@ def solution_of_one_group(
         )
         if verbose:
             print("Merged sol", len(merged_sol), "max possible was", d_prod_len[min_key])
-        del dict_sols_per_eq[min_key[0]]
-        del dict_sols_per_eq[min_key[1]]
         if len(merged_sol) == 0:
             return [], []
         # We restrict the solutions to C when it is possible if merged part is new
         if merged_parts in dict_sols_per_eq:
-            dict_sols_per_eq[merged_parts] = intersection_of_solutions(
-                dict_sols_per_eq[merged_parts], merged_sol, test_compatibility=True
-                )
+            if merged_parts not in min_key:
+                merged_sol = intersection_of_solutions(
+                    dict_sols_per_eq[merged_parts], merged_sol, test_compatibility=True
+                    )
         else:
-            for j in partitions_involved_for_C:
-                part_C = partitions_involved_for_C[j]
-                if all(item in merged_parts for item in part_C):
-                    if verbose:
-                        print("Restriction of the local sol of P with part", merged_parts, "with the C part", part_C)
-                        print("Bef rest", len(merged_sol))
-                    merged_sol = restrict_sol_by_C(merged_sol, C, j, parity_indices)
-                    if len(merged_sol) == 0:
-                        return [], []
-                    if verbose:
-                        print("Aft rest", len(merged_sol))
-                    if merged_parts == part_C:
-                        lines_of_C_already_satisfied.append(j)
-            dict_sols_per_eq[merged_parts] = merged_sol
+            merged_sol, lines_of_C_already_satisfied = restrict_sol_by_C(
+                merged_sol, merged_parts, C, parity_indices, partitions_involved_for_C, lines_of_C_already_satisfied, verbose=verbose
+                )
+        if len(merged_sol) == 0:
+            return [], lines_of_C_already_satisfied
+        del dict_sols_per_eq[min_key[0]]
+        del dict_sols_per_eq[min_key[1]]
+        dict_sols_per_eq[merged_parts] = merged_sol
     return dict_sols_per_eq[list(dict_sols_per_eq.keys())[0]], lines_of_C_already_satisfied
 
 
@@ -643,26 +693,9 @@ def solutions_of_P(
         # We complete the solutions with -1 for all zeros in the line
         local_sols = [partition_to_local_sol(part, part_line_of_P, nb_col) for part in All_parts_morgan_in_k2]
         # We restrict the solutions to C when it is possible
-        all_part_C_to_restrict_on = {}
-        for j in partitions_involved_for_C:
-            part_C = partitions_involved_for_C[j]
-            if all(item in part_line_of_P for item in part_C):
-                all_part_C_to_restrict_on[j] = part_C
-        all_part_C_to_restrict_on_sorted = dict(sorted(all_part_C_to_restrict_on.items(), key=lambda item: len(item[1]), reverse=False))
-        for j in all_part_C_to_restrict_on_sorted:
-            part_C = partitions_involved_for_C[j]
-            if verbose:
-                print("Restriction of the local sol of P with part", part_line_of_P, "with the C part", part_C)
-                print("Bef rest", len(local_sols))
-            local_sols = restrict_sol_by_C(local_sols, C, j, parity_indices)
-            if len(local_sols) == 0:
-                return [], lines_of_C_already_satisfied, bool_timeout
-            if verbose:
-                print("Aft rest", len(local_sols))
-            if part_line_of_P == part_C:
-                if verbose:
-                    print("Suppression of the C line", j)
-                lines_of_C_already_satisfied.append(j)
+        local_sols, lines_of_C_already_satisfied = restrict_sol_by_C(local_sols, part_line_of_P, C, parity_indices, partitions_involved_for_C, lines_of_C_already_satisfied, verbose=verbose)
+        if len(local_sols) == 0:
+            return [], lines_of_C_already_satisfied, bool_timeout
         # We add the solutions of this line to the dictionary of solutions
         if part_line_of_P in dict_sols:
             dict_sols[part_line_of_P] = intersection_of_solutions(
@@ -782,7 +815,7 @@ def solve_by_partitions(P, morgan, C, max_nbr_partition=int(1e5), verbose=False)
         )
     for i in range(C.shape[0]):
         if i not in lines_of_C_already_satisfied:
-            S = restrict_sol_by_C(S, C, i, parity_indices)
+            S = restrict_sol_by_one_line_of_C(S, C, i, parity_indices)
             if len(S) == 0:
                 return [], bool_timeout
     if verbose:
