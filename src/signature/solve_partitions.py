@@ -530,20 +530,25 @@ def solution_of_one_group(
         del dict_sols_per_eq[min_key[1]]
         if len(merged_sol) == 0:
             return [], []
-        # We restrict the solutions to C when it is possible
-        for j in partitions_involved_for_C:
-            part_C = partitions_involved_for_C[j]
-            if all(item in merged_parts for item in part_C):
-                merged_sol = restrict_sol_by_C(merged_sol, C, j, parity_indices)
-                if len(merged_sol) == 0:
-                    return [], []
-                if merged_parts == part_C:
-                    lines_of_C_already_satisfied.append(j)
+        # We restrict the solutions to C when it is possible if merged part is new
         if merged_parts in dict_sols_per_eq:
             dict_sols_per_eq[merged_parts] = intersection_of_solutions(
                 dict_sols_per_eq[merged_parts], merged_sol, test_compatibility=True
                 )
         else:
+            for j in partitions_involved_for_C:
+                part_C = partitions_involved_for_C[j]
+                if all(item in merged_parts for item in part_C):
+                    if verbose:
+                        print("Restriction of the local sol of P with part", merged_parts, "with the C part", part_C)
+                        print("Bef rest", len(merged_sol))
+                    merged_sol = restrict_sol_by_C(merged_sol, C, j, parity_indices)
+                    if len(merged_sol) == 0:
+                        return [], []
+                    if verbose:
+                        print("Aft rest", len(merged_sol))
+                    if merged_parts == part_C:
+                        lines_of_C_already_satisfied.append(j)
             dict_sols_per_eq[merged_parts] = merged_sol
     return dict_sols_per_eq[list(dict_sols_per_eq.keys())[0]], lines_of_C_already_satisfied
 
@@ -638,21 +643,26 @@ def solutions_of_P(
         # We complete the solutions with -1 for all zeros in the line
         local_sols = [partition_to_local_sol(part, part_line_of_P, nb_col) for part in All_parts_morgan_in_k2]
         # We restrict the solutions to C when it is possible
+        all_part_C_to_restrict_on = {}
         for j in partitions_involved_for_C:
             part_C = partitions_involved_for_C[j]
             if all(item in part_line_of_P for item in part_C):
+                all_part_C_to_restrict_on[j] = part_C
+        all_part_C_to_restrict_on_sorted = dict(sorted(all_part_C_to_restrict_on.items(), key=lambda item: len(item[1]), reverse=False))
+        for j in all_part_C_to_restrict_on_sorted:
+            part_C = partitions_involved_for_C[j]
+            if verbose:
+                print("Restriction of the local sol of P with part", part_line_of_P, "with the C part", part_C)
+                print("Bef rest", len(local_sols))
+            local_sols = restrict_sol_by_C(local_sols, C, j, parity_indices)
+            if len(local_sols) == 0:
+                return [], lines_of_C_already_satisfied, bool_timeout
+            if verbose:
+                print("Aft rest", len(local_sols))
+            if part_line_of_P == part_C:
                 if verbose:
-                    print("Restriction of the local sol of P with part", part_line_of_P, "with the C part", part_C)
-                    print("Bef rest", len(local_sols))
-                local_sols = restrict_sol_by_C(local_sols, C, j, parity_indices)
-                if len(local_sols) == 0:
-                    return [], lines_of_C_already_satisfied, bool_timeout
-                if verbose:
-                    print("Aft rest", len(local_sols))
-                if part_line_of_P == part_C:
-                    if verbose:
-                        print("Suppression of the C line", j)
-                    lines_of_C_already_satisfied.append(j)
+                    print("Suppression of the C line", j)
+                lines_of_C_already_satisfied.append(j)
         # We add the solutions of this line to the dictionary of solutions
         if part_line_of_P in dict_sols:
             dict_sols[part_line_of_P] = intersection_of_solutions(
