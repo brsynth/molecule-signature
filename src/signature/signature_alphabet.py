@@ -740,13 +740,12 @@ def sanitize_molecule(
             if verbose:
                 print("WARNING SANITIZATION: molecule cannot be kekularized")
             return None, ""
-    if 1 == 0:
-        try:
-            mol = Chem.RemoveHs(mol)
-        except Exception:
-            if verbose:
-                print("WARNING SANITIZATION: hydrogen cannot be removed)")
-            return None, ""
+    try:
+        mol = Chem.RemoveHs(mol)
+    except Exception:
+        if verbose:
+            print("WARNING SANITIZATION: hydrogen cannot be removed)")
+        return None, ""
     if allHsExplicit:
         try:
             mol = Chem.rdmolops.AddHs(mol)
