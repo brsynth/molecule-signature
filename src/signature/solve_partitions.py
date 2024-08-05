@@ -316,13 +316,15 @@ def restrict_sol_by_one_line_of_C(S, C, i, parity_indices):
     return S
 
 
-def restrict_sol_by_C(S, part_P, C, parity_indices, partitions_involved_for_C, lines_of_C_already_satisfied, verbose=False):
+def restrict_sol_by_C(
+    S, part_P, C, parity_indices, partitions_involved_for_C, lines_of_C_already_satisfied, verbose=False
+):
     """
     Restrict the solution set by applying constraints based on specific partitions.
 
-    This function filters the solution set `S` by applying constraints defined in `C`. It focuses on 
-    partitions involved in `partitions_involved_for_C` and checks their presence in `part_P`. The 
-    solution set is updated by restricting it according to these partitions, and the indices of the 
+    This function filters the solution set `S` by applying constraints defined in `C`. It focuses on
+    partitions involved in `partitions_involved_for_C` and checks their presence in `part_P`. The
+    solution set is updated by restricting it according to these partitions, and the indices of the
     constraints that have been satisfied are tracked.
 
     Parameters
@@ -336,7 +338,7 @@ def restrict_sol_by_C(S, part_P, C, parity_indices, partitions_involved_for_C, l
     parity_indices : list
         A list of indices indicating the positions of parity checks.
     partitions_involved_for_C : dict
-        A dictionary where keys are partition indices and values are tuples representing the partitions 
+        A dictionary where keys are partition indices and values are tuples representing the partitions
         involved in the constraints.
     lines_of_C_already_satisfied : list
         A list of constraint line indices that have already been satisfied.
@@ -355,7 +357,9 @@ def restrict_sol_by_C(S, part_P, C, parity_indices, partitions_involved_for_C, l
         part_C = partitions_involved_for_C[j]
         if all(item in part_P for item in part_C):
             all_part_C_to_restrict_on[j] = part_C
-    all_part_C_to_restrict_on_sorted = dict(sorted(all_part_C_to_restrict_on.items(), key=lambda item: len(item[1]), reverse=True))
+    all_part_C_to_restrict_on_sorted = dict(
+        sorted(all_part_C_to_restrict_on.items(), key=lambda item: len(item[1]), reverse=True)
+    )
     for j in all_part_C_to_restrict_on_sorted:
         part_C = partitions_involved_for_C[j]
         if verbose:
@@ -560,9 +564,9 @@ def solution_of_one_group(
                 tup = (part_i, part_j)
                 if len(set.intersection(set(part_i), set(part_j))) > 0:
                     d_prod_len[tup] = len(dict_sols_per_eq[part_i]) * len(dict_sols_per_eq[part_j])
-        
+
         # Step 1: Find the minimum value and keys with this value in a single pass
-        min_value = float('inf')
+        min_value = float("inf")
         min_keys = []
         for key, value in d_prod_len.items():
             if value < min_value:
@@ -590,11 +594,17 @@ def solution_of_one_group(
             if merged_parts not in min_key:
                 merged_sol = intersection_of_solutions(
                     dict_sols_per_eq[merged_parts], merged_sol, test_compatibility=True
-                    )
+                )
         else:
             merged_sol, lines_of_C_already_satisfied = restrict_sol_by_C(
-                merged_sol, merged_parts, C, parity_indices, partitions_involved_for_C, lines_of_C_already_satisfied, verbose=verbose
-                )
+                merged_sol,
+                merged_parts,
+                C,
+                parity_indices,
+                partitions_involved_for_C,
+                lines_of_C_already_satisfied,
+                verbose=verbose,
+            )
         if len(merged_sol) == 0:
             return [], lines_of_C_already_satisfied
         del dict_sols_per_eq[min_key[0]]
@@ -693,7 +703,15 @@ def solutions_of_P(
         # We complete the solutions with -1 for all zeros in the line
         local_sols = [partition_to_local_sol(part, part_line_of_P, nb_col) for part in All_parts_morgan_in_k2]
         # We restrict the solutions to C when it is possible
-        local_sols, lines_of_C_already_satisfied = restrict_sol_by_C(local_sols, part_line_of_P, C, parity_indices, partitions_involved_for_C, lines_of_C_already_satisfied, verbose=verbose)
+        local_sols, lines_of_C_already_satisfied = restrict_sol_by_C(
+            local_sols,
+            part_line_of_P,
+            C,
+            parity_indices,
+            partitions_involved_for_C,
+            lines_of_C_already_satisfied,
+            verbose=verbose,
+        )
         if len(local_sols) == 0:
             return [], lines_of_C_already_satisfied, bool_timeout
         # We add the solutions of this line to the dictionary of solutions
