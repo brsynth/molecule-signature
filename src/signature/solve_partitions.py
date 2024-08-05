@@ -518,7 +518,7 @@ def solution_of_one_group(
         # Step 3: Find the key with the minimum value in d_tmp
         min_key = min(d_tmp, key=d_tmp.get)
 
-        merged_parts = tuple(dict.fromkeys(min_key[0] + min_key[1]))        
+        merged_parts = tuple(sorted(set(dict.fromkeys(min_key[0] + min_key[1]))))
         if verbose:
             print("Intersection", min_key, "merged part", merged_parts)
         merged_sol = intersection_of_solutions(
