@@ -341,8 +341,8 @@ def restrict_sol_by_C(
     partitions_involved_for_C : dict
         A dictionary where keys are partition indices and values are tuples representing the partitions
         involved in the constraints.
-    lines_of_C_already_satisfied : list
-        A list of constraint line indices that have already been satisfied.
+    lines_of_C_already_satisfied : set
+        A set of constraint line indices that have already been satisfied.
     verbose : bool, optional
         If True, the function will print verbose output for debugging purposes. Default is False.
 
@@ -350,7 +350,7 @@ def restrict_sol_by_C(
     -------
     tuple
         - S (list): The updated solution set after applying the constraints.
-        - lines_of_C_already_satisfied (list): The updated list of constraint line indices that have been satisfied.
+        - lines_of_C_already_satisfied (set): The updated set of constraint line indices that have been satisfied.
     """
 
     all_part_C_to_restrict_on = {}
@@ -369,12 +369,10 @@ def restrict_sol_by_C(
         S = restrict_sol_by_one_line_of_C(S, C, j, parity_indices)
         if len(S) == 0:
             return [], lines_of_C_already_satisfied
-        if verbose:
-            print("Aft rest", len(S))
         if part_P == part_C:
             if verbose:
-                print("Suppression of the C line", j)
-            lines_of_C_already_satisfied.append(j)
+                print("Aft rest", len(S))
+            lines_of_C_already_satisfied.add(j)
     return S, lines_of_C_already_satisfied
 
 
@@ -544,8 +542,8 @@ def solution_of_one_group(
         Indices of partitions involved in matrix `C`.
     parity_indices : list of int
         Indices indicating which rows in `C` correspond to parity constraints.
-    lines_of_C_already_satisfied : list of int
-        A list of line indices in `C` that have already been satisfied by previous groups of solutions.
+    lines_of_C_already_satisfied : set of int
+        A set of line indices in `C` that have already been satisfied by previous groups of solutions.
     verbose : bool, optional
         If True, print detailed information about the merging and filtering process. Default is False.
 
@@ -646,8 +644,8 @@ def solutions_of_P(
         Indices indicating which rows in `C` correspond to parity constraints.
     partitions_involved_for_C : list of list of int
         A list where each element is a list of indices involved in a specific row of `C`.
-    lines_of_C_already_satisfied : list of int
-        A list of line indices in `C` that have already been satisfied by previous computations.
+    lines_of_C_already_satisfied : set of int
+        A set of line indices in `C` that have already been satisfied by previous computations.
     max_nbr_partition : int, optional
         The maximum number of partitions to generate, default is 100,000.
     verbose : bool, optional
@@ -658,7 +656,7 @@ def solutions_of_P(
     tuple
         - dict_sols (dict): A dictionary where keys are tuples representing partitions, and values
           are lists of possible solutions for each partition.
-        - lines_of_C_already_satisfied (list of int): Updated list of line indices in `C` that are satisfied.
+        - lines_of_C_already_satisfied (set of int): Updated list of line indices in `C` that are satisfied.
         - bool_timeout: A flag indicating if the partitioning process was truncated due to reaching `max_nbr_partition`.
     """
 
@@ -777,7 +775,7 @@ def solve_by_partitions(P, morgan, C, max_nbr_partition=int(1e5), verbose=False)
         partitions_involved_for_C[i] = parts
     if verbose:
         print("Partitions involved for C:", list(partitions_involved_for_C.values()))
-    lines_of_C_already_satisfied = []
+    lines_of_C_already_satisfied = set()
     # We compute the solutions for each line of P
     dict_sols, lines_of_C_already_satisfied, bool_timeout = solutions_of_P(
         P,
