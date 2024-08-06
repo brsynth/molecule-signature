@@ -369,9 +369,9 @@ def restrict_sol_by_C(
         S = restrict_sol_by_one_line_of_C(S, C, j, parity_indices)
         if len(S) == 0:
             return [], lines_of_C_already_satisfied
+        if verbose:
+            print("Aft rest", len(S))
         if part_P == part_C:
-            if verbose:
-                print("Aft rest", len(S))
             lines_of_C_already_satisfied.add(j)
     return S, lines_of_C_already_satisfied
 
