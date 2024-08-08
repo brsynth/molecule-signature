@@ -15,13 +15,14 @@ import networkx as nx
 import numpy as np
 from collections import Counter
 from rdkit import Chem
-from signature.enumerate_utils import (atomic_num_charge,
-                                           get_constraint_matrices,
-                                           signature_bond_type,
-                                           update_constraint_matrices)
+from signature.enumerate_utils import (
+    atomic_num_charge,
+    get_constraint_matrices,
+    signature_bond_type,
+    update_constraint_matrices,
+)
 from signature.Signature import AtomSignature, MoleculeSignature
-from signature.signature_alphabet import (sanitize_molecule,
-                                              signature_vector_to_string)
+from signature.signature_alphabet import sanitize_molecule, signature_vector_to_string
 from signature.solve_partitions import solve_by_partitions
 
 ########################################################################################################################
@@ -554,7 +555,14 @@ def enumerate_molecule_from_signature(
     S = S[: int(max_nbr_solution / 10)]
     for smi in S:
         mol = Chem.MolFromSmiles(smi)
-        ms = MoleculeSignature(mol, radius=Alphabet.radius, use_smarts=Alphabet.use_smarts, nbits=0, boundary_bonds=Alphabet.boundary_bonds, map_root=True)
+        ms = MoleculeSignature(
+            mol,
+            radius=Alphabet.radius,
+            use_smarts=Alphabet.use_smarts,
+            nbits=0,
+            boundary_bonds=Alphabet.boundary_bonds,
+            map_root=True,
+        )
         ms.post_compute_neighbors()
         sigsmi = sorted([atom.to_string(neighbors=True) for atom in ms.atoms])
         if sigsmi == sig:
@@ -573,7 +581,7 @@ def is_counted_subset(sublist, mainlist):
     # Create Counters for both lists
     counter_sublist = Counter(sublist)
     counter_mainlist = Counter(mainlist)
-    
+
     # Check if each element in the sublist is in the mainlist with enough count
     for element, count in counter_sublist.items():
         if counter_mainlist[element] < count:
