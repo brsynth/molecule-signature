@@ -13,6 +13,7 @@ from itertools import chain, combinations
 
 import networkx as nx
 import numpy as np
+from collections import Counter
 from rdkit import Chem
 from signature.enumerate_utils import (atomic_num_charge,
                                            get_constraint_matrices,
@@ -568,6 +569,18 @@ def enumerate_molecule_from_signature(
 ########################################################################################################################
 
 
+def is_counted_subset(sublist, mainlist):
+    # Create Counters for both lists
+    counter_sublist = Counter(sublist)
+    counter_mainlist = Counter(mainlist)
+    
+    # Check if each element in the sublist is in the mainlist with enough count
+    for element, count in counter_sublist.items():
+        if counter_mainlist[element] < count:
+            return False
+    return True
+
+
 def signature_set(AS, occ):
     """
     Generate a set of signature strings based on the provided signature and occurrence arrays.
@@ -620,14 +633,15 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
         Time taken to solve the problem.
     """
 
-    morgan_indices = [i for i in range(len(morgan)) if morgan[i] != 0]
-    morgan_non_zero = [morgan[i] for i in morgan_indices]
+    morgan_indices = [i for i in range(len(morgan)) for _ in range(morgan[i]) if morgan[i] != 0]
+    morgan_indices_unique = list(set(morgan_indices))
+    morgan_non_zero = [morgan[i] for i in morgan_indices_unique]
     # Selection of the atomic signatures of the alphabet having morgan bits included in the morgan vector input
     AS, MIN, MAX, IDX, I = {}, {}, {}, {}, 0
     for sig in Alphabet.Dict.keys():
         mbits, sa = sig.split(" ## ")[0], sig.split(" ## ")[1]
         mbits = [int(x) for x in mbits.split("-")]
-        if set(mbits).issubset(morgan_indices):
+        if is_counted_subset(mbits, morgan_indices):
             mbit = mbits[-1]
             maxi = morgan[mbit]
             mini = 0 if len(sig) > 1 else maxi
@@ -650,11 +664,11 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
     if AS.shape[0] == 0:
         return [], False, 0
     # Creation of the diophantine system
-    P = np.zeros((len(morgan_indices), len(AS)), dtype=int)
+    P = np.zeros((len(morgan_indices_unique), len(AS)), dtype=int)
     for i in range(len(IDX)):
         mbits = IDX[i]
         for mbit in mbits:
-            mbit_index = morgan_indices.index(mbit)
+            mbit_index = morgan_indices_unique.index(mbit)
             P[mbit_index, i] += 1
     # Solving the diophantine system
     st = time.time()
