@@ -727,8 +727,8 @@ def is_vector_inferior_or_equal(vector1, vector2):
     """
     Check if each component of the first vector is less than or equal to the corresponding component of the second vector.
 
-    This function compares two vectors component-wise and returns `True` if every element in `vector1` 
-    is less than or equal to the corresponding element in `vector2`. If any element in `vector1` 
+    This function compares two vectors component-wise and returns `True` if every element in `vector1`
+    is less than or equal to the corresponding element in `vector2`. If any element in `vector1`
     is greater than the corresponding element in `vector2`, the function returns `False`.
 
     Parameters
@@ -752,24 +752,24 @@ def sol_max(P, morgan):
     """
     Compute the maximum possible solution for each column of matrix `P` based on the `morgan` values.
 
-    This function iterates over each column of the matrix `P` and determines the maximum possible value 
-    for that column by finding the minimum value in `morgan` corresponding to the non-zero elements of 
-    `P` in that column. The result is a list where each element corresponds to the maximum possible 
+    This function iterates over each column of the matrix `P` and determines the maximum possible value
+    for that column by finding the minimum value in `morgan` corresponding to the non-zero elements of
+    `P` in that column. The result is a list where each element corresponds to the maximum possible
     value for the respective column in `P`.
 
     Parameters
     ----------
     P : numpy.ndarray
-        A 2D array where each column represents a set of elements to be considered. Non-zero elements 
+        A 2D array where each column represents a set of elements to be considered. Non-zero elements
         in a column indicate the relevant rows in the matrix.
     morgan : list of int
-        A list of integers where each element corresponds to a row in matrix `P`. The values in `morgan` 
+        A list of integers where each element corresponds to a row in matrix `P`. The values in `morgan`
         are used to determine the maximum possible solution for each column in `P`.
 
     Returns
     -------
     list of int
-        A list where each element represents the maximum possible solution for the corresponding 
+        A list where each element represents the maximum possible solution for the corresponding
         column in `P`, determined by the minimum value of `morgan` among the non-zero elements in that column.
     """
 
@@ -785,23 +785,23 @@ def clean_solutions_by_sol_max(sol_max, dict_sols):
     """
     Filter solutions in a dictionary by comparing them against a maximum solution vector.
 
-    This function iterates through each key in `dict_sols` and filters the list of solutions associated 
-    with that key. Only those solutions that are component-wise less than or equal to the corresponding 
+    This function iterates through each key in `dict_sols` and filters the list of solutions associated
+    with that key. Only those solutions that are component-wise less than or equal to the corresponding
     components in `sol_max` are retained. The function returns the updated dictionary with filtered solutions.
 
     Parameters
     ----------
     sol_max : list of int
-        A list representing the maximum allowed values for each component of the solutions. 
+        A list representing the maximum allowed values for each component of the solutions.
         Solutions in `dict_sols` that exceed these values in any component are removed.
     dict_sols : dict
-        A dictionary where each key corresponds to a partition or identifier, and the value is a list 
+        A dictionary where each key corresponds to a partition or identifier, and the value is a list
         of possible solutions (each solution is a list or vector of integers).
 
     Returns
     -------
     dict
-        The input dictionary `dict_sols`, with the lists of solutions filtered so that only those 
+        The input dictionary `dict_sols`, with the lists of solutions filtered so that only those
         solutions that are component-wise less than or equal to `sol_max` remain.
     """
 
