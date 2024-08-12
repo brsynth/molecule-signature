@@ -712,7 +712,7 @@ def solutions_of_P(
             verbose=verbose,
         )
         if len(local_sols) == 0:
-            return [], lines_of_C_already_satisfied, bool_timeout
+            return {}, lines_of_C_already_satisfied, bool_timeout
         # We add the solutions of this line to the dictionary of solutions
         if part_line_of_P in dict_sols:
             dict_sols[part_line_of_P] = intersection_of_solutions(
@@ -874,6 +874,8 @@ def solve_by_partitions(P, morgan, C, max_nbr_partition=int(1e5), verbose=False)
         max_nbr_partition,
         verbose,
     )
+    if len(dict_sols) == 0:
+        return [], bool_timeout
     # We clean solutions using the maximum possible solution
     s_max = sol_max(P, morgan)
     dict_sols = clean_solutions_by_sol_max(s_max, dict_sols)
