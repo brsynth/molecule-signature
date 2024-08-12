@@ -847,6 +847,8 @@ def solve_by_partitions(P, morgan, C, max_nbr_partition=int(1e5), verbose=False)
         - bool_timeout (bool): A flag indicating whether a timeout occurred during partition generation.
     """
 
+    if max_nbr_partition <= 0:
+        return [], True
     if verbose:
         print(f"P {P.shape}, C {C.shape}, morgan {len(morgan)}")
     if verbose == 2:
