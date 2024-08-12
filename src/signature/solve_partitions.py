@@ -663,6 +663,7 @@ def solutions_of_P(
     nb_lin, nb_col = P.shape[0], P.shape[1]
     dict_sols = {}
     bool_timeout = False
+    local_bound = max(10, int(max_nbr_partition / 100))
     for i in range(nb_lin):
         local_time_out = False
         # For each line we compute all the partitions of the corresponding morgan bit
@@ -670,14 +671,14 @@ def solutions_of_P(
         counts = [P[i, j] for j in part_line_of_P]
         if len(set(counts)) != 1 or (morgan[i] / counts[0]).is_integer() == False:
             All_parts_morgan_in_k2, bool_timeout = partitions_on_non_constant(
-                counts, morgan[i], max_nbr_partition_non_constant=int(max_nbr_partition / 100)
+                counts, morgan[i], max_nbr_partition_non_constant=local_bound
             )
+            local_time_out = bool_timeout
         else:
             k = len(part_line_of_P)
             morgan_normed = int(morgan[i] / counts[0])
             All_parts_morgan_in_k = list(partitions(morgan_normed, k))
             All_parts_morgan_in_k2 = []
-            local_bound = int(max_nbr_partition / 100)
             if len(All_parts_morgan_in_k) > local_bound:
                 bool_timeout = True
                 local_time_out = True
@@ -697,8 +698,8 @@ def solutions_of_P(
                     All_parts_morgan_in_k2 = All_parts_morgan_in_k2 + list(
                         multiset_permutations(x + [0] * (k - len(x)))
                     )
-            if local_time_out and verbose:
-                print("T I M E O U T, part of P", part_line_of_P, "P values", counts, "morgan", morgan[i])
+        if local_time_out and verbose:
+            print("T I M E O U T, part of P", part_line_of_P, "P values", counts, "morgan", morgan[i])
         # We complete the solutions with -1 for all zeros in the line
         local_sols = [partition_to_local_sol(part, part_line_of_P, nb_col) for part in All_parts_morgan_in_k2]
         # We restrict the solutions to C when it is possible
