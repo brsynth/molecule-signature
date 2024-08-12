@@ -777,7 +777,7 @@ def sol_max(P, morgan):
     sol_max = []
     for i in range(P.shape[1]):
         indices_P_i = [j for j in range(len(list(P[:, i]))) if P[j, i] != 0]
-        min_morgan_i = min([morgan[j] for j in indices_P_i])
+        min_morgan_i = min([int(morgan[j] / P[j, i]) for j in indices_P_i])
         sol_max.append(min_morgan_i)
     return sol_max
 
