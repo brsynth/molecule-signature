@@ -302,7 +302,7 @@ def get_constraint_matrices(sig, unique=True, verbose=False):
     for i in range(N):
         A[i, i] = deg[i]
     # Get B (bond candidate matrix) and BS (bond signature)
-    B, BS = bond_matrices(AS, NAS, deg, unique=unique, verbose=verbose)
+    B, BS = bond_matrices(AS, NAS, deg, unique=True, verbose=verbose)
     # Get constraint matrices
     C = constraint_matrix(AS, BS, deg, verbose=verbose)
     if verbose:
