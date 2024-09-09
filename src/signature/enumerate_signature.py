@@ -345,11 +345,12 @@ class MolecularGraph:
             if verbose:
                 print(f"sol not saturated\nDiag: {Ad}\nBond: {Ab}")
             return True, set()
+        smi = self.smiles(verbose=verbose)
         if verbose == 2:
-            print(f"smi sol found at {self.nbr_recursion}")
+            print(f"smi sol found at {int(self.nbr_recursion)}: {smi}")
         # get the smiles
         enum_graph_dict[node_current][1] = True
-        return True, self.smiles(verbose=verbose)
+        return True, smi
 
 
 ########################################################################################################################
