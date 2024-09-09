@@ -688,4 +688,5 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
         return [], bool_timeout, ct_solve
     occ = occ[:, : AS.shape[0]]
     sol = signature_set(AS, occ)
+    sol = list(map(list, set(map(tuple, sol))))
     return sol, bool_timeout, ct_solve
