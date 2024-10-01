@@ -160,7 +160,7 @@ class AtomSignature:
     def neighbors(self) -> tuple:
         return self._neighbors
 
-    def to_string(self, neighbors=False) -> str:
+    def to_string(self, neighbors=False, morgans=True) -> str:
         """Return the signature as a string
 
         Returns
@@ -168,7 +168,7 @@ class AtomSignature:
         str
             The signature as a string
         """
-        if self.morgan is None:
+        if self.morgan is None or not morgans:
             _ = ""
         elif isinstance(self._morgan, int):
             _ = f"{self._morgan}{self._MORGAN_SEP}"
@@ -901,7 +901,7 @@ class MoleculeSignature:
     def morgans(self) -> list:
         return [atom.morgan for atom in self._atoms]
 
-    def to_list(self, neighbors=False) -> list:
+    def to_list(self, neighbors=False, morgans=True) -> list:
         """Return the signature as a list of features.
 
         If neighbors is False, the signature of the root atum at full radius is used. If neighbors is True,
@@ -918,9 +918,9 @@ class MoleculeSignature:
         list
             The signature as a list
         """
-        return [atom.to_string(neighbors=neighbors) for atom in self._atoms]
+        return [atom.to_string(neighbors=neighbors, morgans=morgans) for atom in self._atoms]
 
-    def to_string(self, neighbors=False) -> str:
+    def to_string(self, neighbors=False, morgans=True) -> str:
         """Return the signature as a string.
 
         If neighbors is False, the signature of the root atum at full radius is used. If neighbors is True,
@@ -937,7 +937,7 @@ class MoleculeSignature:
         str
             The signature as a string
         """
-        return self._ATOM_SEP.join(self.to_list(neighbors=neighbors))
+        return self._ATOM_SEP.join(self.to_list(neighbors=neighbors, morgans=morgans))
 
     @classmethod
     def from_list(cls, signatures: list) -> None:
