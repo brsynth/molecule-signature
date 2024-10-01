@@ -2,11 +2,47 @@
 
 ### Feat
 
+- **Signature**: add morgans argument for to_string methods
+- **solve_partitions**: clean solutions early by max values
+- **1.create_alphabets**: update with new sig form
+- **2.reverse_engineer**: update enum pipeline for sig without neigh and full ecfp
+- **enumerate_signature**: signature without neighbors and change of separators
+- **signature_alphabet**: change of separators
+- **solution_of_one_group**: new method to find a candidate min
+- **enumerate_signature**: alphabet without neighbors and change of separators
+- **enumerate_utils**: change of separators
+
+### Fix
+
+- **get_constraint_matrices**: using unique bond signatures is enough
+- **enumerate_signature_from_morgan**: different eq diophantine solutions can give the same signature
+- **sol_max**: smaller sol max when non constant partition
+- **solve_partitions**: negative max_nbr_partition
+- **partitions_on_non_constant**: bad local bound when small max_nbr_partition
+- **solve_partitions**: stop when empty dictionary
+- **enumerate_signature_from_morgan**: take account of the counted bits in fragments
+- **restrict_sol_by_C**: verbose badly placed
+- **solve_partitions**: bug on timeout flag
+
+### Refactor
+
+- **sol_max**: simplify computation of shape
+- **solve_partitions**: satisfied constraint lines save as set instead of list
+- **sanitize_molecule**: suppress unuseful comment
+- **signature_sorted_array**: change sig in string to list
+- **enumerate_signature**: change sig in string to list
+- **solve_partitions**: add a function to refactor the restriction on C
+- **solve_partitions**: restriction on C only when necessary
+- **solution_of_one_group**: ensure merged_parts is sorted
+- **partitions_on_non_constant**: shorter way to compute final partitions
+
+## 1.4.0 (2024-08-02)
+
+### Feat
+
 - **Signature**: function to set canonic aam for fragment
 - **Signature**: add function to extract features from a SMARTS
 - **Signature**: add function to extract features from a SMARTS
-- **solve_partitions**: new solving method for diophantine systems coming from full ecfp
-- **enumerate_signature**: reduced ecfp changed to full ecfp
 
 ### Fix
 
@@ -14,7 +50,6 @@
 - **AtomSignature**: stop trying to fix MolFromSmarts
 - **atom_to_smarts**: when possible direct extraction from SMARTS of query features
 - **MoleculeSignature**: vector of morgan bits
-- **enumerate_signature**: import correction
 
 ### Refactor
 
@@ -24,9 +59,16 @@
 
 ## 1.3.2 (2024-07-29)
 
+### Feat
+
+- **signature_alphabet**: alphabet without neighbors
+- **solve_partitions**: new solving method for diophantine systems coming from full ecfp
+- **enumerate_signature**: reduced ecfp changed to full ecfp
+
 ### Fix
 
 - **AtomSignature**: wrong radius for generation of neighbors
+- **enumerate_signature**: import correction
 
 ## 1.3.1 (2024-07-16)
 
