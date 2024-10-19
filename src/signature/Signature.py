@@ -1,10 +1,10 @@
 """This library compute signature on atoms and molecules using RDKit.
 
-Molecule signature: the signature of a molecule is composed of the signature of its atoms. Molecule signatures are
-implemented using MoleculeSignature objects.
+Molecule signature: the signature of a molecule is composed of the signature of
+its atoms. Molecule signatures are implemented using MoleculeSignature objects.
 
-Atom signature are represented by a rooted SMILES string (the root is the atom laleled 1). Atom signatures are
-implemented as AtomSignature objects.
+Atom signature are represented by a rooted SMILES string (the root is the atom
+laleled 1). Atom signatures are implemented as AtomSignature objects.
 
 Below are format examples for the oxygen atom in phenol with radius=2
   - Default (nbits=0)
@@ -14,8 +14,9 @@ Below are format examples for the oxygen atom in phenol with radius=2
     91,C:C(:C)[OH:1]
     91 is the Morgan bit of oxygen computed at radius 2
 
-Atom signature can also be computed using neighborhood. A signature neighbor (string) is the signature of the
-atom at radius followed but its signature at raduis-1 and the atom signatutre of its neighbor computed at radius-1
+Atom signature can also be computed using neighborhood. A signature neighbor
+(string) is the signature of the atom at radius followed but its signature at
+raduis-1 and the atom signatutre of its neighbor computed at radius-1
 
 Example:
 signature = C:C(:C)[OH:1]
@@ -40,9 +41,9 @@ from rdkit.Chem import rdFingerprintGenerator
 # Logging settings
 logger = logging.getLogger(__name__)
 
-# =====================================================================================================================
+# =================================================================================================
 # Atom Signature
-# =====================================================================================================================
+# =================================================================================================
 
 
 class AtomSignature:
@@ -160,7 +161,7 @@ class AtomSignature:
     def neighbors(self) -> tuple:
         return self._neighbors
 
-    def to_string(self, neighbors=False) -> str:
+    def to_string(self, neighbors=False, morgans=True) -> str:
         """Return the signature as a string
 
         Returns
@@ -168,7 +169,7 @@ class AtomSignature:
         str
             The signature as a string
         """
-        if self.morgan is None:
+        if self.morgan is None or not morgans:
             _ = ""
         elif isinstance(self._morgan, int):
             _ = f"{self._morgan}{self._MORGAN_SEP}"
@@ -178,7 +179,7 @@ class AtomSignature:
             raise NotImplementedError("Morgan bit must be an integer or a list of integers")
         if neighbors:
             _ += f"{self._root_minus}{self._NEIG_SEP}"
-            _ += self._NEIG_SEP.join([f"{bond}{self._BOND_SEP}{sig}" for bond, sig in self.neighbors])
+            _ += self._NEIG_SEP.join([f"{bond}{self._BOND_SEP}{sig}" for bond, sig in self.neighbors])  # noqa
         else:
             _ += self._root
         return _
@@ -518,9 +519,9 @@ class AtomSignature:
             radius - 1,
         )
 
-# =====================================================================================================================
+# =================================================================================================
 # Atom Signature Helper Functions
-# =====================================================================================================================
+# =================================================================================================
 
 
 def get_smarts_features(qatom: Chem.Atom, wish_list=None) -> dict:
@@ -720,9 +721,9 @@ def canonical_map_fragment(
             mol.GetAtomWithIdx(j).SetIntProp('molAtomMapNumber', i+1)
 
 
-# =====================================================================================================================
+# =================================================================================================
 # Molecule Signature
-# =====================================================================================================================
+# =================================================================================================
 
 
 class MoleculeSignature:
@@ -901,12 +902,12 @@ class MoleculeSignature:
     def morgans(self) -> list:
         return [atom.morgan for atom in self._atoms]
 
-    def to_list(self, neighbors=False) -> list:
+    def to_list(self, neighbors=False, morgans=True) -> list:
         """Return the signature as a list of features.
 
-        If neighbors is False, the signature of the root atum at full radius is used. If neighbors is True,
-        the signature of the root atom at radius - 1 is used, followed by the atom signature of the neighbors
-        at radius - 1.
+        If neighbors is False, the signature of the root atum at full radius is
+        used. If neighbors is True, the signature of the root atom at radius - 1
+        is used, followed by the atom signature of the neighbors at radius - 1.
 
         Parameters
         ----------
@@ -918,14 +919,14 @@ class MoleculeSignature:
         list
             The signature as a list
         """
-        return [atom.to_string(neighbors=neighbors) for atom in self._atoms]
+        return [atom.to_string(neighbors=neighbors, morgans=morgans) for atom in self._atoms]
 
-    def to_string(self, neighbors=False) -> str:
+    def to_string(self, neighbors=False, morgans=True) -> str:
         """Return the signature as a string.
 
-        If neighbors is False, the signature of the root atum at full radius is used. If neighbors is True,
-        the signature of the root atom at radius - 1 is used, followed by the atom signature of the neighbors
-        at radius - 1.
+        If neighbors is False, the signature of the root atum at full radius is
+        used. If neighbors is True, the signature of the root atom at radius - 1
+        is used, followed by the atom signature of the neighbors at radius - 1.
 
         Parameters
         ----------
@@ -937,7 +938,7 @@ class MoleculeSignature:
         str
             The signature as a string
         """
-        return self._ATOM_SEP.join(self.to_list(neighbors=neighbors))
+        return self._ATOM_SEP.join(self.to_list(neighbors=neighbors, morgans=morgans))
 
     @classmethod
     def from_list(cls, signatures: list) -> None:
@@ -986,9 +987,9 @@ class MoleculeSignature:
         [_atom.post_compute_neighbors(radius=radius) for _atom in self._atoms]
 
 
-# =====================================================================================================================
+# =================================================================================================
 # Overall helper functions
-# =====================================================================================================================
+# =================================================================================================
 
 
 def clean_kwargs(kwargs: dict) -> dict:
@@ -1030,7 +1031,7 @@ if __name__ == "__main__":
     mol = Chem.MolFromSmiles(smiles)
 
     # Compute the molecule signature
-    ms = MoleculeSignature(mol, radius=2, neighbor=True, use_smarts=False, boundary_bonds=True, nbits=2048)
+    ms = MoleculeSignature(mol, radius=2, neighbor=True, use_smarts=False, boundary_bonds=True, nbits=2048)  # noqa
 
     # Print the molecule signature
     print("Molecule signature ======================")
