@@ -356,6 +356,8 @@ def restrict_sol_by_C(
     all_part_C_to_restrict_on = {}
     for j in partitions_involved_for_C:
         part_C = partitions_involved_for_C[j]
+        if len(part_C) == 0:
+            continue
         if all(item in part_P for item in part_C):
             all_part_C_to_restrict_on[j] = part_C
     all_part_C_to_restrict_on_sorted = dict(
