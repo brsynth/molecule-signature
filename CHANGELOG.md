@@ -2,6 +2,17 @@
 
 ### Feat
 
+- **Signature**: append cis/trans bonds
+- **Signature**: append chiral tags
+
+### Fix
+
+- **Signature**: debug messages
+
+## 1.5.0 (2024-10-01)
+
+### Feat
+
 - **Signature**: add morgans argument for to_string methods
 - **solve_partitions**: clean solutions early by max values
 - **1.create_alphabets**: update with new sig form
@@ -14,6 +25,7 @@
 
 ### Fix
 
+- **solve_partitions**: part_C zero length
 - **get_constraint_matrices**: using unique bond signatures is enough
 - **enumerate_signature_from_morgan**: different eq diophantine solutions can give the same signature
 - **sol_max**: smaller sol max when non constant partition
