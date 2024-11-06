@@ -393,14 +393,14 @@ class AtomSignature:
             for idx in range(fragment.GetNumAtoms()):
                 _atom = fragment.GetAtomWithIdx(idx)
                 logging.debug(
-                    f"idx: {_atom.GetIdx():2}",
-                    f"symbol: {_atom.GetSymbol():2}",
-                    f"map: {_atom.GetAtomMapNum():2}",
-                    f"degree: {_atom.GetDegree():1}",
-                    f"connec: {_atom.GetTotalDegree():1}",
-                    f"arom: {_atom.GetIsAromatic():1}",
-                    f"smarts: {_atom.GetSmarts():20}",
-                    f"stored smarts: {_atom.GetProp('atom_symbol'):20}",
+                    f"idx: {_atom.GetIdx():2} "
+                    f"symbol: {_atom.GetSymbol():2} "
+                    f"map: {_atom.GetAtomMapNum():2} "
+                    f"degree: {_atom.GetDegree():1} "
+                    f"connec: {_atom.GetTotalDegree():1} "
+                    f"arom: {_atom.GetIsAromatic():1} "
+                    f"smarts: {_atom.GetSmarts():20} "
+                    f"stored smarts: {_atom.GetProp('atom_symbol'):20}"
                 )
 
             smarts = Chem.MolFragmentToSmiles(
