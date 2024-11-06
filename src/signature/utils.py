@@ -18,7 +18,7 @@ from rdkit.Chem import Descriptors
 ########################################################################################################################
 
 
-def mol_from_smiles(smiles: str, max_mw: int = 500, keep_stereo: bool = False) -> Chem.Mol:
+def mol_from_smiles(smiles: str, keep_stereo: bool = False) -> Chem.Mol:
     """Sanitize a molecule
 
     Parameters
