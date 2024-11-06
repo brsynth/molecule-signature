@@ -639,6 +639,7 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
         feats = get_smarts_features(atom)
         _number = feats.get("#", 0)
         _symbol = Chem.GetPeriodicTable().GetElementSymbol(_number)
+        _chirality = atom.GetChiralTag()
         _H_count = feats.get("H", 0)
         _connectivity = feats.get("X", 0)
         _degree = feats.get("D", 0)
@@ -646,6 +647,7 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
         # _is_aromatic = feats.get("a", 0)
     else:
         _symbol = atom.GetSymbol()
+        _chirality = atom.GetChiralTag()
         _H_count = atom.GetTotalNumHs()  # Total number of Hs, including implicit Hs
         _connectivity = atom.GetTotalDegree()  # Total number of connections, including H
         _degree = atom.GetDegree()  # Number of explicit connections, hence excluding H if Hs are implicits
@@ -661,6 +663,10 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
         _symbol = _symbol.lower()
     elif atom.GetAtomicNum() == 1:
         _symbol = "#1"  # otherwise, H is not recognized
+    if _chirality == Chem.ChiralType.CHI_TETRAHEDRAL_CW:
+        _symbol = f"{_symbol}@"
+    elif _chirality == Chem.ChiralType.CHI_TETRAHEDRAL_CCW:
+        _symbol = f"{_symbol}@@"
 
     # Assemble the SMARTS
     smarts = f"[{_symbol}"
