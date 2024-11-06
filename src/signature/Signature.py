@@ -279,7 +279,7 @@ class AtomSignature:
         rooted_smiles: bool = False,
         **kwargs: dict,
     ) -> str:
-        """Generate a signature for an atom (development version)
+        """Generate a signature for an atom
 
         This function generates a signature for an atom based on its environment up to a given radius. The signature is
         either represented as a SMARTS string (smarts=True) or a SMILES string (smarts=False). The atom is labeled as 1.
