@@ -324,6 +324,12 @@ class AtomSignature:
         else:
             raise NotImplementedError("SMILES syntax not implemented yet.")
 
+        # Generate bond symbols
+        if use_smarts:
+            for _bond in mol.GetBonds():
+                _bond_symbol = bond_to_smarts(_bond)
+                _bond.SetProp("bond_symbol", _bond_symbol)
+
         # Get the bonds at the border of the radius
         bonds_radius = Chem.FindAtomEnvironmentOfRadiusN(mol, radius, atom.GetIdx())
         bonds_radius_plus = Chem.FindAtomEnvironmentOfRadiusN(mol, radius + 1, atom.GetIdx())
@@ -366,6 +372,7 @@ class AtomSignature:
             # Build the SMARTS
             _atoms_to_use = list(range(fragment.GetNumAtoms()))
             _atoms_symbols = [atom.GetProp("atom_symbol") for atom in fragment.GetAtoms()]
+            _bonds_symbols = [bond.GetProp("bond_symbol") for bond in fragment.GetBonds()]
 
             # Set a canonical atom mapping
             if fragment.NeedsUpdatePropertyCache():
@@ -407,6 +414,7 @@ class AtomSignature:
                 fragment,
                 atomsToUse=_atoms_to_use,
                 atomSymbols=_atoms_symbols,
+                bondSymbols=_bonds_symbols,
                 isomericSmiles=kwargs.get("isomericSmiles", True),
                 allBondsExplicit=kwargs.get("allBondsExplicit", True),
                 allHsExplicit=kwargs.get("allHsExplicit", False),
@@ -692,6 +700,36 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
     smarts += "]"
 
     return smarts
+
+
+def bond_to_smarts(bond: Chem.Bond) -> str:
+    """Generate a SMARTS string for a bond
+
+    Parameters
+    ----------
+    bond : Chem.Bond
+        The bond to generate the SMARTS for
+
+    Returns
+    -------
+    str
+        The SMARTS string
+    """
+    if bond.GetBondType() == Chem.BondType.AROMATIC:
+        return ":"
+    elif bond.GetBondType() == Chem.BondType.DOUBLE:
+        return "="
+    elif bond.GetBondType() == Chem.BondType.TRIPLE:
+        return "#"
+    elif bond.GetBondType() == Chem.BondType.SINGLE:
+        if bond.GetBondDir() == Chem.BondDir.ENDDOWNRIGHT:
+            return "/"
+        elif bond.GetBondDir() == Chem.BondDir.ENDUPRIGHT:
+            return "\\"
+        else:
+            return "-"
+    else:
+        return "?"
 
 
 def canonical_map_fragment(
