@@ -572,6 +572,45 @@ def enumeration(MG, index, enum_graph, enum_graph_dict, node_previous, j_current
     return sol
 
 
+def atomic_sig_to_smiles(sa):
+    """
+    Transform a single atom atomic signature into a smiles.
+
+    Parameters
+    ----------
+    sa : str
+        The atomic signature.
+
+    Returns
+    -------
+    simplified_smiles : str
+        SMILES string of the molecule.
+    """
+
+    sa_root = atom_sig_to_root(sa)
+    rdmol = Chem.Mol()
+    rdedmol = Chem.EditableMol(rdmol)
+    m = Chem.MolFromSmarts(sa_root)
+    for a in m.GetAtoms():
+        if a.GetAtomMapNum() == 1:
+            formal_charge_str = a.DescribeQuery().split("AtomFormalCharge")[-1].split(" ")[1]
+            if len(formal_charge_str) == 0:
+                formal_charge = 0
+            else:
+                formal_charge = int(formal_charge_str)
+    num = a.GetAtomicNum()
+    rdatom = Chem.Atom(num)
+    rdatom.SetFormalCharge(formal_charge)
+    h_value = get_h_x_d_value_regex(sa_root)[0] # explicit H
+    rdatom.SetNumExplicitHs(h_value)  # Ensure no explicit hydrogens
+    rdatom.SetNoImplicit(True)
+    rdedmol.AddAtom(rdatom)
+    mol = rdedmol.GetMol()
+    Chem.SanitizeMol(mol)
+    simplified_smiles = Chem.MolToSmiles(mol)
+    return simplified_smiles
+
+
 def enumerate_molecule_from_signature(
     sig,
     Alphabet,
@@ -615,6 +654,10 @@ def enumerate_molecule_from_signature(
     recursion_timeout = False
     # If we want to save the plot of the molecule in SVG
     plot_mol = False
+    # Handle signature coming from a single atom
+    if len(sig) == 1:
+        smi = atomic_sig_to_smiles(sig[0])
+        return [smi], False
     # initialization of the enumeration graph
     enum_graph = nx.DiGraph()
     enum_graph.add_node(0)
