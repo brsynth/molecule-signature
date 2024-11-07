@@ -497,7 +497,7 @@ class AtomSignature:
 
         return neighbors
 
-    def post_compute_neighbors(self, radius=2):
+    def post_compute_neighbors(self, radius: int = 2) -> None:
         """Compute the neighbors signature of the atom from the signature of the root atom
 
         Parameters
@@ -509,7 +509,11 @@ class AtomSignature:
         -------
         None
         """
-        # Get the corresponding molecule
+        # Always enable stereochemistry information for neighbors : if there is 
+        # stereo in the root it will be used, if not, it will be ignored.
+        _use_stereo = True
+
+        # Get molecule from the root signature
         mol = self.to_mol()
 
         # Get the root atom
@@ -522,12 +526,15 @@ class AtomSignature:
         self._root_minus = self.atom_signature(
             root_atom,
             radius - 1,
+            _use_stereo,
+
         )
 
         # Compute the neighbors signatures at radius - 1
         self._neighbors = self.atom_signature_neighbors(
             root_atom,
             radius - 1,
+            _use_stereo,
         )
 
 # =================================================================================================
@@ -794,6 +801,40 @@ def canonical_map_fragment(
             mol.GetAtomWithIdx(j).SetIntProp('molAtomMapNumber', i+1)
 
 
+def mol_has_stereo(mol: Chem.Mol) -> bool:
+    """Check if a molecule has stereochemistry information
+
+    Parameters
+    ----------
+    mol : Chem.Mol
+        The molecule to check for stereochemistry information.
+
+    Returns
+    -------
+    bool
+        Whether the molecule has stereochemistry information.
+    """
+    for atom in mol.GetAtoms():
+        _chiral_tag = atom.GetChiralTag()
+        match _chiral_tag:
+            case Chem.ChiralType.CHI_TETRAHEDRAL_CW:
+                return True
+            case Chem.ChiralType.CHI_TETRAHEDRAL_CCW:
+                return True
+            case _:
+                continue
+    for bond in mol.GetBonds():
+        _bond_dir = bond.GetBondDir()
+        match _bond_dir:
+            case Chem.BondDir.ENDDOWNRIGHT:
+                return True
+            case Chem.BondDir.ENDUPRIGHT:
+                return True
+            case _:
+                continue
+    return False
+
+
 # =================================================================================================
 # Molecule Signature
 # =================================================================================================
@@ -1031,7 +1072,7 @@ class MoleculeSignature:
         signatures = signature.split(cls._ATOM_SEP)
         return cls.from_list(signatures)
 
-    def post_compute_neighbors(self, radius=2):
+    def post_compute_neighbors(self, radius: int = 2) -> None:
         """Compute the neighbors signature of the atoms from the signature of the root atom
 
         Parameters
@@ -1045,7 +1086,7 @@ class MoleculeSignature:
         -------
         None
         """
-        [_atom.post_compute_neighbors(radius=radius) for _atom in self._atoms]
+        [_atom.post_compute_neighbors(radius) for _atom in self._atoms]
 
 
 # =================================================================================================
