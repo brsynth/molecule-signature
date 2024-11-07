@@ -8,6 +8,7 @@
 
 
 import copy
+import re
 import time
 from itertools import chain, combinations
 
@@ -125,6 +126,15 @@ class MolecularGraph:
                 print(sa)
             rdatom = Chem.Atom(num)
             rdatom.SetFormalCharge(int(charge))
+            # Get the root
+            sa_root = atom_sig_to_root(sa)
+            # Get explicit H, degree and valency values from the root
+            h_value, d_value, x_value = get_h_x_d_value_regex(sa_root)
+            implicit_hydrogens = x_value - (h_value + d_value) - int(charge)
+            # Set explicit and implicit hydrogens
+            rdatom.SetNumExplicitHs(h_value)
+            if implicit_hydrogens <= 0:
+                rdatom.SetNoImplicit(True)
             rdedmol.AddAtom(rdatom)
         self.mol = rdedmol
         self.imin, self.imax = 0, self.M
@@ -351,6 +361,58 @@ class MolecularGraph:
         # get the smiles
         enum_graph_dict[node_current][1] = True
         return True, smi
+
+
+def atom_sig_to_root(sa):
+    """
+    Extract the root of an atomic signature.
+
+    Parameters
+    ----------
+    sa : str
+        An atomic signature.
+
+    Returns
+    -------
+    str
+        Root of the atomic signature sa.
+    """
+
+    sa = sa.split(" && ")[0]
+    for x in sa.split("]"):
+        for y in x.split("["):
+            if ":1" in y:
+                root = "[" + y + "]"
+    return root
+
+
+def get_h_x_d_value_regex(sa):
+    """
+    Extract the explicit H, degree and valency values from the root.
+
+    Parameters
+    ----------
+    sa : str
+        An atomic signature.
+
+    Returns
+    -------
+    int
+        Explicit H.
+    int
+        Degree.
+    int
+        Valency.
+    """
+
+    # Use regex to find the pattern
+    match = re.search(r'H(\d+)', sa)
+    h_value = int(match.group(1))
+    match = re.search(r'X(\d+)', sa)
+    x_value = int(match.group(1))
+    match = re.search(r'D(\d+)', sa)
+    d_value = int(match.group(1))
+    return h_value, x_value, d_value
 
 
 ########################################################################################################################
