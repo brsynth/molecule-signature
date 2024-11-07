@@ -406,11 +406,11 @@ def get_h_x_d_value_regex(sa):
     """
 
     # Use regex to find the pattern
-    match = re.search(r'H(\d+)', sa)
+    match = re.search(r"H(\d+)", sa)
     h_value = int(match.group(1))
-    match = re.search(r'X(\d+)', sa)
+    match = re.search(r"X(\d+)", sa)
     x_value = int(match.group(1))
-    match = re.search(r'D(\d+)', sa)
+    match = re.search(r"D(\d+)", sa)
     d_value = int(match.group(1))
     return h_value, x_value, d_value
 
@@ -488,7 +488,9 @@ def save_mol_plot(mol, name):
     print(svg)  # This would display the raw SVG in a Jupyter environment or output
 
 
-def enumeration(MG, index, enum_graph, enum_graph_dict, node_previous, j_current, verbose=False, plot_mol=False, len_J=1):
+def enumeration(
+    MG, index, enum_graph, enum_graph_dict, node_previous, j_current, verbose=False, plot_mol=False, len_J=1
+):
     """
     Local function that build a requested number of molecules (in MG.max_nbr_solution) matching the matrices in the
     molecular graph MG.
@@ -513,7 +515,7 @@ def enumeration(MG, index, enum_graph, enum_graph_dict, node_previous, j_current
         If True, save the molecule in SVG at each reconstruction step. Defaults to False.
     len_J : int
         Length of the candidate bonds. Only used to know when to save the molecule in SVG. Defaults to 1.
-    
+
     Returns
     -------
     sol : list
@@ -521,7 +523,7 @@ def enumeration(MG, index, enum_graph, enum_graph_dict, node_previous, j_current
     """
 
     if plot_mol and len_J > 0:
-        mol_to_plot =  copy.deepcopy(MG.mol.GetMol())
+        mol_to_plot = copy.deepcopy(MG.mol.GetMol())
         for atom in mol_to_plot.GetAtoms():
             atom.SetNoImplicit(True)
         save_mol_plot(mol_to_plot, "test" + str(int(MG.nbr_recursion)))
@@ -546,7 +548,9 @@ def enumeration(MG, index, enum_graph, enum_graph_dict, node_previous, j_current
     # search all bonds that can be attached to i
     J = MG.candidate_bond(index)
     if len(J) == 0:
-        Sol2 = enumeration(MG, index + 1, enum_graph, enum_graph_dict, node_current, -1, verbose, plot_mol=plot_mol, len_J=0)
+        Sol2 = enumeration(
+            MG, index + 1, enum_graph, enum_graph_dict, node_current, -1, verbose, plot_mol=plot_mol, len_J=0
+        )
         tmp = []
         for node in [link[1] for link in enum_graph.edges(node_current)]:
             tmp.append(enum_graph_dict[node][1])
@@ -557,7 +561,9 @@ def enumeration(MG, index, enum_graph, enum_graph_dict, node_previous, j_current
     sol = set()
     for j in J:
         MG.add_bond(index, j)
-        sol2 = enumeration(MG, index + 1, enum_graph, enum_graph_dict, node_current, j, verbose=verbose, plot_mol=plot_mol, len_J=1)
+        sol2 = enumeration(
+            MG, index + 1, enum_graph, enum_graph_dict, node_current, j, verbose=verbose, plot_mol=plot_mol, len_J=1
+        )
         sol = sol | sol2
         if MG.nbr_recursion > MG.max_nbr_recursion:
             MG.recursion_timeout = True
@@ -601,7 +607,7 @@ def atomic_sig_to_smiles(sa):
     num = a.GetAtomicNum()
     rdatom = Chem.Atom(num)
     rdatom.SetFormalCharge(formal_charge)
-    h_value = get_h_x_d_value_regex(sa_root)[0] # explicit H
+    h_value = get_h_x_d_value_regex(sa_root)[0]  # explicit H
     rdatom.SetNumExplicitHs(h_value)  # Ensure no explicit hydrogens
     rdatom.SetNoImplicit(True)
     rdedmol.AddAtom(rdatom)
