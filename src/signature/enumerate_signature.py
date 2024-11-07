@@ -635,8 +635,6 @@ def enumerate_molecule_from_signature(
         Constant used in signature_enumerate. Defaults to 1e5.
     max_nbr_solution : float, optional
         Maximum number of solutions returned. Defaults to infinity.
-    nbr_component : int, optional
-        Number of connected components. Defaults to 1.
     repeat : int, optional
         Number of repetitions. Defaults to 1.
     verbose : bool, optional
