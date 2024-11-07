@@ -949,7 +949,7 @@ class MoleculeSignature:
     def to_list(self, neighbors=False, morgans=True) -> list:
         """Return the signature as a list of features.
 
-        If neighbors is False, the signature of the root atum at full radius is
+        If neighbors is False, the signature of the root atom at full radius is
         used. If neighbors is True, the signature of the root atom at radius - 1
         is used, followed by the atom signature of the neighbors at radius - 1.
 
