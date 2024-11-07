@@ -126,13 +126,13 @@ class AtomSignature:
         return _
 
     def __lt__(self, other) -> bool:
-        if self.morgans == other.morgan:
+        if self.morgans == other.morgans:
             if self.root == other.root:
                 if self.neighbors == other.neighbors:
                     return False
                 return self.neighbors < other.neighbors
             return self.root < other.root
-        return self.morgans < other.morgan
+        return self.morgans < other.morgans
 
     def __eq__(self, other) -> bool:
         # check if the signature are the same type
@@ -917,7 +917,7 @@ class MoleculeSignature:
 
     @property
     def morgans(self) -> list:
-        return [atom.morgan for atom in self._atoms]
+        return [atom.morgans for atom in self._atoms]
 
     def to_list(self, neighbors=False, morgans=True) -> list:
         """Return the signature as a list of features.
