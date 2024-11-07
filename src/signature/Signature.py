@@ -58,11 +58,11 @@ class AtomSignature:
         self,
         atom: Chem.Atom = None,
         radius: int = 2,
+        morgan_bits: None | list[int] = None,
         use_smarts: bool = True,
         boundary_bonds: bool = False,
         map_root: bool = True,
         rooted_smiles: bool = False,
-        morgan_bit: None | int | list[int] = None,
         **kwargs: dict,
     ) -> None:
         """Initialize the AtomSignature object
@@ -81,7 +81,7 @@ class AtomSignature:
             Whether to map the root atom in the signature. If yes, the root atom is labeled as 1.
         rooted_smiles : bool
             Whether to use rooted SMILES syntax for the signature. If yes, the SMILES is rooted at the root atom.
-        morgan_bit : None | int | list[int]
+        morgan_bits : None | list[int]
             The Morgan bit(s) of the atom.
         **kwargs
             Additional arguments to pass to Chem.MolFragmentToSmiles calls.
@@ -90,7 +90,7 @@ class AtomSignature:
         self.kwargs = clean_kwargs(kwargs)
 
         # Meaningful information
-        self._morgan = morgan_bit
+        self._morgans = morgan_bits
         self._root = None
         self._root_minus = None
         self._neighbors = []
@@ -102,8 +102,8 @@ class AtomSignature:
             assert isinstance(atom, Chem.Atom), "atom must be a RDKit atom object"
 
         # Refine the Morgan bit
-        if isinstance(self._morgan, list):
-            self._morgan = tuple(self._morgan)
+        if isinstance(self._morgans, list):
+            self._morgans = tuple(self._morgans)
 
         # Compute signature of the atom itself
         self._root = self.atom_signature(
@@ -118,7 +118,7 @@ class AtomSignature:
 
     def __repr__(self) -> str:
         _ = "AtomSignature("
-        _ += f"morgan={self._morgan}, "
+        _ += f"morgans={self._morgans}, "
         _ += f"root='{self._root}', "
         _ += f"root_minus='{self._root_minus}', "
         _ += f"neighbors={self._neighbors}"
@@ -126,27 +126,27 @@ class AtomSignature:
         return _
 
     def __lt__(self, other) -> bool:
-        if self.morgan == other.morgan:
+        if self.morgans == other.morgan:
             if self.root == other.root:
                 if self.neighbors == other.neighbors:
                     return False
                 return self.neighbors < other.neighbors
             return self.root < other.root
-        return self.morgan < other.morgan
+        return self.morgans < other.morgan
 
     def __eq__(self, other) -> bool:
         # check if the signature are the same type
         if not isinstance(other, AtomSignature):
             return False
         return (
-            self.morgan == other.morgan
+            self.morgans == other.morgans
             and self.root == other.root
             and self.neighbors == other.neighbors
         )
 
     @property
-    def morgan(self) -> None | int | list[int]:
-        return self._morgan
+    def morgans(self) -> None | list[int]:
+        return self._morgans
 
     @property
     def root(self) -> str:
@@ -168,14 +168,12 @@ class AtomSignature:
         str
             The signature as a string
         """
-        if self.morgan is None or not morgans:
+        if self.morgans is None or not morgans:
             _ = ""
-        elif isinstance(self._morgan, int):
-            _ = f"{self._morgan}{self._MORGAN_SEP}"
-        elif isinstance(self._morgan, (list, tuple)):
-            _ = f"{self._BIT_SEP.join([str(bit) for bit in self._morgan])}{self._MORGAN_SEP}"
+        elif isinstance(self._morgans, (list, tuple)):
+            _ = f"{self._BIT_SEP.join([str(bit) for bit in self._morgans])}{self._MORGAN_SEP}"
         else:
-            raise NotImplementedError("Morgan bit must be an integer or a list of integers")
+            raise NotImplementedError("Morgan bits must be 'None' or a list of integers")
         if neighbors:
             _ += f"{self._root_minus}{self._NEIG_SEP}"
             _ += self._NEIG_SEP.join([f"{bond}{self._BOND_SEP}{sig}" for bond, sig in self.neighbors])  # noqa
@@ -200,7 +198,7 @@ class AtomSignature:
         """
         s = ""
         if morgan:
-            s += f"{self.morgan},"
+            s += f"{self.morgans},"
         if root:
             s += f"{self.root}&"
         if neighbors:
@@ -221,13 +219,13 @@ class AtomSignature:
         # Parse the string
         parts = signature.split(cls._MORGAN_SEP)
         if len(parts) == 2:
-            morgan, remaining = parts[0], parts[1]
-            if cls._BIT_SEP in morgan:
-                morgan = tuple(int(bit) for bit in morgan.split(cls._BIT_SEP))
+            morgans, remaining = parts[0], parts[1]
+            if cls._BIT_SEP in morgans:
+                morgans = tuple(int(bit) for bit in morgans.split(cls._BIT_SEP))
             else:
-                morgan = int(morgan)
+                morgans = int(morgans)
         else:
-            morgan, remaining = None, parts[0]
+            morgans, remaining = None, parts[0]
 
         if cls._NEIG_SEP in remaining:
             root = None
@@ -242,7 +240,7 @@ class AtomSignature:
 
         # Build the AtomSignature instance
         instance = cls()
-        instance._morgan = morgan
+        instance._morgans = morgans
         instance._root = root
         instance._root_minus = root_minus
         instance._neighbors = neighbors
@@ -851,7 +849,7 @@ class MoleculeSignature:
                 boundary_bonds,
                 map_root,
                 rooted_smiles,
-                morgan_bit=morgan_vect[atom.GetIdx()],
+                morgan_bits=morgan_vect[atom.GetIdx()],
                 **self.kwargs,
             )
             if _sig != "":  # only collect non-empty signatures
