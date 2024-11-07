@@ -30,7 +30,6 @@ Authors:
   - Thomas Duigou <thomas.duigou@inrae.fr>
   - Philippe Meyer <philippe.meyer@inrae.fr>
 """
-import numpy as np
 import logging
 import re
 from typing import List, Tuple
