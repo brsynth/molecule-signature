@@ -59,6 +59,7 @@ class AtomSignature:
         atom: Chem.Atom = None,
         radius: int = 2,
         morgan_bits: None | list[int] = None,
+        use_stereo: bool = False,
         use_smarts: bool = True,
         boundary_bonds: bool = False,
         map_root: bool = True,
@@ -75,6 +76,8 @@ class AtomSignature:
             The radius of the environment to consider.
         boundary_bonds : bool
             Whether to add bonds at the boundary of the radius.
+        use_stereo : bool
+            Whether to use and express stereochemistry information.
         use_smarts : bool
             Whether to use SMARTS syntax for the signature (otherwise, use SMILES syntax).
         map_root : bool
@@ -109,6 +112,7 @@ class AtomSignature:
         self._root = self.atom_signature(
             atom,
             radius,
+            use_stereo,
             use_smarts,
             boundary_bonds,
             map_root,
@@ -270,6 +274,7 @@ class AtomSignature:
         cls,
         atom: Chem.Atom,
         radius: int = 2,
+        use_stereo: bool = False,
         use_smarts: bool = True,
         boundary_bonds: bool = False,
         map_root: bool = True,
@@ -287,6 +292,8 @@ class AtomSignature:
             The atom to generate the signature for.
         radius : int
             The radius of the environment to consider. If negative, the whole molecule is considered.
+        use_stereo : bool
+            Whether to use and express stereochemistry information.
         use_smarts : bool
             Whether to use SMARTS syntax for the signature.
         boundary_bonds : bool
@@ -313,10 +320,8 @@ class AtomSignature:
         # Generate atom symbols
         if use_smarts:
             for _atom in mol.GetAtoms():
-                _atom_symbol = atom_to_smarts(
-                    _atom,
-                    atom_map=1 if _atom.GetIdx() == atom.GetIdx() and map_root else 0,
-                )
+                _atom_map = 1 if _atom.GetIdx() == atom.GetIdx() and map_root else 0
+                _atom_symbol = atom_to_smarts(_atom, _atom_map, use_stereo)
                 _atom.SetProp("atom_symbol", _atom_symbol)
         else:
             raise NotImplementedError("SMILES syntax not implemented yet.")
@@ -324,7 +329,7 @@ class AtomSignature:
         # Generate bond symbols
         if use_smarts:
             for _bond in mol.GetBonds():
-                _bond_symbol = bond_to_smarts(_bond)
+                _bond_symbol = bond_to_smarts(_bond, use_stereo)
                 _bond.SetProp("bond_symbol", _bond_symbol)
 
         # Get the bonds at the border of the radius
@@ -361,12 +366,11 @@ class AtomSignature:
                 break
 
         if use_smarts:  # Get the SMARTS
-
             # Set a canonical atom mapping
             if fragment.NeedsUpdatePropertyCache():
                 fragment.UpdatePropertyCache(strict=False)
 
-            # Build the SMARTS
+            # Build SMARTS elements
             _atoms_to_use = list(range(fragment.GetNumAtoms()))
             _atoms_symbols = [atom.GetProp("atom_symbol") for atom in fragment.GetAtoms()]
             _bonds_symbols = [bond.GetProp("bond_symbol") for bond in fragment.GetBonds()]
@@ -450,6 +454,7 @@ class AtomSignature:
         cls,
         atom: Chem.Atom,
         radius: int = 1,
+        use_stereo: bool = False,
         use_smarts: bool = True,
         boundary_bonds: bool = False,
         map_root: bool = True,
@@ -474,6 +479,7 @@ class AtomSignature:
             neighbor_sig = cls.atom_signature(
                 neighbor_atom,
                 radius,
+                use_stereo,
                 use_smarts,
                 boundary_bonds,
                 map_root,
@@ -621,7 +627,7 @@ def get_smarts_features(qatom: Chem.Atom, wish_list=None) -> dict:
     return feats
 
 
-def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
+def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0, use_stereo: bool = False) -> str:
     """Generate a SMARTS string for an atom
 
     Parameters
@@ -629,7 +635,10 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
     atom : Chem.Atom
         The atom to generate the SMARTS for
     atom_map : int
-        The atom map number to use in the SMARTS string. If 0 (default), the atom map number is not used.
+        The atom map number to use in the SMARTS string. If 0 (default), the
+        atom map number is not used.
+    use_stereo : bool
+        Whether to use and express stereochemistry information.
 
     Returns
     -------
@@ -668,10 +677,13 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
         _symbol = _symbol.lower()
     elif atom.GetAtomicNum() == 1:
         _symbol = "#1"  # otherwise, H is not recognized
-    if _chirality == Chem.ChiralType.CHI_TETRAHEDRAL_CW:
-        _symbol = f"{_symbol}@"
-    elif _chirality == Chem.ChiralType.CHI_TETRAHEDRAL_CCW:
-        _symbol = f"{_symbol}@@"
+
+    # Chirality
+    if use_stereo:
+        if _chirality == Chem.ChiralType.CHI_TETRAHEDRAL_CW:
+            _symbol = f"{_symbol}@"
+        elif _chirality == Chem.ChiralType.CHI_TETRAHEDRAL_CCW:
+            _symbol = f"{_symbol}@@"
 
     # Assemble the SMARTS
     smarts = f"[{_symbol}"
@@ -699,34 +711,54 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
     return smarts
 
 
-def bond_to_smarts(bond: Chem.Bond) -> str:
+def bond_to_smarts(bond: Chem.Bond, use_stereo: bool = False) -> str:
     """Generate a SMARTS string for a bond
 
     Parameters
     ----------
     bond : Chem.Bond
-        The bond to generate the SMARTS for
+        The bond to generate the SMARTS for.
+    use_stereo : bool
+        Whether to use and express stereochemistry information.
 
     Returns
     -------
     str
         The SMARTS string
     """
-    if bond.GetBondType() == Chem.BondType.AROMATIC:
-        return ":"
-    elif bond.GetBondType() == Chem.BondType.DOUBLE:
-        return "="
-    elif bond.GetBondType() == Chem.BondType.TRIPLE:
-        return "#"
-    elif bond.GetBondType() == Chem.BondType.SINGLE:
-        if bond.GetBondDir() == Chem.BondDir.ENDDOWNRIGHT:
-            return "/"
-        elif bond.GetBondDir() == Chem.BondDir.ENDUPRIGHT:
-            return "\\"
-        else:
+    bond_type = bond.GetBondType()
+    match bond_type:
+        case Chem.BondType.SINGLE:
+            if use_stereo:
+                bond_dir = bond.GetBondDir()
+                match bond_dir:
+                    case Chem.BondDir.ENDDOWNRIGHT:
+                        return "\\"
+                    case Chem.BondDir.ENDUPRIGHT:
+                        return "/"
+                    case _:
+                        return "-"
+            else:
+                return "-"
+        case Chem.BondType.DOUBLE:
+            return "="
+        case Chem.BondType.TRIPLE:
+            return "#"
+        case Chem.BondType.QUADRUPLE:
+            return "$"
+        case Chem.BondType.AROMATIC:
+            bond_dir = bond.GetBondDir()
+            match bond_dir:
+                case Chem.BondDir.ENDDOWNRIGHT:
+                    return ":\\"
+                case Chem.BondDir.ENDUPRIGHT:
+                    return ":/"
+                case _:
+                    return ":"
+        case Chem.BondType.DATIVE:
             return "-"
-    else:
-        return "?"
+        case _:
+            return "~"
 
 
 def canonical_map_fragment(
@@ -779,11 +811,12 @@ class MoleculeSignature:
         self,
         mol: Chem.Mol = None,
         radius: int = 2,
+        nbits: int = 2048,
+        use_stereo: bool = False,
         use_smarts: bool = True,
         boundary_bonds: bool = False,
         map_root: bool = True,
         rooted_smiles: bool = False,
-        nbits: int = 2048,
         **kwargs: dict,
     ) -> None:
         """Initialize the MoleculeSignature object
@@ -794,6 +827,10 @@ class MoleculeSignature:
             The molecule to generate the signature for.
         radius : int
             The radius of the environment to consider.
+        nbits : int
+            The number of bits to use for the Morgan fingerprint. If 0, no Morgan fingerprint is computed.
+        use_stereo : bool
+            Whether to use and express stereochemistry information.
         use_smarts : bool
             Whether to use SMARTS syntax for the signature (otherwise, use SMILES syntax).
         boundary_bonds : bool
@@ -802,8 +839,6 @@ class MoleculeSignature:
             Whether to map root atoms in atom signatures. If yes, root atoms are labeled as 1.
         rooted_smiles : bool
             Whether to use rooted SMILES syntax within atom signatures. If yes, SMILES are rooted at the root atoms.
-        nbits : int
-            The number of bits to use for the Morgan fingerprint. If 0, no Morgan fingerprint is computed.
         **kwargs
             Additional arguments to pass to Chem.MolFragmentToSmiles calls.
         """
@@ -811,6 +846,8 @@ class MoleculeSignature:
         if "nBits" in kwargs:
             logger.warning("nBits is deprecated, use nbits instead.")
             nbits = kwargs.pop("nBits")
+        if "all_bits" in kwargs:
+            logger.warning("all_bits option is deprecated, it will be removed soon.")
 
         # Check arguments
         if mol is None:
@@ -832,6 +869,7 @@ class MoleculeSignature:
             rdFingerprintGenerator.GetMorganGenerator(
                 radius=radius,
                 fpSize=nbits,
+                includeChirality=use_stereo,
             ).GetFingerprint(mol, additionalOutput=bits_info)
 
             # Get the Morgan bits per atom
@@ -842,14 +880,16 @@ class MoleculeSignature:
 
         # Compute the signatures of all atoms
         for atom in mol.GetAtoms():
+            _morgan_bits = morgan_vect[atom.GetIdx()]
             _sig = AtomSignature(
                 atom,
                 radius,
+                _morgan_bits,
+                use_stereo,
                 use_smarts,
                 boundary_bonds,
                 map_root,
                 rooted_smiles,
-                morgan_bits=morgan_vect[atom.GetIdx()],
                 **self.kwargs,
             )
             if _sig != "":  # only collect non-empty signatures
@@ -929,7 +969,9 @@ class MoleculeSignature:
         Parameters
         ----------
         neighbors : bool
-            Whether to include the neighbors in the list.
+            Whether to include neighbors.
+        morgans : bool
+            Whether to include Morgan bits.
 
         Returns
         -------
@@ -948,7 +990,9 @@ class MoleculeSignature:
         Parameters
         ----------
         neighbors : bool
-            Whether to include the neighbors in the string.
+            Whether to include the neighbors.
+        morgans : bool
+            Whether to include the Morgan bits.
 
         Returns
         -------
