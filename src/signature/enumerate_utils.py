@@ -500,9 +500,7 @@ def atomic_num_charge(sa, use_smarts=False):
         The formal charge of the root atom.
     """
 
-    # return the atomic number of the root of sa
-    sa = sa.split(".")[0]  # the root
-    sa = sa.split(",")[1] if len(sa.split(",")) > 1 else sa
+    sa = sa.split(" && ")[0]  # the root
     if use_smarts:
         m = Chem.MolFromSmarts(sa)
     else:
