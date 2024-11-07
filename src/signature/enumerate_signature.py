@@ -786,7 +786,7 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
     """
 
     morgan_indices = [i for i in range(len(morgan)) for _ in range(morgan[i]) if morgan[i] != 0]
-    morgan_indices_unique = list(set(morgan_indices))
+    morgan_indices_unique = sorted(list(set(morgan_indices)))
     morgan_non_zero = [morgan[i] for i in morgan_indices_unique]
     # Selection of the atomic signatures of the alphabet having morgan bits included in the morgan vector input
     AS, MIN, MAX, IDX, I = {}, {}, {}, {}, 0
