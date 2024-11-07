@@ -72,7 +72,12 @@ def mol_from_smiles(
         raise err
 
 
-def mol_filter(mol: Chem.Mol, max_mw: int = 500, no_radical: bool = False) -> Chem.Mol:
+def mol_filter(
+        mol: Chem.Mol,
+        max_mw: int = 500,
+        exclude_radical: bool = True,
+        exclude_dative: bool = True
+    ) -> Chem.Mol:
     """Filter a molecule
 
     Parameters
@@ -81,8 +86,10 @@ def mol_filter(mol: Chem.Mol, max_mw: int = 500, no_radical: bool = False) -> Ch
         Molecule to filter.
     max_mw : int, optional
         Maximum molecular weight, by default 500.
-    keep_radical : bool, optional
-        Whether to keep radicals, by default False.
+    exclude_radical : bool, optional
+        Exclude molecules having radicals, by default True.
+    exclude_dative : bool, optional
+        Exclude molecules having dative bonds, by default True.
 
     Returns
     -------
@@ -91,9 +98,13 @@ def mol_filter(mol: Chem.Mol, max_mw: int = 500, no_radical: bool = False) -> Ch
     """
     if Chem.Descriptors.MolWt(mol) > max_mw:
         return
-    if no_radical:
+    if exclude_radical:
         for atom in mol.GetAtoms():
             if atom.GetNumRadicalElectrons() > 0:
+                return
+    if exclude_dative:
+        for bond in mol.GetBonds():
+            if bond.GetBondTypeAsDouble() in [17, 18, 19, 20]:
                 return
     return mol
 
