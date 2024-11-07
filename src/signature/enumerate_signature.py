@@ -801,13 +801,39 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
             mini = 0 if len(sig) > 1 else maxi
             AS[I], MIN[I], MAX[I], IDX[I] = sa, mini, maxi, mbits
             I += 1
-    # Compute neighbors of selected fragments
+    # Handle morgan coming from a single atom
+    if sum(morgan) == 1:
+        for i in range(len(AS)):
+            _as = AS[i]
+            _as_neigh = AtomSignature.from_string(_as)
+            _as_neigh.post_compute_neighbors()
+            _as_neigh_string = _as_neigh.to_string(True)
+            AS[i] = _as_neigh_string
+        return [[x] for x in AS.values()], False, 0
+    # Compute neighbors of selected fragments and suppress single atom fragments
+    x_to_del = []
     for i in range(len(AS)):
         _as = AS[i]
         _as_neigh = AtomSignature.from_string(_as)
         _as_neigh.post_compute_neighbors()
         _as_neigh_string = _as_neigh.to_string(True)
-        AS[i] = _as_neigh_string
+        if _as_neigh_string[-3:] == "&& ":
+            x_to_del.append(i)
+        else:
+            AS[i] = _as_neigh_string
+    for key in x_to_del:
+        del AS[key]
+        del MIN[key]
+        del MAX[key]
+        del IDX[key]
+    AS_2 = {new_key: value for new_key, (old_key, value) in enumerate(AS.items())}
+    MIN_2 = {new_key: value for new_key, (old_key, value) in enumerate(MIN.items())}
+    MAX_2 = {new_key: value for new_key, (old_key, value) in enumerate(MAX.items())}
+    IDX_2 = {new_key: value for new_key, (old_key, value) in enumerate(IDX.items())}
+    AS = AS_2
+    MIN = MIN_2
+    MAX = MAX_2
+    IDX = IDX_2
     # Get Matrices for enumeration
     AS = np.asarray(list(AS.values()))
     MIN = np.asarray(list(MIN.values()))
