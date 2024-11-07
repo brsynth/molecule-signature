@@ -458,7 +458,37 @@ def correction_nitrogen(mol):
     return smis
 
 
-def enumeration(MG, index, enum_graph, enum_graph_dict, node_previous, j_current, verbose=False):
+def save_mol_plot(mol, name):
+    """
+    Save a molecule as SVG file.
+
+    Parameters
+    ----------
+    mol : rdkit.Chem.Mol
+        The molecule object.
+    """
+
+    # Compute 2D coordinates
+    Chem.rdDepictor.Compute2DCoords(mol)
+    # Create an SVG drawer
+    dr = Chem.Draw.rdMolDraw2D.MolDraw2DSVG(300, 300)
+    # Set drawing options (optional, here we disable clearing background)
+    opts = dr.drawOptions()
+    opts.clearBackground = False
+    # Draw the molecule
+    dr.DrawMolecule(mol)
+    dr.FinishDrawing()
+    # Get the SVG string
+    svg = dr.GetDrawingText()
+    # Save the SVG to a file
+    output_path = "C:/Users/meyerp/Documents/INRAE/Diophantine/Enumération/github/output/"
+    with open(output_path + name + ".svg", "w") as f:
+        f.write(svg)
+    # Optionally display the SVG (for Jupyter or inline display environments)
+    print(svg)  # This would display the raw SVG in a Jupyter environment or output
+
+
+def enumeration(MG, index, enum_graph, enum_graph_dict, node_previous, j_current, verbose=False, plot_mol=False, len_J=1):
     """
     Local function that build a requested number of molecules (in MG.max_nbr_solution) matching the matrices in the
     molecular graph MG.
@@ -479,13 +509,22 @@ def enumeration(MG, index, enum_graph, enum_graph_dict, node_previous, j_current
         Index of the current bond.
     verbose : bool, optional
         If True, print detailed information during the operation. Defaults to False.
-
+    plot_mol : bool optional
+        If True, save the molecule in SVG at each reconstruction step. Defaults to False.
+    len_J : int
+        Length of the candidate bonds. Only used to know when to save the molecule in SVG. Defaults to 1.
+    
     Returns
     -------
     sol : list
         List of smiles.
     """
 
+    if plot_mol and len_J > 0:
+        mol_to_plot =  copy.deepcopy(MG.mol.GetMol())
+        for atom in mol_to_plot.GetAtoms():
+            atom.SetNoImplicit(True)
+        save_mol_plot(mol_to_plot, "test" + str(int(MG.nbr_recursion)))
     # start
     if index < 0:
         index = MG.imin
@@ -507,7 +546,7 @@ def enumeration(MG, index, enum_graph, enum_graph_dict, node_previous, j_current
     # search all bonds that can be attached to i
     J = MG.candidate_bond(index)
     if len(J) == 0:
-        Sol2 = enumeration(MG, index + 1, enum_graph, enum_graph_dict, node_current, -1, verbose)
+        Sol2 = enumeration(MG, index + 1, enum_graph, enum_graph_dict, node_current, -1, verbose, plot_mol=plot_mol, len_J=0)
         tmp = []
         for node in [link[1] for link in enum_graph.edges(node_current)]:
             tmp.append(enum_graph_dict[node][1])
@@ -518,7 +557,7 @@ def enumeration(MG, index, enum_graph, enum_graph_dict, node_previous, j_current
     sol = set()
     for j in J:
         MG.add_bond(index, j)
-        sol2 = enumeration(MG, index + 1, enum_graph, enum_graph_dict, node_current, j, verbose=verbose)
+        sol2 = enumeration(MG, index + 1, enum_graph, enum_graph_dict, node_current, j, verbose=verbose, plot_mol=plot_mol, len_J=1)
         sol = sol | sol2
         if MG.nbr_recursion > MG.max_nbr_recursion:
             MG.recursion_timeout = True
@@ -574,7 +613,8 @@ def enumerate_molecule_from_signature(
     """
 
     recursion_timeout = False
-
+    # If we want to save the plot of the molecule in SVG
+    plot_mol = False
     # initialization of the enumeration graph
     enum_graph = nx.DiGraph()
     enum_graph.add_node(0)
@@ -600,7 +640,7 @@ def enumerate_molecule_from_signature(
         MG.nbr_component = float("inf")
         MG.max_nbr_solution = 1
         MG.nbr_recursion = r * max_nbr_recursion
-        SMI = enumeration(MG, -1, enum_graph, enum_graph_dict, 0, -1, verbose=verbose)
+        SMI = enumeration(MG, -1, enum_graph, enum_graph_dict, 0, -1, verbose=verbose, plot_mol=plot_mol)
         recursion_timeout = MG.recursion_timeout
         S = S | set(SMI)
         n_nS = n_nS + 1 if len(S) == nS else 0
