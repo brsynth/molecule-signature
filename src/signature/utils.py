@@ -18,7 +18,12 @@ from rdkit.Chem import Descriptors
 ########################################################################################################################
 
 
-def mol_from_smiles(smiles: str, keep_stereo: bool = False) -> Chem.Mol:
+def mol_from_smiles(
+        smiles: str,
+        clear_stereo: bool = True,
+        clear_aam: bool = True,
+        clear_isotope: bool = True
+) -> Chem.Mol:
     """Sanitize a molecule
 
     Parameters
@@ -27,8 +32,12 @@ def mol_from_smiles(smiles: str, keep_stereo: bool = False) -> Chem.Mol:
         Smiles string to sanitize.
     max_mw : int, optional
         Maximum molecular weight, by default 500.
-    keep_stereo : bool, optional
-        Whether to keep stereochemistry, by default False.
+    clear_stereo : bool, optional
+        Clear stereochemistry information, by default True.
+    clear_aam : bool, optional
+        Clear atom atom mapping, by default True.
+    clear_isotope : bool, optional
+        Clear isotope information, by default True.
 
     Returns
     -------
@@ -42,12 +51,21 @@ def mol_from_smiles(smiles: str, keep_stereo: bool = False) -> Chem.Mol:
             return
         if "*" in smiles:   # Reject generic molecules
             return
-        if not keep_stereo:
-            # Wild but effective stereo removal
+
+        if clear_stereo:  # Wild but effective
             smiles = smiles.replace("@", "").replace("/", "").replace("\\", "")
+
         mol = Chem.MolFromSmiles(smiles)
         if mol is None:
             return
+
+        if clear_aam:
+            for atom in mol.GetAtoms():
+                atom.SetAtomMapNum(0)
+        if clear_isotope:
+            for atom in mol.GetAtoms():
+                atom.SetIsotope(0)
+
         return mol
 
     except Exception as err:
