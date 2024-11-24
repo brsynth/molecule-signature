@@ -271,7 +271,7 @@ class MolecularGraph:
         self.B[self.M, i], self.B[self.M, j] = 1, 1
         self.mol.RemoveBond(ai, aj)
 
-    def smiles(self, verbose=False):
+    def smiles(self):
         """
         Get the SMILES representation of the molecule.
 
@@ -287,22 +287,9 @@ class MolecularGraph:
         """
 
         mol = self.mol.GetMol()
-        # We correct the [nH] for aromatic nitrogen atoms
-        smis = correction_nitrogen(mol)
-        smis_san = []
-        for smi in smis:
-            mol = Chem.MolFromSmiles(smi)
-            _, smi_san = sanitize_molecule(
-                mol,
-                kekuleSmiles=self.Alphabet.kekuleSmiles,
-                allHsExplicit=self.Alphabet.allHsExplicit,
-                isomericSmiles=self.Alphabet.isomericSmiles,
-                formalCharge=self.Alphabet.formalCharge,
-                atomMapping=self.Alphabet.atomMapping,
-                verbose=verbose,
-            )
-            smis_san.append(smi_san)
-        return set(smis_san)
+        Chem.SanitizeMol(mol, Chem.SanitizeFlags.SANITIZE_ALL, catchErrors=True)  # crash for [nH]
+        smi = Chem.MolToSmiles(mol)
+        return set([smi])
 
     def end(self, i, enum_graph_dict, node_current, j_current, verbose):
         """
@@ -344,7 +331,7 @@ class MolecularGraph:
             if verbose:
                 print(f"sol not saturated\nDiag: {Ad}\nBond: {Ab}")
             return True, set()
-        smi = self.smiles(verbose=verbose)
+        smi = self.smiles()
         if verbose == 2:
             print(f"smi sol found at {int(self.nbr_recursion)}: {smi}")
         # get the smiles
