@@ -121,20 +121,9 @@ class MolecularGraph:
         rdmol = Chem.Mol()
         rdedmol = Chem.EditableMol(rdmol)
         for sa in self.SA:
-            num, charge = atomic_num_charge(sa, Alphabet.use_smarts)
-            if num < 1:
-                print(sa)
-            rdatom = Chem.Atom(num)
-            rdatom.SetFormalCharge(int(charge))
             # Get the root
             sa_root = atom_sig_to_root(sa)
-            # Get explicit H, degree and valency values from the root
-            h_value, d_value, x_value = get_h_x_d_value_regex(sa_root)
-            implicit_hydrogens = x_value - (h_value + d_value) - int(charge)
-            # Set explicit and implicit hydrogens
-            rdatom.SetNumExplicitHs(h_value)
-            if implicit_hydrogens <= 0:
-                rdatom.SetNoImplicit(True)
+            rdatom = atom_initialization_from_atomic_signature(sa_root)
             rdedmol.AddAtom(rdatom)
         self.mol = rdedmol
         self.imin, self.imax = 0, self.M
@@ -386,9 +375,94 @@ def atom_sig_to_root(sa):
     return root
 
 
-def get_h_x_d_value_regex(sa):
+def extract_formal_charge(sa_root):
     """
-    Extract the explicit H, degree and valency values from the root.
+    Extract the formal charge of the root of an atomic signature.
+
+    Parameters
+    ----------
+    sa_root : str
+        The root of an atomic signature.
+
+    Returns
+    -------
+    int
+        Formal charge of the root of the atomic signature.
+    """
+
+    if "+" in sa_root:
+        charge_str = sa_root.split("+")[1].split(":")[0]
+        if charge_str == "":
+            charge = 1
+        else:
+            charge = int(charge_str)
+    elif "-" in sa_root:
+        charge_str = sa_root.split("-")[1].split(":")[0]
+        if charge_str == "":
+            charge = -1
+        else:
+            charge = -int(charge_str)
+    else:
+        charge = 0
+    return charge
+
+
+def extract_atomic_num(sa_root):
+    """
+    Extract the atomic number of the root of an atomic signature.
+
+    Parameters
+    ----------
+    sa_root : str
+        The root of an atomic signature.
+
+    Returns
+    -------
+    int
+        Atomic number of the root of the atomic signature.
+    """
+
+    atomic_symbol = sa_root.split(";")[0][1:]
+    if atomic_symbol[0].islower():
+        atomic_symbol = atomic_symbol[0].upper() + atomic_symbol[1:]  # Use uppercase to get atomic number
+    if atomic_symbol == "#1":
+        atomic_symbol = "H"
+    atomic_num = Chem.PeriodicTable.GetAtomicNumber(Chem.GetPeriodicTable(), atomic_symbol)
+    return atomic_num
+
+
+def get_h_x_d_value_regex(sa_root):
+    """
+    Extract the explicit H, degree and valency values from the atomic signature root.
+
+    Parameters
+    ----------
+    sa_root : str
+        The root of an atomic signature.
+
+    Returns
+    -------
+    int
+        Explicit H.
+    int
+        Implcit H.
+    int
+        Valency.
+    """
+
+    # Use regex to find the pattern
+    match = re.search(r"H(\d+)", sa_root)
+    h_value = int(match.group(1))
+    match = re.search(r"D(\d+)", sa_root)
+    d_value = int(match.group(1))
+    match = re.search(r"X(\d+)", sa_root)
+    x_value = int(match.group(1))
+    return h_value, d_value, x_value
+
+
+def atom_initialization_from_atomic_signature(sa):
+    """
+    Create a RDkit atom initialized with properties coming from an atomic signature.
 
     Parameters
     ----------
@@ -397,65 +471,30 @@ def get_h_x_d_value_regex(sa):
 
     Returns
     -------
-    int
-        Explicit H.
-    int
-        Degree.
-    int
-        Valency.
+    Chem.Atom
+        RDkit atom with properties from the atomic signature.
     """
 
-    # Use regex to find the pattern
-    match = re.search(r"H(\d+)", sa)
-    h_value = int(match.group(1))
-    match = re.search(r"X(\d+)", sa)
-    x_value = int(match.group(1))
-    match = re.search(r"D(\d+)", sa)
-    d_value = int(match.group(1))
-    return h_value, x_value, d_value
+    # Get the root
+    sa_root = atom_sig_to_root(sa)
+    # Get and set the atomic number
+    num = extract_atomic_num(sa_root)
+    rdatom = Chem.Atom(num)
+    # Get and set the formal charge
+    charge = extract_formal_charge(sa_root)
+    rdatom.SetFormalCharge(charge)
+    # Get h=explicit_Hs, d=implicit_Hs and x=valency
+    h_value, d_value, x_value = get_h_x_d_value_regex(sa_root)
+    # Set explicit and implicit hydrogens
+    rdatom.SetNumExplicitHs(h_value)
+    if d_value == 0:
+        rdatom.SetNoImplicit(True)
+    return rdatom
 
 
 ########################################################################################################################
 # Enumerate molecule(s) (smiles) from signature.
 ########################################################################################################################
-
-
-def correction_nitrogen(mol):
-    """
-    Perform correction of the [nH] valence problems on a molecule by increasing
-    the number of explicit hydrogens on aromatic nitrogen atoms.
-
-    Parameters
-    ----------
-    mol : rdkit.Chem.Mol
-        The molecule object that needs correction.
-
-    Returns
-    -------
-    smis_san : list of str
-        List of canonical SMILES strings after applying all possible corrections.
-    """
-
-    smi = Chem.MolToSmiles(mol)
-    smis = [smi]
-    list_N = []
-    # Identify aromatic nitrogen atoms
-    for atom in mol.GetAtoms():
-        if atom.GetSymbol() == "N" and atom.GetIsAromatic():
-            list_N.append(atom.GetIdx())
-    # Generate all possible corrections by incrementing explicit hydrogens on identified atoms
-    if len(list_N) > 0:
-        lists_atoms_N_to_incr = [
-            list(l) for l in chain.from_iterable(combinations(list_N, r + 1) for r in range(len(list_N)))
-        ]
-        for atoms_N in lists_atoms_N_to_incr:
-            new_mol = copy.deepcopy(mol)
-            for atom in new_mol.GetAtoms():
-                if atom.GetIdx() in atoms_N:
-                    atom.SetNumExplicitHs(atom.GetNumExplicitHs() + 1)
-            new_mol_smi = Chem.MolToSmiles(new_mol)
-            smis.append(new_mol_smi)
-    return smis
 
 
 def save_mol_plot(mol, name):
@@ -607,9 +646,10 @@ def atomic_sig_to_smiles(sa):
     num = a.GetAtomicNum()
     rdatom = Chem.Atom(num)
     rdatom.SetFormalCharge(formal_charge)
-    h_value = get_h_x_d_value_regex(sa_root)[0]  # explicit H
-    rdatom.SetNumExplicitHs(h_value)  # Ensure no explicit hydrogens
-    rdatom.SetNoImplicit(True)
+    h_value, d_value, x_value = get_h_x_d_value_regex(sa_root)
+    rdatom.SetNumExplicitHs(h_value)  # Explicit hydrogens
+    if d_value == 0:
+        rdatom.SetNoImplicit(True)
     rdedmol.AddAtom(rdatom)
     mol = rdedmol.GetMol()
     Chem.SanitizeMol(mol)
