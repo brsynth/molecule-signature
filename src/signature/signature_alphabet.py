@@ -16,10 +16,9 @@ import time
 import numpy as np
 from rdkit import Chem
 
-from signature.utils import dic_to_vector, vector_to_dic
 from signature.Signature import MoleculeSignature
 from signature.signature_old import get_molecule_signature
-
+from signature.utils import dic_to_vector, vector_to_dic
 
 ########################################################################################################################
 # Alphabet callable class
@@ -41,6 +40,7 @@ class SignatureAlphabet:
         atomMapping=False,
         kekuleSmiles=False,
         allHsExplicit=False,
+        use_stereo=False,
         maxvalence=4,
         Dict={},
     ):
@@ -66,6 +66,7 @@ class SignatureAlphabet:
         self.boundary_bonds = boundary_bonds
         self.map_root = map_root
         self.legacy = legacy
+        self.use_stereo = use_stereo
 
     def get_attributes(self):
         """
@@ -108,6 +109,7 @@ class SignatureAlphabet:
             "kekuleSmiles": self.kekuleSmiles,
             "allHsExplicit": self.allHsExplicit,
             "maxvalence": self.maxvalence,
+            "use_stereo": self.use_stereo,
         }
 
     def fill(self, Smiles, verbose=False):
@@ -147,7 +149,8 @@ class SignatureAlphabet:
                 use_smarts=self.use_smarts,
                 nbits=self.nBits,
                 boundary_bonds=self.boundary_bonds,
-                map_root=self.map_root
+                map_root=self.map_root,
+                use_stereo=self.use_stereo,
             )
             if len(ms.to_list()) == 0:
                 if verbose:
@@ -210,6 +213,7 @@ class SignatureAlphabet:
             kekuleSmiles=self.kekuleSmiles,
             allHsExplicit=self.allHsExplicit,
             maxvalence=self.maxvalence,
+            use_stereo=self.use_stereo,
             Dict=list(self.Dict.keys()),
         )
 
@@ -230,6 +234,7 @@ class SignatureAlphabet:
         print(f"maxvalence: {self.maxvalence}")
         print(f"use_smarts: {self.use_smarts}")
         print(f"boundary_bonds: {self.boundary_bonds}")
+        print(f"use_stereo: {self.use_stereo}")
         print(f"alphabet length: {len(self.Dict.keys())}")
 
 
@@ -455,10 +460,10 @@ def signature_sorted_array(LAS, Alphabet=None, unique=False, verbose=False):
 
     if Alphabet is not None:
         LAS = signature_vector_to_string(sigV, Alphabet.Dict, verbose=verbose)
-    LAS.sort()
-    AS = list(set(LAS)) if unique else LAS
-    AS.sort()
-    AS = np.asarray(AS)
+    # LAS.sort()
+    # AS = list(set(LAS)) if unique else LAS
+    # AS.sort()
+    AS = np.asarray(LAS)
     N = AS.shape[0]  # nbr of atoms
     NAS, deg, M = {}, {}, 0
     for i in range(N):
