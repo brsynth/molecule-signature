@@ -724,29 +724,14 @@ def enumerate_molecule_from_signature(
         nS = len(S)
         r += 1
     # retain solutions having a signature = provided sig
-    Alphabet.nBits = 0
-    SMIsig = set()
     S = [smi for smi in S if smi != "" and "." not in smi and Chem.MolFromSmiles(smi) is not None]
-    if len(S) > int(max_nbr_solution / 10):
-        recursion_timeout = True
-    S = S[: int(max_nbr_solution / 10)]
-    for smi in S:
-        mol = Chem.MolFromSmiles(smi)
-        ms = MoleculeSignature(
-            mol,
-            radius=Alphabet.radius,
-            use_smarts=Alphabet.use_smarts,
-            nbits=0,
-            boundary_bonds=Alphabet.boundary_bonds,
-            map_root=True,
-        )
-        ms.post_compute_neighbors()
-        sigsmi = sorted([atom.to_string(neighbors=True) for atom in ms.atoms])
-        if sigsmi == sig:
-            SMIsig.add(smi)
+    S_stereo = set()
+    for s in S:
+        S_stereo_tmp = generate_stereoisomers(s)
+        S_stereo = S_stereo.union(S_stereo_tmp)
     if verbose:
-        print(f"retain solutions having a signature = provided sig {len(S)}, {len(SMIsig)}")
-    return list(SMIsig), recursion_timeout
+        print("S_stereo", len(S_stereo))
+    return S_stereo, recursion_timeout
 
 
 ########################################################################################################################
