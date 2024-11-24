@@ -740,10 +740,25 @@ def enumerate_molecule_from_signature(
 
 
 def is_counted_subset(sublist, mainlist):
+    """
+    Check if a list is a counted sublist of another one.
+
+    Parameters
+    ----------
+    sublist : list
+        A list of elements.
+    mainlist : list
+        A list of elements.
+
+    Returns
+    -------
+    bool
+        True if the first list is a counted of the second list, False otherwise.
+    """
+
     # Create Counters for both lists
     counter_sublist = Counter(sublist)
     counter_mainlist = Counter(mainlist)
-
     # Check if each element in the sublist is in the mainlist with enough count
     for element, count in counter_sublist.items():
         if counter_mainlist[element] < count:
