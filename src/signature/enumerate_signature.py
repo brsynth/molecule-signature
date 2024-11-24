@@ -793,6 +793,41 @@ def signature_set(AS, occ):
     return sol
 
 
+def custom_sort_with_dependent(primary_list, dependent_lists):
+    """
+    Sort secondary lists wrt the sorting of a primary list.
+
+    Parameters
+    ----------
+    primary_list : list
+        A list that we want to sort.
+    dependent_lists : a list of lists
+        A list of secondary lists that we want to sort wrt the sorting of the primary_list.
+
+    Returns
+    -------
+    sorted_primary : list
+        A sorted list.
+    sorted_dependent_lists : list of lists
+        A list of lists sorted wrt to the sorted_primary.
+    """
+
+    # Sort each sublist in the primary list individually
+    primary_list = [sorted(sublist) for sublist in primary_list]
+    # Create a list of indices based on the custom sorting criteria
+    sorted_indices = sorted(
+        range(len(primary_list)), key=lambda idx: [x if x != 0 else float("-inf") for x in primary_list[idx]]
+    )
+    # Sort both the primary and dependent lists using the sorted indices
+    sorted_primary = [primary_list[i] for i in sorted_indices]
+    sorted_dependent_lists = []
+    for i in range(len(dependent_lists)):
+        l = dependent_lists[i]
+        sorted_l = [l[i] for i in sorted_indices]
+        sorted_dependent_lists.append(sorted_l)
+    return sorted_primary, sorted_dependent_lists
+
+
 def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5), verbose=False):
     """
     Compute all possible signatures having the same Morgan vector as the provided one.
