@@ -10,10 +10,11 @@
 import numpy as np
 from rdkit import Chem
 from rdkit.Chem import AllChem
+from rdkit.Chem.EnumerateStereoisomers import (EnumerateStereoisomers,
+                                               StereoEnumerationOptions)
 
 from signature.Signature import MoleculeSignature
 from signature.signature_alphabet import signature_sorted_array
-
 
 ########################################################################################################################
 # Local functions
@@ -406,7 +407,7 @@ def test_sol_ECFP(smis, Alphabet):
         True if all generated ECFPs are identical, otherwise False.
     """
 
-    fpgen = AllChem.GetMorganGenerator(radius=Alphabet.radius, fpSize=Alphabet.nBits)
+    fpgen = AllChem.GetMorganGenerator(radius=Alphabet.radius, fpSize=Alphabet.nBits, includeChirality=True)
     ecfp_list = []
     for smi in smis:
         mol = Chem.MolFromSmiles(smi)
@@ -534,3 +535,86 @@ def signature_bond_type(bt="UNSPECIFIED"):
         The corresponding RDKit BondType object.
     """
     return Chem.BondType.names[bt]
+
+
+########################################################################################################################
+# Stereochemistry related functions.
+########################################################################################################################
+
+
+def generate_stereoisomers(smi):
+    """
+    Generate all stereoisomers of a molecule.
+
+    Parameters
+    ----------
+    smi : str
+        The SMILES string of the molecule.
+
+    Returns
+    -------
+    list
+        A list of the SMILES of the stereoisomers of the input molecule.
+    """
+
+    mol = Chem.MolFromSmiles(smi)
+    options = StereoEnumerationOptions(onlyUnassigned=True, unique=True)
+    stereoisomers = list(EnumerateStereoisomers(mol, options=options))
+    return [Chem.MolToSmiles(isomer, isomericSmiles=True) for isomer in stereoisomers]
+
+
+def get_first_stereoisomer(smi):
+    """
+    Generate the first stereoisomer of a molecule.
+
+    Parameters
+    ----------
+    smi : str
+        The SMILES string of the molecule.
+
+    Returns
+    -------
+    str
+        The SMILES string of the first stereoisomer of the input molecule.
+    """
+
+    # Create a molecule and set options
+    mol = Chem.MolFromSmiles(smi)
+    options = StereoEnumerationOptions(onlyUnassigned=True, unique=True)
+    # Generate stereoisomers (as a generator)
+    stereoisomers = EnumerateStereoisomers(mol, options=options)
+    # Get only the first stereoisomer
+    first_isomer = next(stereoisomers, None)  # None is a default if the generator is empty
+    smi_stereo = Chem.MolToSmiles(first_isomer)
+    return smi_stereo
+
+
+########################################################################################################################
+# Isotopic related functions.
+########################################################################################################################
+
+
+def remove_isotopes(smiles):
+    """
+    Remove isotopic information from a SMILES string.
+
+    Parameters
+    ----------
+    smi : str
+        Input SMILES string, potentially with isotopic information.
+
+    Returns
+    -------
+    str
+        SMILES string without isotopic information.
+    """
+
+    # Convert SMILES to an RDKit molecule
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        raise ValueError("Invalid SMILES string")
+    # Set the isotope of each atom to 0
+    for atom in mol.GetAtoms():
+        atom.SetIsotope(0)
+    # Convert the molecule back to a SMILES string
+    return Chem.MolToSmiles(mol)
