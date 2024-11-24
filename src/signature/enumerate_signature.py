@@ -11,19 +11,16 @@ import copy
 import re
 import time
 from collections import Counter
-from itertools import chain, combinations
 
 import networkx as nx
 import numpy as np
 from rdkit import Chem
 
-from signature.enumerate_utils import (atomic_num_charge,
+from signature.enumerate_utils import (generate_stereoisomers,
                                        get_constraint_matrices,
                                        signature_bond_type,
                                        update_constraint_matrices)
-from signature.Signature import AtomSignature, MoleculeSignature
-from signature.signature_alphabet import (sanitize_molecule,
-                                          signature_vector_to_string)
+from signature.Signature import AtomSignature
 from signature.solve_partitions import solve_by_partitions
 
 ########################################################################################################################
