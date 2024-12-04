@@ -20,7 +20,7 @@ from rdkit.Chem import Descriptors
 
 def mol_from_smiles(
         smiles: str,
-        clear_stereo: bool = True,
+        clear_stereo: bool = False,
         clear_aam: bool = True,
         clear_isotope: bool = True
 ) -> Chem.Mol:
