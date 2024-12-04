@@ -829,7 +829,7 @@ class MoleculeSignature:
         mol: Chem.Mol = None,
         radius: int = 2,
         nbits: int = 2048,
-        use_stereo: bool = False,
+        use_stereo: bool = True,
         use_smarts: bool = True,
         boundary_bonds: bool = False,
         map_root: bool = True,
