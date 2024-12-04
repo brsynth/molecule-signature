@@ -531,7 +531,8 @@ def get_smarts_features(qatom: Chem.Atom, wish_list=None) -> dict:
         - # : Atomic number
         - A : Aliphatic
         - a : Aromatic
-        - H : Number of hydrogens
+        - H : Total number of hydrogens (implicit + explicit)
+        - h : Number of implicit hydrogens
         - D : Degree
         - X : Connectivity
         - +-: Charge
@@ -546,7 +547,7 @@ def get_smarts_features(qatom: Chem.Atom, wish_list=None) -> dict:
     _descriptors = qatom.DescribeQuery()
 
     if wish_list is None:
-        wish_list = ["#", "A", "a", "H", "D", "X", "+-"]
+        wish_list = ["#", "A", "a", "H", "h", "D", "X", "+-"]
 
     # Atomic number and atom type
     if "#" in wish_list:
@@ -572,11 +573,17 @@ def get_smarts_features(qatom: Chem.Atom, wish_list=None) -> dict:
                 feats["#"] = int(_match.group("value"))
                 feats["A"] = 1
 
-    # Hydrogens
+    # Hydrogens (implicit + explicit)
     if "H" in wish_list:
         _match = re.search(r"AtomHCount (?P<value>\d) = val", _descriptors)
         if _match:
             feats["H"] = int(_match.group("value"))
+
+    # Implicit hydrogens
+    if "h" in wish_list:
+        _match = re.search(r"AtomImplicitHCount (?P<value>\d) = val", _descriptors)
+        if _match:
+            feats["h"] = int(_match.group("value"))
 
     # # Aromatic
     if "a" in wish_list and "a" not in feats:
@@ -636,6 +643,7 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
         _number = feats.get("#", 0)
         _symbol = Chem.GetPeriodicTable().GetElementSymbol(_number)
         _H_count = feats.get("H", 0)
+        _h_count = feats.get("h", 0)
         _connectivity = feats.get("X", 0)
         _degree = feats.get("D", 0)
         _formal_charge = feats.get("+-", 0)
@@ -643,6 +651,7 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
     else:
         _symbol = atom.GetSymbol()
         _H_count = atom.GetTotalNumHs()  # Total number of Hs, including implicit Hs
+        _h_count = atom.GetNumImplicitHs()  # Number of implicit Hs
         _connectivity = atom.GetTotalDegree()  # Total number of connections, including H
         _degree = atom.GetDegree()  # Number of explicit connections, hence excluding H if Hs are implicits
         _formal_charge = atom.GetFormalCharge()
@@ -661,6 +670,7 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
     # Assemble the SMARTS
     smarts = f"[{_symbol}"
     smarts += f"{_PROP_SEP}H{_H_count}"
+    smarts += f"{_PROP_SEP}h{_h_count}"
     smarts += f"{_PROP_SEP}D{_degree}"
     smarts += f"{_PROP_SEP}X{_connectivity}"
     # if _is_aromatic:
@@ -885,8 +895,13 @@ class MoleculeSignature:
         else:
             morgan_vect = [None] * mol.GetNumAtoms()
 
+        # Now let's work without stereochemistry
+        _smi = Chem.MolToSmiles(mol)
+        _smi = _smi.replace("@", "").replace("/", "").replace("\\", "")
+        _mol = Chem.MolFromSmiles(_smi)
+
         # Compute the signatures of all atoms
-        for atom in mol.GetAtoms():
+        for atom in _mol.GetAtoms():
             _morgan_bits = morgan_vect[atom.GetIdx()]
             _sig = AtomSignature(
                 atom,
