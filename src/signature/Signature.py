@@ -59,7 +59,6 @@ class AtomSignature:
         atom: Chem.Atom = None,
         radius: int = 2,
         morgan_bits: None | list[int] = None,
-        use_stereo: bool = False,
         use_smarts: bool = True,
         boundary_bonds: bool = False,
         map_root: bool = True,
@@ -76,8 +75,6 @@ class AtomSignature:
             The radius of the environment to consider.
         boundary_bonds : bool
             Whether to add bonds at the boundary of the radius.
-        use_stereo : bool
-            Whether to use and express stereochemistry information.
         use_smarts : bool
             Whether to use SMARTS syntax for the signature (otherwise, use SMILES syntax).
         map_root : bool
@@ -112,7 +109,6 @@ class AtomSignature:
         self._root = self.atom_signature(
             atom,
             radius,
-            use_stereo,
             use_smarts,
             boundary_bonds,
             map_root,
@@ -274,7 +270,6 @@ class AtomSignature:
         cls,
         atom: Chem.Atom,
         radius: int = 2,
-        use_stereo: bool = False,
         use_smarts: bool = True,
         boundary_bonds: bool = False,
         map_root: bool = True,
@@ -292,8 +287,6 @@ class AtomSignature:
             The atom to generate the signature for.
         radius : int
             The radius of the environment to consider. If negative, the whole molecule is considered.
-        use_stereo : bool
-            Whether to use and express stereochemistry information.
         use_smarts : bool
             Whether to use SMARTS syntax for the signature.
         boundary_bonds : bool
@@ -321,7 +314,7 @@ class AtomSignature:
         if use_smarts:
             for _atom in mol.GetAtoms():
                 _atom_map = 1 if _atom.GetIdx() == atom.GetIdx() and map_root else 0
-                _atom_symbol = atom_to_smarts(_atom, _atom_map, use_stereo)
+                _atom_symbol = atom_to_smarts(_atom, _atom_map)
                 _atom.SetProp("atom_symbol", _atom_symbol)
         else:
             raise NotImplementedError("SMILES syntax not implemented yet.")
@@ -364,7 +357,7 @@ class AtomSignature:
             if fragment.NeedsUpdatePropertyCache():
                 fragment.UpdatePropertyCache(strict=False)
 
-            # Build SMARTS elements
+            # Collect SMARTS elements
             _atoms_to_use = list(range(fragment.GetNumAtoms()))
             _atoms_symbols = [atom.GetProp("atom_symbol") for atom in fragment.GetAtoms()]
 
@@ -384,6 +377,7 @@ class AtomSignature:
                     updateLabel=False,
                     preserveProps=False,
                 )
+                # Restore properties
                 _fragment.GetAtomWithIdx(_atom_idx).SetProp("atom_symbol", _atom_symbol)  # Restore the atom symbol
             fragment = _fragment.GetMol()
 
@@ -391,18 +385,18 @@ class AtomSignature:
                 fragment.UpdatePropertyCache(strict=False)
 
             # DEBUG
-            for idx in range(fragment.GetNumAtoms()):
-                _atom = fragment.GetAtomWithIdx(idx)
-                logging.debug(
-                    f"idx: {_atom.GetIdx():2} "
-                    f"symbol: {_atom.GetSymbol():2} "
-                    f"map: {_atom.GetAtomMapNum():2} "
-                    f"degree: {_atom.GetDegree():1} "
-                    f"connec: {_atom.GetTotalDegree():1} "
-                    f"arom: {_atom.GetIsAromatic():1} "
-                    f"smarts: {_atom.GetSmarts():20} "
-                    f"stored smarts: {_atom.GetProp('atom_symbol'):20}"
-                )
+            # for idx in range(fragment.GetNumAtoms()):
+            #     _atom = fragment.GetAtomWithIdx(idx)
+            #     logging.debug(
+            #         f"idx: {_atom.GetIdx():2} "
+            #         f"symbol: {_atom.GetSymbol():2} "
+            #         f"map: {_atom.GetAtomMapNum():2} "
+            #         f"degree: {_atom.GetDegree():1} "
+            #         f"connec: {_atom.GetTotalDegree():1} "
+            #         f"arom: {_atom.GetIsAromatic():1} "
+            #         f"smarts: {_atom.GetSmarts():20} "
+            #         f"stored smarts: {_atom.GetProp('atom_symbol'):20}"
+            #     )
 
             smarts = Chem.MolFragmentToSmiles(
                 fragment,
@@ -446,7 +440,6 @@ class AtomSignature:
         cls,
         atom: Chem.Atom,
         radius: int = 1,
-        use_stereo: bool = False,
         use_smarts: bool = True,
         boundary_bonds: bool = False,
         map_root: bool = True,
@@ -471,7 +464,6 @@ class AtomSignature:
             neighbor_sig = cls.atom_signature(
                 neighbor_atom,
                 radius,
-                use_stereo,
                 use_smarts,
                 boundary_bonds,
                 map_root,
@@ -501,10 +493,6 @@ class AtomSignature:
         -------
         None
         """
-        # Always enable stereochemistry information for neighbors : if there is 
-        # stereo in the root it will be used, if not, it will be ignored.
-        _use_stereo = True
-
         # Get molecule from the root signature
         mol = self.to_mol()
 
@@ -518,15 +506,12 @@ class AtomSignature:
         self._root_minus = self.atom_signature(
             root_atom,
             radius - 1,
-            _use_stereo,
-
         )
 
         # Compute the neighbors signatures at radius - 1
         self._neighbors = self.atom_signature_neighbors(
             root_atom,
             radius - 1,
-            _use_stereo,
         )
 
 # =================================================================================================
@@ -626,7 +611,7 @@ def get_smarts_features(qatom: Chem.Atom, wish_list=None) -> dict:
     return feats
 
 
-def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0, use_stereo: bool = False) -> str:
+def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
     """Generate a SMARTS string for an atom
 
     Parameters
@@ -636,8 +621,6 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0, use_stereo: bool = False)
     atom_map : int
         The atom map number to use in the SMARTS string. If 0 (default), the
         atom map number is not used.
-    use_stereo : bool
-        Whether to use and express stereochemistry information.
 
     Returns
     -------
@@ -652,7 +635,6 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0, use_stereo: bool = False)
         feats = get_smarts_features(atom)
         _number = feats.get("#", 0)
         _symbol = Chem.GetPeriodicTable().GetElementSymbol(_number)
-        _chirality = atom.GetChiralTag()
         _H_count = feats.get("H", 0)
         _connectivity = feats.get("X", 0)
         _degree = feats.get("D", 0)
@@ -660,7 +642,6 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0, use_stereo: bool = False)
         # _is_aromatic = feats.get("a", 0)
     else:
         _symbol = atom.GetSymbol()
-        _chirality = atom.GetChiralTag()
         _H_count = atom.GetTotalNumHs()  # Total number of Hs, including implicit Hs
         _connectivity = atom.GetTotalDegree()  # Total number of connections, including H
         _degree = atom.GetDegree()  # Number of explicit connections, hence excluding H if Hs are implicits
@@ -676,13 +657,6 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0, use_stereo: bool = False)
         _symbol = _symbol.lower()
     elif atom.GetAtomicNum() == 1:
         _symbol = "#1"  # otherwise, H is not recognized
-
-    # Chirality
-    if use_stereo:
-        if _chirality == Chem.ChiralType.CHI_TETRAHEDRAL_CW:
-            _symbol = f"{_symbol}@"
-        elif _chirality == Chem.ChiralType.CHI_TETRAHEDRAL_CCW:
-            _symbol = f"{_symbol}@@"
 
     # Assemble the SMARTS
     smarts = f"[{_symbol}"
@@ -918,7 +892,6 @@ class MoleculeSignature:
                 atom,
                 radius,
                 _morgan_bits,
-                use_stereo,
                 use_smarts,
                 boundary_bonds,
                 map_root,
