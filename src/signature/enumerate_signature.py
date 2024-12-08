@@ -415,7 +415,7 @@ def extract_atomic_num(sa_root):
     return atomic_num
 
 
-def get_h_x_d_value_regex(sa_root):
+def get_H_h_x_d_value_regex(sa_root):
     """
     Extract the explicit H, degree and valency values from the atomic signature root.
 
@@ -436,12 +436,14 @@ def get_h_x_d_value_regex(sa_root):
 
     # Use regex to find the pattern
     match = re.search(r"H(\d+)", sa_root)
+    H_value = int(match.group(1))
+    match = re.search(r"h(\d+)", sa_root)
     h_value = int(match.group(1))
     match = re.search(r"D(\d+)", sa_root)
     d_value = int(match.group(1))
     match = re.search(r"X(\d+)", sa_root)
     x_value = int(match.group(1))
-    return h_value, d_value, x_value
+    return H_value, h_value, d_value, x_value
 
 
 def atom_initialization_from_atomic_signature(sa):
@@ -468,10 +470,11 @@ def atom_initialization_from_atomic_signature(sa):
     charge = extract_formal_charge(sa_root)
     rdatom.SetFormalCharge(charge)
     # Get h=explicit_Hs, d=implicit_Hs and x=valency
-    h_value, d_value, x_value = get_h_x_d_value_regex(sa_root)
+    H_value, h_value, d_value, x_value = get_H_h_x_d_value_regex(sa_root)
+    nb_H_explicit = H_value - h_value
     # Set explicit and implicit hydrogens
-    rdatom.SetNumExplicitHs(h_value)
-    if d_value == 0:
+    rdatom.SetNumExplicitHs(nb_H_explicit)
+    if h_value == 0:
         rdatom.SetNoImplicit(True)
     return rdatom
 
@@ -630,9 +633,9 @@ def atomic_sig_to_smiles(sa):
     num = a.GetAtomicNum()
     rdatom = Chem.Atom(num)
     rdatom.SetFormalCharge(formal_charge)
-    h_value, d_value, x_value = get_h_x_d_value_regex(sa_root)
-    rdatom.SetNumExplicitHs(h_value)  # Explicit hydrogens
-    if d_value == 0:
+    H_value, h_value, d_value, x_value = get_H_h_x_d_value_regex(sa_root)
+    rdatom.SetNumExplicitHs(H_value - h_value)  # Explicit hydrogens
+    if h_value == 0:
         rdatom.SetNoImplicit(True)
     rdedmol.AddAtom(rdatom)
     mol = rdedmol.GetMol()
