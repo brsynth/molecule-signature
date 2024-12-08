@@ -558,7 +558,7 @@ def generate_stereoisomers(smi):
     """
 
     mol = Chem.MolFromSmiles(smi)
-    options = StereoEnumerationOptions(onlyUnassigned=True, unique=True)
+    options = StereoEnumerationOptions(onlyUnassigned=True, unique=True, maxIsomers=float('inf'))
     stereoisomers = list(EnumerateStereoisomers(mol, options=options))
     return [Chem.MolToSmiles(isomer, isomericSmiles=True) for isomer in stereoisomers]
 
