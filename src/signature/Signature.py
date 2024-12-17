@@ -893,13 +893,17 @@ class MoleculeSignature:
         else:
             morgan_vect = [None] * mol.GetNumAtoms()
 
-        # Now let's work without stereochemistry
-        _smi = Chem.MolToSmiles(mol)
-        _smi = _smi.replace("@", "").replace("/", "").replace("\\", "")
-        _mol = Chem.MolFromSmiles(_smi)
+        # Flatten the molecule
+        mol_flat = flat_molecule_copy(mol)
+
+        # Get indexes mapping between original vs flattened molecules
+        index_mapping = get_index_mapping(mol, mol_flat)  # key: mol_flat => value: mol
+
+        # Reorder morgan_vect
+        morgan_vect = [morgan_vect[index_mapping[idx]] for idx in range(len(morgan_vect))]
 
         # Compute the signatures of all atoms
-        for atom in _mol.GetAtoms():
+        for atom in mol_flat.GetAtoms():
             _morgan_bits = morgan_vect[atom.GetIdx()]
             _sig = AtomSignature(
                 atom,
@@ -1065,6 +1069,51 @@ class MoleculeSignature:
         None
         """
         [_atom.post_compute_neighbors(radius) for _atom in self._atoms]
+
+
+# =================================================================================================
+# Molecule Signature helper functions
+# =================================================================================================
+def flat_molecule_copy(mol: Chem.Mol) -> Chem.Mol:
+    # Work on a copy
+    _mol = Chem.Mol(mol)
+    # Remove stereochemistry
+    Chem.RemoveStereochemistry(_mol)
+    # Go back and forth with SMILES to get rid of explicit Hs
+    _mol2 = Chem.MolFromSmiles(Chem.MolToSmiles(_mol))
+
+    # Return the flattened molecule
+    return _mol2
+
+
+def get_index_mapping(mol1: Chem.Mol, mol2: Chem.Mol, includeChirality: bool = False) -> dict:
+    """Get the index mapping between two molecules
+
+    This function computes the index mapping between two molecules.
+
+    Parameters
+    ----------
+    mol1 : Chem.Mol
+        The first molecule
+    mol2 : Chem.Mol
+        The second molecule
+    includeChirality : bool
+        Whether to include chirality information
+
+    Returns
+    -------
+    dict
+        The index mapping between the two molecules as a dictionary where the
+        keys are the indexes of the second molecule and the values are the indexes
+        of the second molecule.
+    """
+    canon_order_mol1 = list(Chem.CanonicalRankAtoms(mol1, includeChirality=includeChirality))
+    canon_order_mol2 = list(Chem.CanonicalRankAtoms(mol2, includeChirality=includeChirality))
+    index_mapping = {}
+    for idx_mol1, rank_mol1 in enumerate(canon_order_mol1):
+        idx_mol2 = canon_order_mol2.index(rank_mol1)
+        index_mapping[idx_mol2] = idx_mol1
+    return index_mapping
 
 
 # =================================================================================================
