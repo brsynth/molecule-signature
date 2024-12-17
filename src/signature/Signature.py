@@ -220,10 +220,8 @@ class AtomSignature:
         parts = signature.split(cls._MORGAN_SEP)
         if len(parts) == 2:
             morgans, remaining = parts[0], parts[1]
-            if cls._BIT_SEP in morgans:
-                morgans = tuple(int(bit) for bit in morgans.split(cls._BIT_SEP))
-            else:
-                morgans = int(morgans)
+            morgans = tuple(int(bit) for bit in morgans.split(cls._BIT_SEP))
+
         else:
             morgans, remaining = None, parts[0]
 
