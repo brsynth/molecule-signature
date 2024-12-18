@@ -22,7 +22,8 @@ def mol_from_smiles(
         smiles: str,
         clear_stereo: bool = False,
         clear_aam: bool = True,
-        clear_isotope: bool = True
+        clear_isotope: bool = True,
+        clear_hs: bool = True
 ) -> Chem.Mol:
     """Sanitize a molecule
 
@@ -38,6 +39,8 @@ def mol_from_smiles(
         Clear atom atom mapping, by default True.
     clear_isotope : bool, optional
         Clear isotope information, by default True.
+    clear_hs : bool, optional
+        Clear hydrogen atoms, by default True.
 
     Returns
     -------
@@ -62,9 +65,16 @@ def mol_from_smiles(
         if clear_aam:
             for atom in mol.GetAtoms():
                 atom.SetAtomMapNum(0)
+
         if clear_isotope:
             for atom in mol.GetAtoms():
                 atom.SetIsotope(0)
+
+        if clear_stereo or clear_isotope or clear_hs:
+            # Removing stereochemistry and isotope information might leave 
+            # the molecule with explicit hydrogens that does not carry any
+            # useful information. We remove them.
+            mol = Chem.RemoveHs(mol)
 
         return mol
 
