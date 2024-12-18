@@ -1075,15 +1075,28 @@ class MoleculeSignature:
 # Molecule Signature helper functions
 # =================================================================================================
 def flat_molecule_copy(mol: Chem.Mol) -> Chem.Mol:
-    # Work on a copy
-    _mol = Chem.Mol(mol)
-    # Remove stereochemistry
-    Chem.RemoveStereochemistry(_mol)
-    # Go back and forth with SMILES to get rid of explicit Hs
-    _mol2 = Chem.MolFromSmiles(Chem.MolToSmiles(_mol))
+    """Create a flat copy of a molecule
 
-    # Return the flattened molecule
-    return _mol2
+    Notes:
+    - original molecule is not modified
+    - unneeded Hs are removed
+
+    Parameters
+    ----------
+    mol : Chem.Mol
+        The molecule to create a flat copy of.
+
+    Returns
+    -------
+    Chem.Mol
+        The flat copy of the molecule.
+    """
+    _mol = Chem.Mol(mol)              # Work on a copy
+    Chem.RemoveStereochemistry(_mol)  # Remove stereochemistry
+    _mol = Chem.RemoveHs(_mol)        # Remove Hs not being useful anymore
+    # _mol2 = Chem.MolFromSmiles(Chem.MolToSmiles(_mol))  # Go back and forth with SMILES to get rid of explicit Hs
+
+    return _mol
 
 
 def get_index_mapping(mol1: Chem.Mol, mol2: Chem.Mol, includeChirality: bool = False) -> dict:
