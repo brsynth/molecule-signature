@@ -71,7 +71,7 @@ def mol_from_smiles(
                 atom.SetIsotope(0)
 
         if clear_stereo or clear_isotope or clear_hs:
-            # Removing stereochemistry and isotope information might leave 
+            # Removing stereochemistry and isotope information might leave
             # the molecule with explicit hydrogens that does not carry any
             # useful information. We remove them.
             mol = Chem.RemoveHs(mol)
