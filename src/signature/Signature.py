@@ -1093,8 +1093,10 @@ def flat_molecule_copy(mol: Chem.Mol) -> Chem.Mol:
     """
     _mol = Chem.Mol(mol)              # Work on a copy
     Chem.RemoveStereochemistry(_mol)  # Remove stereochemistry
-    _mol = Chem.RemoveHs(_mol)        # Remove Hs not being useful anymore
-    # _mol2 = Chem.MolFromSmiles(Chem.MolToSmiles(_mol))  # Go back and forth with SMILES to get rid of explicit Hs
+    # _mol = Chem.RemoveHs(_mol)        # Remove Hs not being useful anymore
+    # Go back and forth with SMILES to get rid of explicit Hs
+    # Note: just using Chem.RemoveHs() does not update the implicit H count of atoms
+    _mol = Chem.MolFromSmiles(Chem.MolToSmiles(_mol))
 
     return _mol
 
