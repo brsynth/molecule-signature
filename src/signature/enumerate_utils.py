@@ -542,7 +542,7 @@ def signature_bond_type(bt="UNSPECIFIED"):
 ########################################################################################################################
 
 
-def generate_stereoisomers(smi):
+def generate_stereoisomers(smi, max_nb_stereoisomers=2048):
     """
     Generate all stereoisomers of a molecule.
 
@@ -558,7 +558,7 @@ def generate_stereoisomers(smi):
     """
 
     mol = Chem.MolFromSmiles(smi)
-    options = StereoEnumerationOptions(onlyUnassigned=True, unique=True, maxIsomers=float('inf'))
+    options = StereoEnumerationOptions(onlyUnassigned=True, unique=True, maxIsomers=max_nb_stereoisomers)
     stereoisomers = list(EnumerateStereoisomers(mol, options=options))
     return [Chem.MolToSmiles(isomer, isomericSmiles=True) for isomer in stereoisomers]
 
