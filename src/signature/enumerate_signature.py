@@ -726,8 +726,14 @@ def enumerate_molecule_from_signature(
     # retain solutions having a signature = provided sig
     S = [smi for smi in S if smi != "" and "." not in smi and Chem.MolFromSmiles(smi) is not None]
     S_stereo = set()
+    if len(S) > 0:
+        max_nb_stereoisomers = int(1e5 / len(S))
+    if verbose:
+        print("S before stereoisomers", len(S))
     for s in S:
-        S_stereo_tmp = generate_stereoisomers(s)
+        S_stereo_tmp = generate_stereoisomers(s, max_nb_stereoisomers=max_nb_stereoisomers)
+        if len(S_stereo_tmp) >= max_nb_stereoisomers:
+            recursion_timeout = True
         S_stereo = S_stereo.union(S_stereo_tmp)
     if verbose:
         print("S_stereo", len(S_stereo))
