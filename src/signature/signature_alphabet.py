@@ -331,6 +331,7 @@ def load_alphabet(filename, verbose=False):
     Alphabet.atomMapping = bool(load["atomMapping"])
     Alphabet.kekuleSmiles = bool(load["kekuleSmiles"])
     Alphabet.allHsExplicit = bool(load["allHsExplicit"])
+    Alphabet.use_stereo = bool(load["use_stereo"])
     if verbose:
         Alphabet.print_out()
     return Alphabet
