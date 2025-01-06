@@ -407,10 +407,12 @@ def test_sol_ECFP(smis, Alphabet):
         True if all generated ECFPs are identical, otherwise False.
     """
 
-    fpgen = AllChem.GetMorganGenerator(radius=Alphabet.radius, fpSize=Alphabet.nBits, includeChirality=True)
+    fpgen = AllChem.GetMorganGenerator(radius=Alphabet.radius, fpSize=Alphabet.nBits, includeChirality=Alphabet.use_stereo)
     ecfp_list = []
     for smi in smis:
         mol = Chem.MolFromSmiles(smi)
+        if mol is None:
+            return False
         morgan = fpgen.GetCountFingerprint(mol).ToList()
         ecfp_list.append(morgan)
     return len(set(tuple(i) for i in ecfp_list)) == 1
