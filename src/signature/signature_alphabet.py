@@ -17,8 +17,8 @@ import numpy as np
 from rdkit import Chem
 
 from signature.Signature import MoleculeSignature
-from signature.signature_old import get_molecule_signature
 from signature.utils import dic_to_vector, vector_to_dic
+
 
 ########################################################################################################################
 # Alphabet callable class
@@ -30,23 +30,16 @@ class SignatureAlphabet:
         self,
         radius=2,
         nBits=0,
-        use_smarts=False,
-        boundary_bonds=False,
-        map_root=False,
+        map_root=True,
         use_stereo=False,
         Dict={},
     ):
         self.filename = ""
         self.radius = radius  # radius signatures are computed
-        # the number of bits in Morgan vector (defaut 0 = no vector)
-        self.nBits = nBits
-        # the alphabet dictionary keys = atom signature, values = index
-        self.Dict = Dict
-        self.use_smarts = use_smarts
-        self.boundary_bonds = boundary_bonds
-        self.map_root = map_root
-        # include information about stereochemistry
-        self.use_stereo = use_stereo
+        self.nBits = nBits  # the number of bits in Morgan vector (defaut 0 = no vector)
+        self.map_root = map_root # put :1 to identify the root
+        self.use_stereo = use_stereo # include information about stereochemistry
+        self.Dict = Dict  # the alphabet dictionary keys = atom signature, values = index
 
     def get_attributes(self):
         """
@@ -70,8 +63,6 @@ class SignatureAlphabet:
         return {
             "radius": self.radius,
             "nBits": self.nBits,
-            "use_smarts": self.use_smarts,
-            "boundary_bonds": self.boundary_bonds,
             "map_root": self.map_root,
             "use_stereo": self.use_stereo,
         }
@@ -97,7 +88,7 @@ class SignatureAlphabet:
             smi = Smiles[i]
             if i % 1000 == 0:
                 print(
-                    f"... processing alphabet iteration: {i} size: {len(list(Dict))} time: {(time.time()-start_time):2f}"
+                    f"... processing alphabet iteration: {i} size: {len(list(Dict))} time: {(time.time() - start_time):2f}"
                 )
                 start_time = time.time()
             if "*" in smi:  # no wild card allowed
@@ -111,9 +102,7 @@ class SignatureAlphabet:
                 ms = MoleculeSignature(
                     mol,
                     radius=self.radius,
-                    use_smarts=self.use_smarts,
                     nbits=self.nBits,
-                    boundary_bonds=self.boundary_bonds,
                     map_root=self.map_root,
                     use_stereo=self.use_stereo,
                 )
@@ -150,7 +139,7 @@ class SignatureAlphabet:
             if i % 10000 == 0:
                 print(
                     f"... processing alphabet iteration: {i:,} size: {len(Dict):,} time: {(time.time()-start_time):.2f}"
-                )  # noqa: E501
+                )
                 start_time = time.time()
             for sig in signature.split(" . "):  # separate molecules
                 for s in sig.split(" "):  # separate atom signatures
@@ -173,8 +162,7 @@ class SignatureAlphabet:
             filename=filename,
             radius=self.radius,
             nBits=self.nBits,
-            use_smarts=self.use_smarts,
-            boundary_bonds=self.boundary_bonds,
+            map_root=self.map_root,
             use_stereo=self.use_stereo,
             Dict=list(self.Dict.keys()),
         )
@@ -187,8 +175,7 @@ class SignatureAlphabet:
         print(f"filename: {self.filename}")
         print(f"radius: {self.radius}")
         print(f"nBits: {self.nBits}")
-        print(f"use_smarts: {self.use_smarts}")
-        print(f"boundary_bonds: {self.boundary_bonds}")
+        print(f"map_root: {self.map_root}")
         print(f"use_stereo: {self.use_stereo}")
         print(f"alphabet length: {len(self.Dict.keys())}")
 
@@ -277,8 +264,7 @@ def load_alphabet(filename, verbose=False):
     # Flags to compute signatures
     Alphabet.radius = int(load["radius"])
     Alphabet.nBits = int(load["nBits"])
-    Alphabet.use_smarts = bool(load["use_smarts"])
-    Alphabet.boundary_bonds = bool(load["boundary_bonds"])
+    Alphabet.map_root = int(load["map_root"])
     Alphabet.use_stereo = bool(load["use_stereo"])
     if verbose:
         Alphabet.print_out()
