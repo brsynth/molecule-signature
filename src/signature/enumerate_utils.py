@@ -450,8 +450,7 @@ def get_first_stereoisomer(smi):
     stereoisomers = EnumerateStereoisomers(mol, options=options)
     # Get only the first stereoisomer
     first_isomer = next(stereoisomers, None)  # None is a default if the generator is empty
-    smi_stereo = Chem.MolToSmiles(first_isomer)
-    return smi_stereo
+    return Chem.MolToSmiles(first_isomer)
 
 
 ########################################################################################################################
@@ -459,7 +458,7 @@ def get_first_stereoisomer(smi):
 ########################################################################################################################
 
 
-def remove_isotopes(smiles):
+def remove_isotopes(smi):
     """
     Remove isotopic information from a SMILES string.
 
@@ -475,7 +474,7 @@ def remove_isotopes(smiles):
     """
 
     # Convert SMILES to an RDKit molecule
-    mol = Chem.MolFromSmiles(smiles)
+    mol = Chem.MolFromSmiles(smi)
     if mol is None:
         raise ValueError("Invalid SMILES string")
     # Set the isotope of each atom to 0
