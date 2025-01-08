@@ -143,15 +143,20 @@ class SignatureAlphabet:
                 if verbose:
                     print(f"WARNING no signature for molecule {i} {smi}")
                 continue
-            ms = MoleculeSignature(
-                mol,
-                radius=self.radius,
-                use_smarts=self.use_smarts,
-                nbits=self.nBits,
-                boundary_bonds=self.boundary_bonds,
-                map_root=self.map_root,
-                use_stereo=self.use_stereo,
-            )
+            try:
+                ms = MoleculeSignature(
+                    mol,
+                    radius=self.radius,
+                    use_smarts=self.use_smarts,
+                    nbits=self.nBits,
+                    boundary_bonds=self.boundary_bonds,
+                    map_root=self.map_root,
+                    use_stereo=self.use_stereo,
+                )
+            except:
+                if verbose:
+                    print(f"PB signature {smi}")
+                continue
             if len(ms.to_list()) == 0:
                 if verbose:
                     print(f"WARNING no signature for molecule {i} {smi}")
