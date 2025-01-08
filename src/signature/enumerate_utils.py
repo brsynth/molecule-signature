@@ -343,43 +343,6 @@ def test_sol_ECFP(smis, Alphabet):
     return len(set(tuple(i) for i in ecfp_list)) == 1
 
 
-def test_sol_sig(smis, Alphabet):
-    """
-    Generate molecular signatures for a list of SMILES strings and check if all generated signatures are identical.
-
-    Parameters
-    ----------
-    smis : list of str
-        A list of SMILES (Simplified Molecular Input Line Entry System) strings representing the molecules.
-    Alphabet : object
-        An object with attributes specifying the parameters for generating the molecular signatures:
-        - radius: int, the radius for the signature calculation.
-        - use_smarts: bool, whether to use SMARTS patterns.
-        - boundary_bonds: bool, whether to consider boundary bonds.
-
-    Returns
-    -------
-    bool
-        True if all generated molecular signatures are identical, otherwise False.
-    """
-
-    sig_list = []
-    for smi in smis:
-        mol = Chem.MolFromSmiles(smi)
-        ms = MoleculeSignature(
-            mol,
-            radius=Alphabet.radius,
-            neighbor=True,
-            use_smarts=Alphabet.use_smarts,
-            nbits=False,
-            boundary_bonds=Alphabet.boundary_bonds,
-            map_root=True,
-        )
-        sig = ms.as_deprecated_string(morgan=False, root=False, neighbors=True)
-        sig_list.append(sig)
-    return len(set(tuple(i) for i in sig_list)) == 1
-
-
 ########################################################################################################################
 # Signature Callable functions.
 ########################################################################################################################
