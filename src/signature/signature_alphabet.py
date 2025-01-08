@@ -33,39 +33,19 @@ class SignatureAlphabet:
         use_smarts=False,
         boundary_bonds=False,
         map_root=False,
-        legacy=False,
-        splitcomponent=False,
-        isomericSmiles=False,
-        formalCharge=True,
-        atomMapping=False,
-        kekuleSmiles=False,
-        allHsExplicit=False,
         use_stereo=False,
-        maxvalence=4,
         Dict={},
     ):
         self.filename = ""
         self.radius = radius  # radius signatures are computed
         # the number of bits in Morgan vector (defaut 0 = no vector)
         self.nBits = nBits
-        # when True the signature is computed for each molecule
-        self.splitcomponent = splitcomponent
-        # include information about stereochemistry
-        self.isomericSmiles = isomericSmiles
-        # Remove charges on atom when False. Defaults to False
-        self.formalCharge = formalCharge
-        # Remove atom mapping when False
-        self.atomMapping = atomMapping
-        self.kekuleSmiles = kekuleSmiles
-        # if true, all H  will be explicitly in signatures
-        self.allHsExplicit = allHsExplicit
-        self.maxvalence = maxvalence  # for all atoms
         # the alphabet dictionary keys = atom signature, values = index
         self.Dict = Dict
         self.use_smarts = use_smarts
         self.boundary_bonds = boundary_bonds
         self.map_root = map_root
-        self.legacy = legacy
+        # include information about stereochemistry
         self.use_stereo = use_stereo
 
     def get_attributes(self):
@@ -85,14 +65,6 @@ class SignatureAlphabet:
             - 'use_smarts': The use_smarts attribute of the object.
             - 'boundary_bonds': The boundary_bonds attribute of the object.
             - 'map_root': The map_root attribute of the object.
-            - 'legacy': The legacy attribute of the object.
-            - 'splitcomponent': The splitcomponent attribute of the object.
-            - 'isomericSmiles': The isomericSmiles attribute of the object.
-            - 'formalCharge': The formalCharge attribute of the object.
-            - 'atomMapping': The atomMapping attribute of the object.
-            - 'kekuleSmiles': The kekuleSmiles attribute of the object.
-            - 'allHsExplicit': The allHsExplicit attribute of the object.
-            - 'maxvalence': The maxvalence attribute of the object.
         """
 
         return {
@@ -101,14 +73,6 @@ class SignatureAlphabet:
             "use_smarts": self.use_smarts,
             "boundary_bonds": self.boundary_bonds,
             "map_root": self.map_root,
-            "legacy": self.legacy,
-            "splitcomponent": self.splitcomponent,
-            "isomericSmiles": self.isomericSmiles,
-            "formalCharge": self.formalCharge,
-            "atomMapping": self.atomMapping,
-            "kekuleSmiles": self.kekuleSmiles,
-            "allHsExplicit": self.allHsExplicit,
-            "maxvalence": self.maxvalence,
             "use_stereo": self.use_stereo,
         }
 
@@ -211,13 +175,6 @@ class SignatureAlphabet:
             nBits=self.nBits,
             use_smarts=self.use_smarts,
             boundary_bonds=self.boundary_bonds,
-            splitcomponent=self.splitcomponent,
-            isomericSmiles=self.isomericSmiles,
-            formalCharge=self.formalCharge,
-            atomMapping=self.atomMapping,
-            kekuleSmiles=self.kekuleSmiles,
-            allHsExplicit=self.allHsExplicit,
-            maxvalence=self.maxvalence,
             use_stereo=self.use_stereo,
             Dict=list(self.Dict.keys()),
         )
@@ -230,13 +187,6 @@ class SignatureAlphabet:
         print(f"filename: {self.filename}")
         print(f"radius: {self.radius}")
         print(f"nBits: {self.nBits}")
-        print(f"splitcomponent: {self.splitcomponent}")
-        print(f"isomericSmiles: {self.isomericSmiles}")
-        print(f"formalCharge: {self.formalCharge}")
-        print(f"atomMapping: {self.atomMapping}")
-        print(f"kekuleSmiles: {self.kekuleSmiles}")
-        print(f"allHsExplicit: {self.allHsExplicit}")
-        print(f"maxvalence: {self.maxvalence}")
         print(f"use_smarts: {self.use_smarts}")
         print(f"boundary_bonds: {self.boundary_bonds}")
         print(f"use_stereo: {self.use_stereo}")
@@ -329,13 +279,6 @@ def load_alphabet(filename, verbose=False):
     Alphabet.nBits = int(load["nBits"])
     Alphabet.use_smarts = bool(load["use_smarts"])
     Alphabet.boundary_bonds = bool(load["boundary_bonds"])
-    Alphabet.maxvalence = int(load["maxvalence"])
-    Alphabet.splitcomponent = bool(load["splitcomponent"])
-    Alphabet.isomericSmiles = bool(load["isomericSmiles"])
-    Alphabet.formalCharge = bool(load["formalCharge"])
-    Alphabet.atomMapping = bool(load["atomMapping"])
-    Alphabet.kekuleSmiles = bool(load["kekuleSmiles"])
-    Alphabet.allHsExplicit = bool(load["allHsExplicit"])
     Alphabet.use_stereo = bool(load["use_stereo"])
     if verbose:
         Alphabet.print_out()
