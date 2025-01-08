@@ -863,15 +863,16 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
     morgan_indices_unique = sorted(list(set(morgan_indices)))
     morgan_non_zero = [morgan[i] for i in morgan_indices_unique]
     # Selection of the atomic signatures of the alphabet having morgan bits included in the morgan vector input
-    AS, MAX, IDX, I = {}, {}, {}, 0
+    AS, MAX, IDX = [], [], []
     for sig in Alphabet.Dict.keys():
         mbits, sa = sig.split(" ## ")[0], sig.split(" ## ")[1]
         mbits = [int(x) for x in mbits.split("-")]
         if is_counted_subset(mbits, morgan_indices):
             mbit = mbits[-1]
             maxi = morgan[mbit]
-            AS[I], MAX[I], IDX[I] = sa, maxi, mbits
-            I += 1
+            AS.append(sa)
+            MAX.append(maxi)
+            IDX.append(mbits)
     # Handle morgan coming from a single atom
     if sum(morgan) == 1:
         for i in range(len(AS)):
@@ -882,31 +883,20 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
             AS[i] = _as_neigh_string
         return [[x] for x in AS.values()], False, 0
     # Compute neighbors of selected fragments and suppress single atom fragments
-    x_to_del = []
+    indices_to_keep = []
     for i in range(len(AS)):
         _as = AS[i]
         _as_neigh = AtomSignature.from_string(_as)
         _as_neigh.post_compute_neighbors()
         _as_neigh_string = _as_neigh.to_string(True)
-        if _as_neigh_string[-3:] == "&& ":
-            x_to_del.append(i)
-        else:
+        if _as_neigh_string[-3:] != "&& ":
+            indices_to_keep.append(i)
             AS[i] = _as_neigh_string
-    for key in x_to_del:
-        del AS[key]
-        del MAX[key]
-        del IDX[key]
-    AS_2 = {new_key: value for new_key, (old_key, value) in enumerate(AS.items())}
-    MAX_2 = {new_key: value for new_key, (old_key, value) in enumerate(MAX.items())}
-    IDX_2 = {new_key: value for new_key, (old_key, value) in enumerate(IDX.items())}
-    AS = AS_2
-    MAX = MAX_2
-    IDX = IDX_2
+    AS = [AS[i] for i in indices_to_keep]
+    MAX = [MAX[i] for i in indices_to_keep]
+    IDX = [IDX[i] for i in indices_to_keep]
     # Get Matrices for enumeration
-    AS = np.asarray(list(AS.values()))
-    MAX = np.asarray(list(MAX.values()))
-    Deg = np.asarray([len(AS[i].split(" && ")) - 1 for i in range(AS.shape[0])])
-    IDX = list(IDX.values())
+    Deg = [len(AS[i].split(" && ")) - 1 for i in range(len(AS))]
     IDX, [AS, MAX, Deg] = custom_sort_with_dependent(IDX, [AS, MAX, Deg])
     AS = np.array(AS)
     MAX = np.array(MAX)
