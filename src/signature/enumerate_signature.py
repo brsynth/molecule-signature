@@ -863,15 +863,14 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
     morgan_indices_unique = sorted(list(set(morgan_indices)))
     morgan_non_zero = [morgan[i] for i in morgan_indices_unique]
     # Selection of the atomic signatures of the alphabet having morgan bits included in the morgan vector input
-    AS, MIN, MAX, IDX, I = {}, {}, {}, {}, 0
+    AS, MAX, IDX, I = {}, {}, {}, 0
     for sig in Alphabet.Dict.keys():
         mbits, sa = sig.split(" ## ")[0], sig.split(" ## ")[1]
         mbits = [int(x) for x in mbits.split("-")]
         if is_counted_subset(mbits, morgan_indices):
             mbit = mbits[-1]
             maxi = morgan[mbit]
-            mini = 0 if len(sig) > 1 else maxi
-            AS[I], MIN[I], MAX[I], IDX[I] = sa, mini, maxi, mbits
+            AS[I], MAX[I], IDX[I] = sa, maxi, mbits
             I += 1
     # Handle morgan coming from a single atom
     if sum(morgan) == 1:
@@ -895,29 +894,24 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
             AS[i] = _as_neigh_string
     for key in x_to_del:
         del AS[key]
-        del MIN[key]
         del MAX[key]
         del IDX[key]
     AS_2 = {new_key: value for new_key, (old_key, value) in enumerate(AS.items())}
-    MIN_2 = {new_key: value for new_key, (old_key, value) in enumerate(MIN.items())}
     MAX_2 = {new_key: value for new_key, (old_key, value) in enumerate(MAX.items())}
     IDX_2 = {new_key: value for new_key, (old_key, value) in enumerate(IDX.items())}
     AS = AS_2
-    MIN = MIN_2
     MAX = MAX_2
     IDX = IDX_2
     # Get Matrices for enumeration
     AS = np.asarray(list(AS.values()))
-    MIN = np.asarray(list(MIN.values()))
     MAX = np.asarray(list(MAX.values()))
     Deg = np.asarray([len(AS[i].split(" && ")) - 1 for i in range(AS.shape[0])])
     IDX = list(IDX.values())
-    IDX, [AS, MIN, MAX, Deg] = custom_sort_with_dependent(IDX, [AS, MIN, MAX, Deg])
+    IDX, [AS, MAX, Deg] = custom_sort_with_dependent(IDX, [AS, MAX, Deg])
     AS = np.array(AS)
-    MIN = np.array(MIN)
     MAX = np.array(MAX)
     Deg = np.array(Deg)
-    AS, IDX, MIN, MAX, Deg, C = update_constraint_matrices(AS, IDX, MIN, MAX, Deg, verbose=verbose)
+    AS, IDX, MAX, Deg, C = update_constraint_matrices(AS, IDX, MAX, Deg, verbose=verbose)
     C = C.astype(int)
     if AS.shape[0] == 0:
         return [], False, 0
