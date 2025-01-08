@@ -881,7 +881,7 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
             _as_neigh.post_compute_neighbors()
             _as_neigh_string = _as_neigh.to_string(True)
             AS[i] = _as_neigh_string
-        return [[x] for x in AS.values()], False, 0
+        return [[x] for x in AS], False, 0
     # Compute neighbors of selected fragments and suppress single atom fragments
     indices_to_keep = []
     for i in range(len(AS)):
