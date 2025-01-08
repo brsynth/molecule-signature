@@ -239,7 +239,7 @@ def get_constraint_matrices(sig, unique=True, verbose=False):
     return AS, NAS, deg, A, B, C
 
 
-def update_constraint_matrices(AS, IDX, MIN, MAX, deg, verbose=False):
+def update_constraint_matrices(AS, IDX, MAX, deg, verbose=False):
     """
     Update the constraint matrices based on the provided atom signatures and their properties.
 
@@ -249,8 +249,6 @@ def update_constraint_matrices(AS, IDX, MIN, MAX, deg, verbose=False):
         An array of atom signatures.
     IDX : numpy.ndarray
         An array containing the atom index.
-    MIN : numpy.ndarray
-        An array containing the minimum atom occurrence.
     MAX : numpy.ndarray
         An array containing the maximum atom occurrence.
     deg : numpy.ndarray
@@ -264,8 +262,6 @@ def update_constraint_matrices(AS, IDX, MIN, MAX, deg, verbose=False):
         Updated array of atom signatures.
     IDX : numpy.ndarray
         Updated array containing the atom index.
-    MIN : numpy.ndarray
-        Updated array containing the minimum atom occurrence.
     MAX : numpy.ndarray
         Updated array containing the maximum atom occurrence.
     deg : numpy.ndarray
@@ -288,10 +284,10 @@ def update_constraint_matrices(AS, IDX, MIN, MAX, deg, verbose=False):
                 I.append(i)
         AS = AS[I]
         IDX = [IDX[j] for j in I]
-        MIN, MAX, deg = MIN[I], MAX[I], deg[I]
+        MAX, deg = MAX[I], deg[I]
 
     if AS.shape[0] == 0:
-        return AS, IDX, MIN, MAX, deg, np.array([])
+        return AS, IDX, MAX, deg, np.array([])
 
     # Get constraint matrices
     C = constraint_matrix(AS, BS, deg, verbose=verbose)
@@ -306,7 +302,7 @@ def update_constraint_matrices(AS, IDX, MIN, MAX, deg, verbose=False):
         for i in range(BS.shape[0]):
             print(f"{i} {BS[i]}")
 
-    return AS, IDX, MIN, MAX, deg, C
+    return AS, IDX, MAX, deg, C
 
 
 ########################################################################################################################
