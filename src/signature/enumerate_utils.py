@@ -21,81 +21,6 @@ from signature.signature_alphabet import signature_sorted_array
 ########################################################################################################################
 
 
-def reduced_fingerprint(smi, radius=2, nbits=2048, useFeatures=False):
-    """
-    Compute the reduced ECFP (Extended-Connectivity Fingerprints) or FCFP (Feature-Connectivity Fingerprints) for a
-    given SMILES string. The reduced fingerprint is obtained by selecting the most prominent bit for each atom in the
-    molecule.
-
-    Parameters
-    ----------
-    smi : str
-        A SMILES string representing the molecule.
-    radius : int, optional
-        The radius of the fingerprint. Defaults to 2.
-    useFeatures : bool, optional
-        If False, computes ECFP (Extended-Connectivity Fingerprints).
-        If True, computes FCFP (Feature-Connectivity Fingerprints). Defaults to False.
-
-    Returns
-    -------
-    morgan : numpy.ndarray
-        The reduced ECFP (or FCFP) fingerprint.
-    """
-
-    if nbits <= 0:
-        print("WARNING Nbits <= 0")
-    fpgen = AllChem.GetMorganGenerator(radius=radius, fpSize=nbits)
-    ao = AllChem.AdditionalOutput()
-    ao.CollectBitInfoMap()
-    mol = Chem.MolFromSmiles(smi)
-    if useFeatures:
-        info2 = {}
-        fp = AllChem.GetMorganFingerprint(mol, radius, useFeatures=True, bitInfo=info2)
-        info = {}
-        for i in info2:
-            info[i % nbits] = info2[i]
-    else:
-        ecfp_list = fpgen.GetCountFingerprint(mol, additionalOutput=ao).ToList()
-        info = ao.GetBitInfoMap()
-    morgan_tmp = []
-    for j in range(len(mol.GetAtoms())):
-        tmp = [(key, info[key][i][1]) for key in info for i in range(len(info[key])) if info[key][i][0] == j]
-        indice = np.argmax([tmp[i][1] for i in range(len(tmp))])
-        morgan_tmp.append(tmp[indice][0])
-    morgan = np.zeros((nbits,), dtype=int)
-    for i in range(morgan.shape[0]):
-        if i in morgan_tmp:
-            morgan[i] = morgan_tmp.count(i)
-
-    return morgan
-
-
-def atom_signature_root_neighbors(asig):
-    """
-    Get the signature of the root atom and the array of neighbor signatures from the provided atom signature. This
-    function removes the Morgan bit from the atom signature if present.
-
-    Parameters
-    ----------
-    asig : str
-        The atom signature.
-
-    Returns
-    -------
-    asig0 : str
-        The signature of the root atom (without type).
-    asign : list of str
-        The array of neighbor signatures.
-    """
-
-    if len(asig.split(",")) > 1:  # remove morgan bit
-        asig = asig.split(",")[1]
-    asig0, asign = asig.split(".")[0], asig.split(".")[1:]
-
-    return asig0, asign
-
-
 def bond_signature_occurence(bsig, asig):
     """
     Get the left and right atom signatures of the provided bond signature, along with their occurrence numbers in the
@@ -418,31 +343,6 @@ def test_sol_ECFP(smis, Alphabet):
     return len(set(tuple(i) for i in ecfp_list)) == 1
 
 
-def test_sol_ECFP_reduced(smis, Alphabet):
-    """
-    Generate reduced Extended-Connectivity Fingerprints (ECFP) for a list of SMILES strings and check if all generated fingerprints are identical.
-
-    Parameters
-    ----------
-    smis : list of str
-        A list of SMILES (Simplified Molecular Input Line Entry System) strings representing the molecules.
-    Alphabet : object
-        An object with attributes 'radius' and 'nBits' which specify the parameters for the reduced fingerprint generator.
-        'radius' determines the radius of the atom environments considered, and 'nBits' specifies the size of the fingerprint bit vector.
-
-    Returns
-    -------
-    bool
-        True if all generated reduced ECFPs are identical, otherwise False.
-    """
-
-    ecfp_list = []
-    for smi in smis:
-        morgan = reduced_fingerprint(smi, radius=Alphabet.radius, nbits=Alphabet.nBits, useFeatures=False).tolist()
-        ecfp_list.append(morgan)
-    return len(set(tuple(i) for i in ecfp_list)) == 1
-
-
 def test_sol_sig(smis, Alphabet):
     """
     Generate molecular signatures for a list of SMILES strings and check if all generated signatures are identical.
@@ -483,43 +383,6 @@ def test_sol_sig(smis, Alphabet):
 ########################################################################################################################
 # Signature Callable functions.
 ########################################################################################################################
-
-
-def atomic_num_charge(sa, use_smarts=False):
-    """
-    Return the atomic number and formal charge of the root atom in the atom signature.
-    If the root atom is not found, (-1, 0) is returned.
-
-    Parameters
-    ----------
-    sa : str
-        The atom signature.
-
-    Returns
-    -------
-    int
-        The atomic number of the root atom.
-    int
-        The formal charge of the root atom.
-    """
-
-    sa = sa.split(" && ")[0]  # the root
-    if use_smarts:
-        m = Chem.MolFromSmarts(sa)
-    else:
-        m = Chem.MolFromSmiles(sa, sanitize=False)
-    for a in m.GetAtoms():
-        if a.GetAtomMapNum() == 1:
-            if use_smarts:
-                formal_charge_str = a.DescribeQuery().split("AtomFormalCharge")[-1].split(" ")[1]
-                if len(formal_charge_str) == 0:
-                    formal_charge = 0
-                else:
-                    formal_charge = int(formal_charge_str)
-            else:
-                formal_charge = a.GetFormalCharge()
-            return a.GetAtomicNum(), formal_charge
-    return -1, 0
 
 
 def signature_bond_type(bt="UNSPECIFIED"):
