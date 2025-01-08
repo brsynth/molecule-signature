@@ -310,7 +310,7 @@ def update_constraint_matrices(AS, IDX, MIN, MAX, deg, verbose=False):
 
 
 ########################################################################################################################
-# Functions to test if a set of smiles has the same ECFP representation.
+# Function to test if a set of smiles has the same ECFP representation.
 ########################################################################################################################
 
 
