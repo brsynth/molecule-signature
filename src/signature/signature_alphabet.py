@@ -14,6 +14,7 @@ import sys
 import time
 
 import numpy as np
+from itertools import chain
 from rdkit import Chem
 
 from signature.Signature import MoleculeSignature
@@ -111,21 +112,29 @@ class SignatureAlphabet:
                 continue
             self.Dict = self.Dict | set(ms.to_list())
 
-    def fill_from_signatures(self, atomic_sigs, verbose=False):
+    def fill_from_signatures(self, signatures, atomic=False, verbose=False):
         """
         Fill the alphabet from a set of atomic signatures.
 
         Parameters
         ----------
-        atomic_sigs : set of str
-            A set of atomic signature strings.
+        signatures : set of str
+            A set of atomic or molecular signatures strings.
+        atomic : bool, optional
+            If False, the set signatures is composed of molecular signatures.
+            If True, the set signatures is composed of atomic signatures (default is False).
         verbose : bool, optional
             If True, print verbose output (default is False).
         """
 
         if verbose and len(self.Dict) > 0:
             print(f"WARNING alphabet non empty, alphabet length: {len(self.Dict)}")
-        self.Dict = self.Dict | atomic_sigs
+        if atomic:
+            self.Dict = self.Dict | signatures
+        else:
+            atomic_signatures = [sig.split(" .. ") for sig in signatures]
+            atomic_signatures_flattened = set(chain.from_iterable(atomic_signatures))
+            self.Dict = self.Dict | atomic_signatures_flattened
 
     def save(self, filename):
         """
