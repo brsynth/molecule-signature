@@ -864,7 +864,7 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
     morgan_non_zero = [morgan[i] for i in morgan_indices_unique]
     # Selection of the atomic signatures of the alphabet having morgan bits included in the morgan vector input
     AS, MAX, IDX = [], [], []
-    for sig in Alphabet.Dict.keys():
+    for sig in Alphabet.Dict:
         mbits, sa = sig.split(" ## ")[0], sig.split(" ## ")[1]
         mbits = [int(x) for x in mbits.split("-")]
         if is_counted_subset(mbits, morgan_indices):
