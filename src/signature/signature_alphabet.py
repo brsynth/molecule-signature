@@ -18,7 +18,6 @@ from itertools import chain
 from rdkit import Chem
 
 from signature.Signature import MoleculeSignature
-from signature.utils import dic_to_vector, vector_to_dic
 
 
 ########################################################################################################################
