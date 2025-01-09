@@ -31,14 +31,12 @@ class SignatureAlphabet:
         self,
         radius=2,
         nBits=0,
-        map_root=True,
         use_stereo=False,
         Dict=set(),
     ):
         self.filename = ""
         self.radius = radius  # radius signatures are computed
         self.nBits = nBits  # the number of bits in Morgan vector (defaut 0 = no vector)
-        self.map_root = map_root # put :1 to identify the root
         self.use_stereo = use_stereo # include information about stereochemistry
         self.Dict = Dict  # the set of atomic signatures
 
@@ -56,14 +54,12 @@ class SignatureAlphabet:
             A dictionary containing the following key-value pairs:
             - 'radius': The radius attribute of the object.
             - 'nBits': The nBits attribute of the object.
-            - 'map_root': The map_root attribute of the object.
             - 'use_stereo': The use_stereo attribute of the object.
         """
 
         return {
             "radius": self.radius,
             "nBits": self.nBits,
-            "map_root": self.map_root,
             "use_stereo": self.use_stereo,
         }
 
@@ -99,7 +95,7 @@ class SignatureAlphabet:
                     mol,
                     radius=self.radius,
                     nbits=self.nBits,
-                    map_root=self.map_root,
+                    map_root=True,
                     use_stereo=self.use_stereo,
                 )
             except:
@@ -152,7 +148,6 @@ class SignatureAlphabet:
             filename=filename,
             radius=self.radius,
             nBits=self.nBits,
-            map_root=self.map_root,
             use_stereo=self.use_stereo,
             Dict=list(self.Dict),
         )
@@ -165,7 +160,6 @@ class SignatureAlphabet:
         print(f"filename: {self.filename}")
         print(f"radius: {self.radius}")
         print(f"nBits: {self.nBits}")
-        print(f"map_root: {self.map_root}")
         print(f"use_stereo: {self.use_stereo}")
         print(f"alphabet length: {len(self.Dict)}")
 
@@ -250,7 +244,6 @@ def load_alphabet(filename, verbose=False):
     # Flags to compute signatures
     Alphabet.radius = int(load["radius"])
     Alphabet.nBits = int(load["nBits"])
-    Alphabet.map_root = int(load["map_root"])
     Alphabet.use_stereo = bool(load["use_stereo"])
     if verbose:
         Alphabet.print_out()
