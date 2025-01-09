@@ -32,14 +32,14 @@ class SignatureAlphabet:
         nBits=0,
         map_root=True,
         use_stereo=False,
-        Dict={},
+        Dict=set(),
     ):
         self.filename = ""
         self.radius = radius  # radius signatures are computed
         self.nBits = nBits  # the number of bits in Morgan vector (defaut 0 = no vector)
         self.map_root = map_root # put :1 to identify the root
         self.use_stereo = use_stereo # include information about stereochemistry
-        self.Dict = Dict  # the alphabet dictionary keys = atom signature, values = index
+        self.Dict = Dict  # the set of atomic signatures
 
     def get_attributes(self):
         """
@@ -55,9 +55,8 @@ class SignatureAlphabet:
             A dictionary containing the following key-value pairs:
             - 'radius': The radius attribute of the object.
             - 'nBits': The nBits attribute of the object.
-            - 'use_smarts': The use_smarts attribute of the object.
-            - 'boundary_bonds': The boundary_bonds attribute of the object.
             - 'map_root': The map_root attribute of the object.
+            - 'use_stereo': The use_stereo attribute of the object.
         """
 
         return {
@@ -79,17 +78,13 @@ class SignatureAlphabet:
             If True, print verbose output (default is False).
         """
 
-        if self.Dict != {}:  # there's already signatures in the alphabet
-            Dict = dic_to_vector(self.Dict)  # return a set
-        else:
-            Dict = set()
+        if verbose and len(self.Dict) > 0:
+            print(f"WARNING alphabet non empty, alphabet length: {len(self.Dict)}")
         start_time = time.time()
         for i in range(len(Smiles)):
             smi = Smiles[i]
             if i % 1000 == 0:
-                print(
-                    f"... processing alphabet iteration: {i} size: {len(list(Dict))} time: {(time.time() - start_time):2f}"
-                )
+                print(f"... processing alphabet iteration: {i} size: {len(self.Dict)} time: {(time.time() - start_time):2f}")
                 start_time = time.time()
             if "*" in smi:  # no wild card allowed
                 continue
@@ -114,37 +109,23 @@ class SignatureAlphabet:
                 if verbose:
                     print(f"WARNING no signature for molecule {i} {smi}")
                 continue
-            for _as in ms.to_list():
-                Dict.add(_as)
-        self.Dict = vector_to_dic(list(Dict))
+            self.Dict = self.Dict | set(ms.to_list())
 
-    def fill_from_signatures(self, signatures, verbose=False):
+    def fill_from_signatures(self, atomic_sigs, verbose=False):
         """
-        Fill the signature dictionary from an array of signatures.
+        Fill the alphabet from a set of atomic signatures.
 
         Parameters
         ----------
-        signatures : list of str
-            An array of signature strings.
+        atomic_sigs : set of str
+            A set of atomic signature strings.
         verbose : bool, optional
             If True, print verbose output (default is False).
         """
 
-        if self.Dict != {}:
-            Dict = dic_to_vector(self.Dict)
-        else:
-            Dict = set()
-        start_time = time.time()
-        for i, signature in enumerate(signatures):
-            if i % 10000 == 0:
-                print(
-                    f"... processing alphabet iteration: {i:,} size: {len(Dict):,} time: {(time.time()-start_time):.2f}"
-                )
-                start_time = time.time()
-            for sig in signature.split(" . "):  # separate molecules
-                for s in sig.split(" "):  # separate atom signatures
-                    Dict.add(s)
-        self.Dict = vector_to_dic(list(Dict))
+        if verbose and len(self.Dict) > 0:
+            print(f"WARNING alphabet non empty, alphabet length: {len(self.Dict)}")
+        self.Dict = self.Dict | atomic_sigs
 
     def save(self, filename):
         """
@@ -164,7 +145,7 @@ class SignatureAlphabet:
             nBits=self.nBits,
             map_root=self.map_root,
             use_stereo=self.use_stereo,
-            Dict=list(self.Dict.keys()),
+            Dict=list(self.Dict),
         )
 
     def print_out(self):
@@ -177,7 +158,7 @@ class SignatureAlphabet:
         print(f"nBits: {self.nBits}")
         print(f"map_root: {self.map_root}")
         print(f"use_stereo: {self.use_stereo}")
-        print(f"alphabet length: {len(self.Dict.keys())}")
+        print(f"alphabet length: {len(self.Dict)}")
 
 
 def compatible_alphabets(Alphabet_1, Alphabet_2):
@@ -202,6 +183,8 @@ def compatible_alphabets(Alphabet_1, Alphabet_2):
     if len(attributes_1) != len(attributes_2):
         return False
     for x in attributes_1.keys():
+        if x not in attributes_2.keys():
+            return False
         if attributes_1[x] != attributes_2[x]:
             return False
     return True
@@ -228,14 +211,8 @@ def merge_alphabets(Alphabet_1, Alphabet_2):
         A new alphabet object with a combined dictionary from Alphabet_1 and Alphabet_2.
     """
 
-    d_1 = Alphabet_1.Dict
-    d_2 = Alphabet_2.Dict
-    d_3_keys = list(d_1.keys()) + list(d_2.keys())
-    d_3_keys = list(set(d_3_keys))
-    d_3_values = list(range(len(d_3_keys)))
-    d_3 = dict(zip(d_3_keys, d_3_values))
     Alphabet_3 = copy.deepcopy(Alphabet_1)
-    Alphabet_3.Dict = d_3
+    Alphabet_3.Dict = Alphabet_1.Dict | Alphabet_2.Dict
     return Alphabet_3
 
 
@@ -260,7 +237,7 @@ def load_alphabet(filename, verbose=False):
     load = np.load(filename, allow_pickle=True)
     Alphabet = SignatureAlphabet()
     Alphabet.filename = filename
-    Alphabet.Dict = vector_to_dic(load["Dict"])
+    Alphabet.Dict = set(load["Dict"])
     # Flags to compute signatures
     Alphabet.radius = int(load["radius"])
     Alphabet.nBits = int(load["nBits"])
