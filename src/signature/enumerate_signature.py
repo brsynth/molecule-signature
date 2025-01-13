@@ -47,8 +47,6 @@ class MolecularGraph:
         Maximum number of recursions (default is 1e6).
     ai : int, optional
         Current atom number used when enumerating signature up (default is -1).
-    max_nbr_solution : float, optional
-        Maximum number of solutions to produce (default is float("inf")).
     nbr_component : int, optional
         Number of connected components (default is 1).
 
@@ -80,7 +78,6 @@ class MolecularGraph:
         Alphabet,  # SignatureAlphabet object
         max_nbr_recursion=1e6,  # Max nbr of recursion
         ai=-1,  # Current atom nbr used when enumerating signature up
-        max_nbr_solution=float("inf"),  # to produce all solutions
         nbr_component=1,  # nbr connected components
     ):
         """
@@ -100,14 +97,11 @@ class MolecularGraph:
             Maximum number of recursions (default is 1e6).
         ai : int, optional
             Current atom number used when enumerating signature up (default is -1).
-        max_nbr_solution : float, optional
-            Maximum number of solutions to produce (default is float("inf")).
         nbr_component : int, optional
             Number of connected components (default is 1).
         """
 
         self.A, self.B, self.SA, self.Alphabet = A, B, SA, Alphabet
-        self.max_nbr_solution = max_nbr_solution
         self.M = self.B.shape[1]  # number of bounds
         self.K = int(self.B.shape[1] / self.SA.shape[0])  # nbr of bound/atom
         self.ai = ai  # current atom for which signature is expanded
@@ -518,8 +512,7 @@ def enumeration(
     MG, index, enum_graph, enum_graph_dict, node_previous, j_current, verbose=False, plot_mol=False, len_J=1
 ):
     """
-    Local function that build a requested number of molecules (in MG.max_nbr_solution) matching the matrices in the
-    molecular graph MG.
+    Local function that build a requested number of molecules matching the matrices in the molecular graph MG.
 
     Parameters
     ----------
@@ -649,7 +642,6 @@ def enumerate_molecule_from_signature(
     Alphabet,
     smi,
     max_nbr_recursion=int(1e5),
-    max_nbr_solution=float("inf"),
     repeat=1,
     verbose=False,
 ):
@@ -666,8 +658,6 @@ def enumerate_molecule_from_signature(
         The smiles representation of the molecule.
     max_nbr_recursion : int, optional
         Constant used in signature_enumerate. Defaults to 1e5.
-    max_nbr_solution : float, optional
-        Maximum number of solutions returned. Defaults to infinity.
     repeat : int, optional
         Number of repetitions. Defaults to 1.
     verbose : bool, optional
@@ -709,10 +699,8 @@ def enumerate_molecule_from_signature(
             Alphabet,
             ai=-1,
             max_nbr_recursion=(r + 1) * max_nbr_recursion,
-            max_nbr_solution=max_nbr_solution,
         )
         MG.nbr_component = float("inf")
-        MG.max_nbr_solution = 1
         MG.nbr_recursion = r * max_nbr_recursion
         SMI = enumeration(MG, -1, enum_graph, enum_graph_dict, 0, -1, verbose=verbose, plot_mol=plot_mol)
         recursion_timeout = MG.recursion_timeout
