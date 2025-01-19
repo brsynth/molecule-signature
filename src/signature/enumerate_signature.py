@@ -847,6 +847,7 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
         Time taken to solve the problem.
     """
 
+    st_total = time.time()
     morgan_indices = [i for i in range(len(morgan)) for _ in range(morgan[i]) if morgan[i] != 0]
     morgan_indices_unique = sorted(list(set(morgan_indices)))
     morgan_non_zero = [morgan[i] for i in morgan_indices_unique]
@@ -869,7 +870,8 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
             _as_neigh.post_compute_neighbors()
             _as_neigh_string = _as_neigh.to_string(True)
             AS[i] = _as_neigh_string
-        return [[x] for x in AS], False, 0
+            ct_total = time.time() - st_total
+        return [[x] for x in AS], False, ct_total, 0
     # Compute neighbors of selected fragments and suppress single atom fragments
     indices_to_keep = []
     for i in range(len(AS)):
@@ -892,7 +894,8 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
     AS, IDX, MAX, Deg, C = update_constraint_matrices(AS, IDX, MAX, Deg, verbose=verbose)
     C = C.astype(int)
     if AS.shape[0] == 0:
-        return [], False, 0
+        ct_total = time.time() - st_total
+        return [], False, ct_total, 0
     # Creation of the diophantine system
     P = np.zeros((len(morgan_indices_unique), len(AS)), dtype=int)
     for i in range(len(IDX)):
@@ -906,8 +909,10 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
     ct_solve = time.time() - st
     occ = np.array(S)
     if occ.shape[0] == 0:
-        return [], bool_timeout, ct_solve
+        ct_total = time.time() - st_total
+        return [], bool_timeout, ct_total, ct_solve
     occ = occ[:, : AS.shape[0]]
     sol = signature_set(AS, occ)
     sol = list(map(list, set(map(tuple, sol))))
-    return sol, bool_timeout, ct_solve
+    ct_total = time.time() - st_total
+    return sol, bool_timeout, ct_total, ct_solve
