@@ -401,10 +401,10 @@ def partitions_on_non_constant(v, target_sum, max_nbr_partition_non_constant=int
     -------
     tuple
         - partitions_3 (list of list of int): The list of valid partitions that meet the criteria.
-        - bool_timeout_loc (bool): A flag indicating if the partitioning process was truncated due to reaching `max_nbr_partition_non_constant`.
+        - bool_threshold_reached_loc (bool): A flag indicating if the partitioning process was truncated due to reaching `max_nbr_partition_non_constant`.
     """
 
-    bool_timeout_loc = False
+    bool_threshold_reached_loc = False
     if target_sum == 0:
         return [[0] * len(v)]
     v2 = []
@@ -427,7 +427,7 @@ def partitions_on_non_constant(v, target_sum, max_nbr_partition_non_constant=int
     for x in partitions_1:
         nb_perm = nb_permutations(x)
         if nb_perm > max_nbr_partition_non_constant:
-            bool_timeout_loc = True
+            bool_threshold_reached_loc = True
             partitions_2 = partitions_2 + list(
                 itertools.islice(
                     multiset_permutations(x),
@@ -452,7 +452,7 @@ def partitions_on_non_constant(v, target_sum, max_nbr_partition_non_constant=int
     for sol in partitions_2:
         partitions_3.append([sol[sum(v[:i])] for i in range(len(v))])
 
-    return partitions_3, bool_timeout_loc
+    return partitions_3, bool_threshold_reached_loc
 
 
 def groups_of_solutions(
@@ -659,37 +659,37 @@ def solutions_of_P(
         - dict_sols (dict): A dictionary where keys are tuples representing partitions, and values
           are lists of possible solutions for each partition.
         - lines_of_C_already_satisfied (set of int): Updated list of line indices in `C` that are satisfied.
-        - bool_timeout: A flag indicating if the partitioning process was truncated due to reaching `max_nbr_partition`.
+        - bool_threshold_reached: A flag indicating if the partitioning process was truncated due to reaching `max_nbr_partition`.
     """
 
     nb_lin, nb_col = P.shape[0], P.shape[1]
     dict_sols = {}
-    bool_timeout = False
+    bool_threshold_reached = False
     local_bound = max(10, int(max_nbr_partition / 100))
     for i in range(nb_lin):
-        local_time_out = False
+        bool_threshold_reached_local = False
         # For each line we compute all the partitions of the corresponding morgan bit
         part_line_of_P = tuple([j for j in range(nb_col) if P[i, j] != 0])
         counts = [P[i, j] for j in part_line_of_P]
         if len(set(counts)) != 1 or (morgan[i] / counts[0]).is_integer() == False:
-            All_parts_morgan_in_k2, bool_timeout = partitions_on_non_constant(
+            All_parts_morgan_in_k2, bool_threshold_reached = partitions_on_non_constant(
                 counts, morgan[i], max_nbr_partition_non_constant=local_bound
             )
-            local_time_out = bool_timeout
+            bool_threshold_reached_local = bool_threshold_reached
         else:
             k = len(part_line_of_P)
             morgan_normed = int(morgan[i] / counts[0])
             All_parts_morgan_in_k = list(partitions(morgan_normed, k))
             All_parts_morgan_in_k2 = []
             if len(All_parts_morgan_in_k) > local_bound:
-                bool_timeout = True
-                local_time_out = True
+                bool_threshold_reached = True
+                bool_threshold_reached_local = True
                 All_parts_morgan_in_k = All_parts_morgan_in_k[:local_bound]
             for x in All_parts_morgan_in_k:
                 nb_perm = nb_permutations(x + [0] * (sum(P[i, :]) - len(x)))
                 if nb_perm > max_nbr_partition:
-                    bool_timeout = True
-                    local_time_out = True
+                    bool_threshold_reached = True
+                    bool_threshold_reached_local = True
                     All_parts_morgan_in_k2 = All_parts_morgan_in_k2 + list(
                         itertools.islice(
                             multiset_permutations(x + [0] * (k - len(x))),
@@ -700,8 +700,8 @@ def solutions_of_P(
                     All_parts_morgan_in_k2 = All_parts_morgan_in_k2 + list(
                         multiset_permutations(x + [0] * (k - len(x)))
                     )
-        if local_time_out and verbose:
-            print("T I M E O U T, part of P", part_line_of_P, "P values", counts, "morgan", morgan[i])
+        if bool_threshold_reached_local and verbose:
+            print("Threshold reached! part of P", part_line_of_P, "P values", counts, "morgan", morgan[i])
         # We complete the solutions with -1 for all zeros in the line
         local_sols = [partition_to_local_sol(part, part_line_of_P, nb_col) for part in All_parts_morgan_in_k2]
         # We restrict the solutions to C when it is possible
@@ -715,7 +715,7 @@ def solutions_of_P(
             verbose=verbose,
         )
         if len(local_sols) == 0:
-            return {}, lines_of_C_already_satisfied, bool_timeout
+            return {}, lines_of_C_already_satisfied, bool_threshold_reached
         # We add the solutions of this line to the dictionary of solutions
         if part_line_of_P in dict_sols:
             dict_sols[part_line_of_P] = intersection_of_solutions(
@@ -723,7 +723,7 @@ def solutions_of_P(
             )
         else:
             dict_sols[part_line_of_P] = local_sols
-    return dict_sols, lines_of_C_already_satisfied, bool_timeout
+    return dict_sols, lines_of_C_already_satisfied, bool_threshold_reached
 
 
 def is_vector_inferior_or_equal(vector1, vector2):
@@ -846,7 +846,7 @@ def solve_by_partitions(P, morgan, C, max_nbr_partition=int(1e5), verbose=False)
     -------
     tuple
         - S (list): The list of solutions that satisfy both the partitioning and the constraints in `C`.
-        - bool_timeout (bool): A flag indicating whether a timeout occurred during partition generation.
+        - bool_threshold_reached (bool): A flag indicating if the partitioning process was truncated due to reaching `max_nbr_partition`.
     """
 
     if max_nbr_partition <= 0:
@@ -857,7 +857,7 @@ def solve_by_partitions(P, morgan, C, max_nbr_partition=int(1e5), verbose=False)
         print(f"P\n {repr(P)}")
         print(f"morgan\n {repr(morgan)}")
         print(f"C\n {repr(C)}")
-    bool_timeout = False
+    bool_threshold_reached = False
     nb_col = P.shape[1]
     # We update C and compute its partitions
     C, parity_indices = update_C(C, nb_col)
@@ -869,7 +869,7 @@ def solve_by_partitions(P, morgan, C, max_nbr_partition=int(1e5), verbose=False)
         print("Partitions involved for C:", list(partitions_involved_for_C.values()))
     lines_of_C_already_satisfied = set()
     # We compute the solutions for each line of P
-    dict_sols, lines_of_C_already_satisfied, bool_timeout = solutions_of_P(
+    dict_sols, lines_of_C_already_satisfied, bool_threshold_reached = solutions_of_P(
         P,
         morgan,
         C,
@@ -880,7 +880,7 @@ def solve_by_partitions(P, morgan, C, max_nbr_partition=int(1e5), verbose=False)
         verbose,
     )
     if len(dict_sols) == 0:
-        return [], bool_timeout
+        return [], bool_threshold_reached
     # We clean solutions using the maximum possible solution
     s_max = sol_max(P, morgan)
     dict_sols = clean_solutions_by_sol_max(s_max, dict_sols)
@@ -903,7 +903,7 @@ def solve_by_partitions(P, morgan, C, max_nbr_partition=int(1e5), verbose=False)
         verbose=verbose,
     )
     if len(S_groups) == 0:
-        return [], bool_timeout
+        return [], bool_threshold_reached
     # We compute the intersection between the groups of partitions
     if verbose:
         print("We compute the sol between the distinct groups (intersection)")
@@ -916,7 +916,7 @@ def solve_by_partitions(P, morgan, C, max_nbr_partition=int(1e5), verbose=False)
         if verbose:
             print(f"after inter: {len(S)}")
     if len(S) == 0:
-        return [], bool_timeout
+        return [], bool_threshold_reached
     # We now restrict of the solutions of P with the remaining lines of C
     if verbose:
         print(
@@ -931,7 +931,7 @@ def solve_by_partitions(P, morgan, C, max_nbr_partition=int(1e5), verbose=False)
         if i not in lines_of_C_already_satisfied:
             S = restrict_sol_by_one_line_of_C(S, C, i, parity_indices)
             if len(S) == 0:
-                return [], bool_timeout
+                return [], bool_threshold_reached
     if verbose:
         print("Finally, S len", len(S))
-    return S, bool_timeout
+    return S, bool_threshold_reached
