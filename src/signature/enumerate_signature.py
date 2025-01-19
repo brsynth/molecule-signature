@@ -642,7 +642,7 @@ def enumerate_molecule_from_signature(
     Alphabet,
     smi,
     max_nbr_recursion=int(1e5),
-    repeat=1,
+    repeat=10,
     verbose=False,
 ):
     """
