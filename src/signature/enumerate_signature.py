@@ -108,7 +108,7 @@ class MolecularGraph:
         self.nbr_recursion = 0  # Nbr of recursion
         self.max_nbr_recursion = max_nbr_recursion
         self.nbr_component = nbr_component
-        self.recursion_timeout = False  # True if max_nbr_recursion is reached
+        self.recursion_threshold_reached = False  # True if max_nbr_recursion is reached
         rdmol = Chem.Mol()
         rdedmol = Chem.EditableMol(rdmol)
         for sa in self.SA:
@@ -309,7 +309,7 @@ class MolecularGraph:
         """
 
         if self.nbr_recursion > self.max_nbr_recursion:
-            self.recursion_timeout = True
+            self.recursion_threshold_reached = True
             if verbose:
                 print("recursion exceeded for enumeration")
             return True, set()
@@ -585,7 +585,7 @@ def enumeration(
         )
         sol = sol | sol2
         if MG.nbr_recursion > MG.max_nbr_recursion:
-            MG.recursion_timeout = True
+            MG.recursion_threshold_reached = True
             break  # time exceeded
         MG.remove_bond(index, j)
     # update the enumeration graph
@@ -668,11 +668,11 @@ def enumerate_molecule_from_signature(
     list(SMIsig) : list
         The list of smiles representing the molecules matching the provided signature.
 
-    recursion_timeout : bool
-        True if recursion timeout occurred, False otherwise.
+    recursion_threshold_reached : bool
+        True if max_nbr_recursion occurred, False otherwise.
     """
 
-    recursion_timeout = False
+    recursion_threshold_reached = False
     # If we want to save the plot of the molecule in SVG
     plot_mol = False
     # Handle signature coming from a single atom
@@ -687,7 +687,7 @@ def enumerate_molecule_from_signature(
     # initialization of the solution sets
     S, nS, n_nS, max_nS = set(), 0, 0, 3
     r = 0
-    while r == 0 or (recursion_timeout and r < repeat):
+    while r == 0 or (recursion_threshold_reached and r < repeat):
         if verbose:
             print(f"repeat {r}")
         # Get initial molecule
@@ -703,7 +703,7 @@ def enumerate_molecule_from_signature(
         MG.nbr_component = float("inf")
         MG.nbr_recursion = r * max_nbr_recursion
         SMI = enumeration(MG, -1, enum_graph, enum_graph_dict, 0, -1, verbose=verbose, plot_mol=plot_mol)
-        recursion_timeout = MG.recursion_timeout
+        recursion_threshold_reached = MG.recursion_threshold_reached
         S = S | set(SMI)
         n_nS = n_nS + 1 if len(S) == nS else 0
         # break if no new solutions in max_nS repeats
@@ -721,11 +721,11 @@ def enumerate_molecule_from_signature(
     for s in S:
         S_stereo_tmp = generate_stereoisomers(s, max_nb_stereoisomers=max_nb_stereoisomers)
         if len(S_stereo_tmp) >= max_nb_stereoisomers:
-            recursion_timeout = True
+            recursion_threshold_reached = True
         S_stereo = S_stereo.union(S_stereo_tmp)
     if verbose:
         print("S_stereo", len(S_stereo))
-    return S_stereo, recursion_timeout
+    return S_stereo, recursion_threshold_reached
 
 
 ########################################################################################################################
@@ -841,8 +841,8 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
     -------
     list(sol) : list of str
         The list of signature strings matching the Morgan vector.
-    bool_timeout : bool
-        True if timeout occurred during solving, False otherwise.
+    bool_threshold_reached : bool
+        True if partition threshold has been reaching during solving, False otherwise.
     ct_solve : float
         Time taken to solve the problem.
     """
@@ -905,14 +905,14 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
             P[mbit_index, i] += 1
     # Solving the diophantine system
     st = time.time()
-    S, bool_timeout = solve_by_partitions(P, morgan_non_zero, C, max_nbr_partition=max_nbr_partition, verbose=verbose)
+    S, bool_threshold_reached = solve_by_partitions(P, morgan_non_zero, C, max_nbr_partition=max_nbr_partition, verbose=verbose)
     ct_solve = time.time() - st
     occ = np.array(S)
     if occ.shape[0] == 0:
         ct_total = time.time() - st_total
-        return [], bool_timeout, ct_total, ct_solve
+        return [], bool_threshold_reached, ct_total, ct_solve
     occ = occ[:, : AS.shape[0]]
     sol = signature_set(AS, occ)
     sol = list(map(list, set(map(tuple, sol))))
     ct_total = time.time() - st_total
-    return sol, bool_timeout, ct_total, ct_solve
+    return sol, bool_threshold_reached, ct_total, ct_solve
