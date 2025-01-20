@@ -13,7 +13,6 @@ from rdkit.Chem import AllChem
 from rdkit.Chem.EnumerateStereoisomers import (EnumerateStereoisomers,
                                                StereoEnumerationOptions)
 
-from signature.Signature import MoleculeSignature
 from signature.signature_alphabet import signature_sorted_array
 
 ########################################################################################################################
@@ -337,6 +336,37 @@ def test_sol_ECFP(smis, Alphabet):
         morgan = fpgen.GetCountFingerprint(mol).ToList()
         ecfp_list.append(morgan)
     return len(set(tuple(i) for i in ecfp_list)) == 1
+
+
+########################################################################################################################
+# Function to test if a smiles has the same ECFP representation that a given ECFP.
+########################################################################################################################
+
+
+def test_sol_morgan_ECFP(morgan, smi, Alphabet):
+    """
+    Generate Extended-Connectivity Fingerprints (ECFP) for a list of SMILES strings and check if all generated fingerprints are identical.
+
+    Parameters
+    ----------
+    smis : list of str
+        A list of SMILES (Simplified Molecular Input Line Entry System) strings representing the molecules.
+    Alphabet : object
+        An object with attributes 'radius' and 'nBits' which specify the parameters for the Morgan fingerprint generator.
+        'radius' determines the radius of the atom environments considered, and 'nBits' specifies the size of the fingerprint bit vector.
+
+    Returns
+    -------
+    bool
+        True if all generated ECFPs are identical, otherwise False.
+    """
+
+    mol = Chem.MolFromSmiles(smi)
+    if mol is None:
+        return False
+    fpgen = AllChem.GetMorganGenerator(radius=Alphabet.radius, fpSize=Alphabet.nBits, includeChirality=Alphabet.use_stereo)
+    morgan_2 = fpgen.GetCountFingerprint(mol).ToList()
+    return morgan == morgan_2
 
 
 ########################################################################################################################
