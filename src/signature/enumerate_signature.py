@@ -19,8 +19,8 @@ from rdkit import Chem
 from signature.enumerate_utils import (generate_stereoisomers,
                                        get_constraint_matrices,
                                        signature_bond_type,
-                                       update_constraint_matrices,
-                                       test_sol_morgan_ECFP)
+                                       test_sol_ECFP_smi,
+                                       update_constraint_matrices)
 from signature.Signature import AtomSignature, MoleculeSignature
 from signature.solve_partitions import solve_by_partitions
 
@@ -908,7 +908,9 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
             P[mbit_index, i] += 1
     # Solving the diophantine system
     st = time.time()
-    S, threshold_reached = solve_by_partitions(P, morgan_non_zero, C, max_nbr_partition=max_nbr_partition, verbose=verbose)
+    S, threshold_reached = solve_by_partitions(
+        P, morgan_non_zero, C, max_nbr_partition=max_nbr_partition, verbose=verbose
+    )
     ct_solve = time.time() - st
     occ = np.array(S)
     if occ.shape[0] == 0:
@@ -998,7 +1000,9 @@ def enumerate_molecule_from_morgan(
         if verbose:
             print("S after stereoisomers", len(Smol_loc_stereo))
         # We select molecules with the correct ECFP
-        Smol_loc_stereo_cleaned_ecfp = [smi for smi in Smol_loc_stereo if test_sol_morgan_ECFP(morgan, smi, Alphabet=Alphabet)]
+        Smol_loc_stereo_cleaned_ecfp = [
+            smi for smi in Smol_loc_stereo if test_sol_ECFP_smi(morgan, smi, Alphabet=Alphabet)
+        ]
         # We select molecules with the correct molecular signature
         Smol_loc_stereo_cleaned_sig = set()
         for smi in Smol_loc_stereo_cleaned_ecfp:
