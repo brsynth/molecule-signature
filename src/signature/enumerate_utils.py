@@ -327,7 +327,9 @@ def test_sol_ECFP(smis, Alphabet):
         True if all generated ECFPs are identical, otherwise False.
     """
 
-    fpgen = AllChem.GetMorganGenerator(radius=Alphabet.radius, fpSize=Alphabet.nBits, includeChirality=Alphabet.use_stereo)
+    fpgen = AllChem.GetMorganGenerator(
+        radius=Alphabet.radius, fpSize=Alphabet.nBits, includeChirality=Alphabet.use_stereo
+    )
     ecfp_list = []
     for smi in smis:
         mol = Chem.MolFromSmiles(smi)
@@ -343,28 +345,31 @@ def test_sol_ECFP(smis, Alphabet):
 ########################################################################################################################
 
 
-def test_sol_morgan_ECFP(morgan, smi, Alphabet):
+def test_sol_ECFP_smi(morgan, smi, Alphabet):
     """
-    Generate Extended-Connectivity Fingerprints (ECFP) for a list of SMILES strings and check if all generated fingerprints are identical.
+    Generate the Extended-Connectivity Fingerprints (ECFP) for the input SMILES string smi and check if it is equal to the input morgan ECFP vector.
 
     Parameters
     ----------
-    smis : list of str
-        A list of SMILES (Simplified Molecular Input Line Entry System) strings representing the molecules.
+    morgan : list of int
+        A counted ECFP having radius, fpSize and includeChirality parameters defined by the parameters of the Alphabet.
+    smi : str
+        A SMILES (Simplified Molecular Input Line Entry System) string representing a molecule.
     Alphabet : object
-        An object with attributes 'radius' and 'nBits' which specify the parameters for the Morgan fingerprint generator.
-        'radius' determines the radius of the atom environments considered, and 'nBits' specifies the size of the fingerprint bit vector.
+        An object with attributes 'radius', 'nBits' and 'use_stereo' which specify the parameters for the Morgan fingerprint generator.
 
     Returns
     -------
     bool
-        True if all generated ECFPs are identical, otherwise False.
+        True if the ECFP of the SMILES smi is equal to the input morgan ECFP, otherwise False.
     """
 
     mol = Chem.MolFromSmiles(smi)
     if mol is None:
         return False
-    fpgen = AllChem.GetMorganGenerator(radius=Alphabet.radius, fpSize=Alphabet.nBits, includeChirality=Alphabet.use_stereo)
+    fpgen = AllChem.GetMorganGenerator(
+        radius=Alphabet.radius, fpSize=Alphabet.nBits, includeChirality=Alphabet.use_stereo
+    )
     morgan_2 = fpgen.GetCountFingerprint(mol).ToList()
     return morgan == morgan_2
 
