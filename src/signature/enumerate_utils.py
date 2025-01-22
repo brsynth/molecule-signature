@@ -309,7 +309,7 @@ def update_constraint_matrices(AS, IDX, MAX, deg, verbose=False):
 ########################################################################################################################
 
 
-def test_sol_ECFP(smis, Alphabet):
+def smiles_same_ecfp_or_not(smis, Alphabet):
     """
     Generate Extended-Connectivity Fingerprints (ECFP) for a list of SMILES strings and check if all generated fingerprints are identical.
 
@@ -345,7 +345,7 @@ def test_sol_ECFP(smis, Alphabet):
 ########################################################################################################################
 
 
-def test_sol_ECFP_smi(morgan, smi, Alphabet):
+def smiles_ecfp_same_ecfp_or_not(morgan, smi, Alphabet):
     """
     Generate the Extended-Connectivity Fingerprints (ECFP) for the input SMILES string smi and check if it is equal to the input morgan ECFP vector.
 
