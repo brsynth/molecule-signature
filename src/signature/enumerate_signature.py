@@ -19,7 +19,7 @@ from rdkit import Chem
 from signature.enumerate_utils import (generate_stereoisomers,
                                        get_constraint_matrices,
                                        signature_bond_type,
-                                       test_sol_ECFP_smi,
+                                       smiles_ecfp_same_ecfp_or_not,
                                        update_constraint_matrices)
 from signature.Signature import AtomSignature, MoleculeSignature
 from signature.solve_partitions import solve_by_partitions
@@ -1001,7 +1001,7 @@ def enumerate_molecule_from_morgan(
             print("S after stereoisomers", len(Smol_loc_stereo))
         # We select molecules with the correct ECFP
         Smol_loc_stereo_cleaned_ecfp = [
-            smi for smi in Smol_loc_stereo if test_sol_ECFP_smi(morgan, smi, Alphabet=Alphabet)
+            smi for smi in Smol_loc_stereo if smiles_ecfp_same_ecfp_or_not(morgan, smi, Alphabet=Alphabet)
         ]
         # We select molecules with the correct molecular signature
         Smol_loc_stereo_cleaned_sig = set()
