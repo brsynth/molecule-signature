@@ -775,40 +775,6 @@ def canonical_map_fragment(
             mol.GetAtomWithIdx(j).SetIntProp('molAtomMapNumber', i+1)
 
 
-def mol_has_stereo(mol: Chem.Mol) -> bool:
-    """Check if a molecule has stereochemistry information
-
-    Parameters
-    ----------
-    mol : Chem.Mol
-        The molecule to check for stereochemistry information.
-
-    Returns
-    -------
-    bool
-        Whether the molecule has stereochemistry information.
-    """
-    for atom in mol.GetAtoms():
-        _chiral_tag = atom.GetChiralTag()
-        match _chiral_tag:
-            case Chem.ChiralType.CHI_TETRAHEDRAL_CW:
-                return True
-            case Chem.ChiralType.CHI_TETRAHEDRAL_CCW:
-                return True
-            case _:
-                continue
-    for bond in mol.GetBonds():
-        _bond_dir = bond.GetBondDir()
-        match _bond_dir:
-            case Chem.BondDir.ENDDOWNRIGHT:
-                return True
-            case Chem.BondDir.ENDUPRIGHT:
-                return True
-            case _:
-                continue
-    return False
-
-
 # =================================================================================================
 # Molecule Signature
 # =================================================================================================
