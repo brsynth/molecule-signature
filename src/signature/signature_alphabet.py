@@ -306,7 +306,7 @@ def signature_sorted_string(sig, verbose=False):
         The sorted signature string.
     """
 
-    AS, NAS, Deg = signature_sorted_array(sig, Alphabet=None, unique=False, verbose=verbose)
+    AS, NAS, Deg = signature_sorted_array(sig, unique=False, verbose=verbose)
     sigsorted = AS[0]
     for i in range(1, AS.shape[0]):
         sigsorted = sigsorted + " " + AS[i]
@@ -345,7 +345,7 @@ def signature_vector_to_string(sigV, Dict, verbose=False):
     return signature_sorted_string(sig, verbose=verbose)
 
 
-def signature_sorted_array(LAS, Alphabet=None, unique=False, verbose=False):
+def signature_sorted_array(LAS, unique=False, verbose=False):
     """
     Convert a signature into a sorted array of atom signatures along with occurrence numbers and degrees.
 
@@ -353,9 +353,6 @@ def signature_sorted_array(LAS, Alphabet=None, unique=False, verbose=False):
     ----------
     LAS : str
         A signature string.
-    Alphabet : SignatureAlphabet, optional
-        A SignatureAlphabet object. If provided, the signature is converted to a string using the dictionary
-        in the alphabet.
     unique : bool, optional
         A flag indicating if the atom signature list must contain only unique atom signatures (default is False).
     verbose : bool, optional
@@ -371,8 +368,6 @@ def signature_sorted_array(LAS, Alphabet=None, unique=False, verbose=False):
         An array of degrees of each atom signature.
     """
 
-    if Alphabet is not None:
-        LAS = signature_vector_to_string(sigV, Alphabet.Dict, verbose=verbose)
     # LAS.sort()
     # AS = list(set(LAS)) if unique else LAS
     # AS.sort()
