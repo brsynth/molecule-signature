@@ -1,30 +1,29 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Apr 23 14:57:23 2024
+Tests for functions in the `signature.solve_partitions` module.
 
-@author: meyerp
+Authors:
+  - Jean-loup Faulon <jfaulon@gmail.com>
+  - Thomas Duigou <thomas.duigou@inrae.fr>
+  - Philippe Meyer <philippe.meyer@inrae.fr>
 """
 
 import numpy as np
 
-from signature.solve_partitions import (
-    clean_local_solutions,
-    compatibility,
-    equations_trivially_satisfied,
-    extract_matrices_C_P,
-    groups_of_solutions,
-    intersection_of_solutions,
-    intersection_of_lists_of_lists,
-    nb_permutations,
-    partitions,
-    partitions_groups,
-    partitions_P_N,
-    sized_partitions,
-    solutions_per_line,
-    solve_by_partitions,
-    sort_C_wrt_partitions_involved,
-    sort_group_of_partitions,
-)
+from signature.solve_partitions import (clean_solutions_by_sol_max,
+                                        compatibility, groups_of_solutions,
+                                        intersection_of_lists_of_lists,
+                                        intersection_of_solutions,
+                                        is_vector_inferior_or_equal,
+                                        nb_permutations,
+                                        partition_to_local_sol, partitions,
+                                        partitions_groups,
+                                        partitions_on_non_constant,
+                                        restrict_sol_by_C,
+                                        restrict_sol_by_one_line_of_C,
+                                        sized_partitions, sol_max,
+                                        solution_of_one_group, solutions_of_P,
+                                        solve_by_partitions, update_C)
 
 
 def test_sized_partitions():
@@ -40,9 +39,9 @@ def test_partitions():
     assert partitions(0, 5) == []
     assert partitions(5, 0) == []
     assert partitions(5, 1) == [[5]]
-    assert partitions(5, 5) == [[5], [4, 1], [3, 2], [3, 1, 1], [2, 2, 1], [2, 1, 1, 1], [1, 1, 1, 1, 1]]
-    assert partitions(4, 3) == [[4], [3, 1], [2, 2], [2, 1, 1]]
-    assert partitions(3, 6) == [[3], [2, 1], [1, 1, 1]]
+    assert partitions(5, 5) == [[1, 1, 1, 1, 1], [2, 1, 1, 1], [2, 2, 1], [3, 1, 1], [3, 2], [4, 1], [5]]
+    assert partitions(4, 3) == [[2, 1, 1], [2, 2], [3, 1], [4]]
+    assert partitions(3, 6) == [[1, 1, 1], [2, 1], [3]]
 
 
 def test_nb_permutations():
@@ -52,161 +51,9 @@ def test_nb_permutations():
     assert nb_permutations([1, 1, 2]) == 3
 
 
-def test_extract_matrices_C_P():
-    A = np.array([[1, 0, -2, 0, 0], [0, 1, 1, 2, -2], [1, 1, 0, 0, 0], [0, 0, 1, 0, 0]])
-    b = np.array([0, 0, 1, 2])
-    C, P, N, parity_indices, graph_line, graph_index = extract_matrices_C_P(A, b)
-    expected_C = np.array([[1, 0, -2], [0, 1, 1]])
-    expected_P = np.array([[1, 1, 0], [0, 0, 1]])
-    expected_N = np.array([1, 2])
-    expected_parity_indices = [False, True]
-    expected_graph_line = np.array([[0, 1, 1]])
-    expected_graph_index = 1
-    assert np.array_equal(C, expected_C)
-    assert np.array_equal(P, expected_P)
-    assert np.array_equal(N, expected_N)
-    assert parity_indices == expected_parity_indices
-    assert np.array_equal(graph_line, expected_graph_line)
-    assert graph_index == expected_graph_index
-
-
-def test_partitions_P_N():
-    P = np.array([[1, 1, 0], [0, 0, 1]])
-    N = np.array([3, 1])
-    max_nbr_partition = 1e5
-    bool_timeout = False
-    dict_partitions, tups, bool_timeout = partitions_P_N(P, N, max_nbr_partition, bool_timeout)
-    expected_dict_partitions = dict()
-    expected_dict_partitions[0] = [[0, 3], [3, 0], [1, 2], [2, 1]]
-    expected_dict_partitions[1] = [[1]]
-    expected_tups = [(0, 2), (2, 3)]
-    assert dict_partitions == expected_dict_partitions
-    assert tups == expected_tups
-    assert bool_timeout == False
-
-
-def test_equations_trivially_satisfied():
-    C = np.array([[1, 0, -2], [0, 1, 1]])
-    N = np.array([1, 2])
-    tups = [(0, 2), (2, 3)]
-    parity_indices = [False, True]
-    graph_index = 1
-    indices, graph = equations_trivially_satisfied(C, N, tups, parity_indices, graph_index)
-    expected_indices = [0, 1]
-    expected_graph = False
-    assert indices == expected_indices
-    assert graph == expected_graph
-
-
-def test_sort_C_wrt_partitions_involved():
-    C = np.array([[1, 0, 1], [0, 1, 0], [0, 0, 1]])
-    tups = [(0, 2), (2, 3)]
-    parity_indices = [True, False, True]
-    sorted_C, sorted_parity_indices, sorted_partitions_involved = sort_C_wrt_partitions_involved(
-        C, tups, parity_indices
-    )
-    expected_C = np.array([[0, 1, 0], [0, 0, 1], [1, 0, 1]])
-    expected_parity_indices = [False, True, True]
-    expected_partitions_involved = [(0,), (1,), (0, 1)]
-    assert np.array_equal(sorted_C, expected_C)
-    assert sorted_parity_indices == expected_parity_indices
-    assert sorted_partitions_involved == expected_partitions_involved
-
-
 def test_intersection_of_lists_of_lists():
     assert intersection_of_lists_of_lists([[1]], [[2]]) == []
     assert intersection_of_lists_of_lists([[1]], [[1], [2]]) == [[1]]
-
-
-def test_solutions_per_line():
-    C = np.array(
-        [
-            [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, -1],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 1, 0],
-            [0, -1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0],
-        ]
-    )
-    tups = [
-        (0, 2),
-        (2, 3),
-        (3, 4),
-        (4, 5),
-        (5, 6),
-        (6, 7),
-        (7, 8),
-        (8, 9),
-        (9, 10),
-        (10, 11),
-        (11, 12),
-        (12, 13),
-        (13, 14),
-        (14, 16),
-    ]
-    max_nbr_partition = int(1e5)
-    bool_timeout = False
-    parity_indices = [False, False, False, False]
-    dict_partitions = {
-        0: [[0, 2], [2, 0], [1, 1]],
-        1: [[1]],
-        2: [[1]],
-        3: [[1]],
-        4: [[1]],
-        5: [[1]],
-        6: [[1]],
-        7: [[1]],
-        8: [[1]],
-        9: [[1]],
-        10: [[1]],
-        11: [[1]],
-        12: [[1]],
-        13: [[0, 2], [2, 0], [1, 1]],
-    }
-    partitions_involved = [(6, 13), (9, 13), (0, 7), (0, 11)]
-    dict_sols_per_eq, dict_partitions, bool_timeout = solutions_per_line(
-        C, tups, parity_indices, dict_partitions, partitions_involved, max_nbr_partition, bool_timeout
-    )
-    expected_dict_sols_per_eq = {
-        (6, 13): [[-1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, 1, 1]],
-        (9, 13): [[-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, 1, 1]],
-        (0, 7): [[1, 1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1]],
-        (0, 11): [[1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1]],
-    }
-    expected_dict_partitions = {
-        0: [[1, 1]],
-        1: [[1]],
-        2: [[1]],
-        3: [[1]],
-        4: [[1]],
-        5: [[1]],
-        6: [[1]],
-        7: [[1]],
-        8: [[1]],
-        9: [[1]],
-        10: [[1]],
-        11: [[1]],
-        12: [[1]],
-        13: [[1, 1]],
-    }
-    assert dict_sols_per_eq == expected_dict_sols_per_eq
-    assert dict_partitions == expected_dict_partitions
-    assert bool_timeout == False
-
-
-def test_clean_local_solutions():
-    tups = [(0, 2), (2, 3)]
-    dict_sols_per_eq = {(0,): [[1, 2, -1], [2, 1, -1], [3, 0, -1], [0, 3, -1]], (1,): [[-1, -1, 2]]}
-    dict_partitions = {0: [[1, 2]], 1: [[2]]}
-    dict_sols_per_eq = clean_local_solutions(tups, dict_sols_per_eq, dict_partitions)
-    expected_dict_sols_per_eq = {(0,): [[1, 2, -1]], (1,): [[-1, -1, 2]]}
-    assert dict_sols_per_eq == expected_dict_sols_per_eq
-
-
-def test_partitions_groups():
-    partitions_involved = [(6, 13), (9, 13), (0, 7), (0, 11), (1,), (2,), (3,), (4,), (5,), (8,), (10,), (12,)]
-    expected_groups = [{9, 13, 6}, {0, 11, 7}, {1}, {2}, {3}, {4}, {5}, {8}, {10}, {12}]
-    groups = partitions_groups(partitions_involved)
-    assert groups == expected_groups
 
 
 def test_compatibility():
@@ -219,88 +66,280 @@ def test_intersection_of_solutions():
     assert intersection_of_solutions([[-1, 2]], [[1, -1], [-1, 1]], True) == [[1, 2]]
 
 
-def test_sort_group_of_partitions():
-    dict_sols_per_eq = {
-        (0,): [[1, 2], [3, 4], [5, 6]],
-        (1,): [[7, 8], [9, 10]],
-        (2,): [[11, 12], [13, 14], [15, 16], [17, 18]],
-    }
-    group = {0, 1, 2}
-    sorted_group = sort_group_of_partitions(dict_sols_per_eq, group)
-    expected_sorted_group = [(1,), (0,), (2,)]
-    assert sorted_group == expected_sorted_group
+def test_partitions_groups():
+    partitions_involved = [(6, 13), (9, 13), (0, 7), (0, 11), (1,), (2,), (3,), (4,), (5,), (8,), (10,), (12,)]
+    expected_groups = [{9, 13, 6}, {0, 11, 7}, {1}, {2}, {3}, {4}, {5}, {8}, {10}, {12}]
+    groups = partitions_groups(partitions_involved)
+    assert groups == expected_groups
+
+
+def test_partition_to_local_sol():
+    # Test case 1: Typical case
+    partition = [1, 2, 3]
+    part_line_of_P = [0, 2, 4]
+    nb_lin = 5
+    expected_output = [1, -1, 2, -1, 3]
+    assert partition_to_local_sol(partition, part_line_of_P, nb_lin) == expected_output
+
+    # Test case 2: Empty partition and part_line_of_P
+    partition = []
+    part_line_of_P = []
+    nb_lin = 3
+    expected_output = [-1, -1, -1]
+    assert partition_to_local_sol(partition, part_line_of_P, nb_lin) == expected_output
+
+    # Test case 3: All indices filled
+    partition = [0, 1, 2]
+    part_line_of_P = [0, 1, 2]
+    nb_lin = 3
+    expected_output = [0, 1, 2]
+    assert partition_to_local_sol(partition, part_line_of_P, nb_lin) == expected_output
+
+    # Test case 4: nb_lin larger than needed
+    partition = [1, 2]
+    part_line_of_P = [0, 1]
+    nb_lin = 5
+    expected_output = [1, 2, -1, -1, -1]
+    assert partition_to_local_sol(partition, part_line_of_P, nb_lin) == expected_output
+
+
+def test_update_C():
+    # Test case 1: Typical case without graph
+    C = np.array([[1, 2, 3], [0, 0, 4], [5, 6, 0]])
+    nb_col = 2
+    graph = False
+    expected_C = np.array([[1, 2], [0, 0], [5, 6]])
+    expected_parity_indices = [0, 1]
+    result_C, result_parity_indices = update_C(C, nb_col, graph)
+    assert np.array_equal(result_C, expected_C)
+    assert result_parity_indices == expected_parity_indices
+
+    # Test case 2: Typical case with graph
+    C = np.array([[1, 2, 3], [0, 0, 4], [5, 6, 0]])
+    nb_col = 2
+    graph = True
+    expected_C = np.array([[1, 2], [0, 0]])
+    expected_parity_indices = [0, 1]
+    expected_graph_line = np.array([[5, 6]])
+    expected_graph_index = 2
+    result_C, result_parity_indices, result_graph_line, result_graph_index = update_C(C, nb_col, graph)
+    assert np.array_equal(result_C, expected_C)
+    assert result_parity_indices == expected_parity_indices
+    assert np.array_equal(result_graph_line, expected_graph_line)
+    assert result_graph_index == expected_graph_index
+
+    # Test case 3: No rows beyond nb_col have non-zero elements
+    C = np.array([[1, 2, 0], [0, 0, 0], [5, 6, 0]])
+    nb_col = 2
+    graph = False
+    expected_C = np.array([[1, 2], [0, 0], [5, 6]])
+    expected_parity_indices = []
+    result_C, result_parity_indices = update_C(C, nb_col, graph)
+    assert np.array_equal(result_C, expected_C)
+    assert result_parity_indices == expected_parity_indices
+
+    # Test case 4: Empty matrix
+    C = np.array([]).reshape(0, 3)
+    nb_col = 2
+    graph = False
+    expected_C = np.array([]).reshape(0, 2)
+    expected_parity_indices = []
+    result_C, result_parity_indices = update_C(C, nb_col, graph)
+    assert np.array_equal(result_C, expected_C)
+    assert result_parity_indices == expected_parity_indices
+
+    # Test case 5: Single row matrix with graph
+    C = np.array([[1, 2, 3]])
+    nb_col = 2
+    graph = True
+    expected_C = np.array([]).reshape(0, 2)
+    expected_parity_indices = [0]
+    expected_graph_line = np.array([[1, 2]])
+    expected_graph_index = 0
+    result_C, result_parity_indices, result_graph_line, result_graph_index = update_C(C, nb_col, graph)
+    assert np.array_equal(result_C, expected_C)
+    assert result_parity_indices == expected_parity_indices
+    assert np.array_equal(result_graph_line, expected_graph_line)
+    assert result_graph_index == expected_graph_index
+
+
+def test_restrict_sol_by_one_line_of_C():
+    # Test case 1: Typical case with parity constraint
+    S = np.array([[1, 0], [0, 1], [1, 1]])
+    C = np.array([[1, 1], [0, 1]])
+    i = 0
+    parity_indices = [0]
+    expected_output = [S[2]]  # Only the row with even parity matches
+    result = restrict_sol_by_one_line_of_C(S, C, i, parity_indices)
+    assert np.array_equal(result, expected_output)
+
+    # Test case 2: No matching rows
+    S = np.array([[1, 0], [-1, 1], [1, 1]])
+    C = np.array([[1, 1], [1, 0]])
+    i = 1
+    parity_indices = [0]
+    expected_output = []  # No rows satisfy the condition
+    result = restrict_sol_by_one_line_of_C(S, C, i, parity_indices)
+    assert np.array_equal(result, expected_output)
+
+    # Test case 3: Empty solution set
+    S = np.array([]).reshape(0, 2)
+    C = np.array([[1, 1], [0, 1]])
+    i = 0
+    parity_indices = [0]
+    expected_output = []  # Empty input should return empty output
+    result = restrict_sol_by_one_line_of_C(S, C, i, parity_indices)
+    assert np.array_equal(result, expected_output)
+
+
+def test_restrict_sol_by_C():
+    S = [[2, 0], [0, 1], [1, 1]]
+    part_P = (0, 1)
+    C = np.array([[1, 0], [0, 1], [0, 1]])
+    parity_indices = [0]
+    partitions_involved_for_C = {0: (0,), 1: (1,), 2: (0, 1)}
+    lines_of_C_already_satisfied = set()
+    expected_S = [[2, 0]]
+    expected_lines_satisfied = {2}
+    result_S, result_lines_satisfied = restrict_sol_by_C(
+        S, part_P, C, parity_indices, partitions_involved_for_C, lines_of_C_already_satisfied
+    )
+    assert result_S == expected_S
+    assert result_lines_satisfied == expected_lines_satisfied
+
+
+def test_partitions_on_non_constant():
+    v = [2, 1, 3]
+    target_sum = 3
+    expected_partitions = [[0, 0, 1], [1, 1, 0], [0, 3, 0]]
+    result_partitions, threshold_reached = partitions_on_non_constant(v, target_sum)
+    assert result_partitions == expected_partitions
+    assert not threshold_reached
 
 
 def test_groups_of_solutions():
     dict_sols_per_eq = {
-        (6, 13): [[-1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, 1, 1]],
-        (9, 13): [[-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, 1, 1]],
-        (0, 7): [[1, 1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1]],
-        (0, 11): [[1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1]],
-        (1,): [[-1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]],
-        (2,): [[-1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]],
-        (3,): [[-1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]],
-        (4,): [[-1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]],
-        (5,): [[-1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1]],
-        (8,): [[-1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1]],
-        (10,): [[-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1]],
-        (12,): [[-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1]],
+        (0, 1): [[1, 1, -1, -1]],
+        (2,): [[-1, -1, 1, -1]],
+        (3,): [[-1, -1, -1, 1]],
+        (0,): [[1, -1, -1, -1]],
+        (1,): [[-1, 1, -1, -1]],
     }
-    parts_groups = [{9, 13, 6}, {0, 11, 7}, {1}, {2}, {3}, {4}, {5}, {8}, {10}, {12}]
-    S_groups = groups_of_solutions(dict_sols_per_eq, parts_groups)
+    parts_groups = {
+        (0, 1): [[1, 1, -1, -1]],
+        (2,): [[-1, -1, 1, -1]],
+        (3,): [[-1, -1, -1, 1]],
+        (0,): [[1, -1, -1, -1]],
+        (1,): [[-1, 1, -1, -1]],
+    }
+    C = np.array([[-1, 1, 0, 0], [0, 1, 0, -1], [1, 0, -1, 0], [0, 0, -1, -1]])
+    partitions_involved_for_C = {0: (0, 1), 1: (1, 3), 2: (0, 2), 3: (2, 3)}
+    parity_indices = [3]
+    lines_of_C_already_satisfied = {0}
     expected_S_groups = [
-        [[-1, -1, -1, -1, -1, -1, -1, 1, -1, -1, 1, -1, -1, -1, 1, 1]],
-        [[1, 1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, 1, -1, -1, -1]],
-        [[-1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]],
-        [[-1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]],
-        [[-1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]],
-        [[-1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]],
-        [[-1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1]],
-        [[-1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1]],
-        [[-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1]],
-        [[-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1]],
+        [[np.int64(1), np.int64(1), np.int64(-1), np.int64(-1)]],
+        [[-1, -1, 1, -1]],
+        [[-1, -1, -1, 1]],
+        [[np.int64(1), np.int64(1), np.int64(-1), np.int64(-1)]],
+        [[-1, 1, -1, -1]],
     ]
-    for S_group, expected_S_group in zip(S_groups, expected_S_groups):
-        assert np.array_equal(S_group, expected_S_group)
+    expected_lines_of_C_already_satisfied = {0}
+    result_S_groups, result_lines_of_C_already_satisfied = groups_of_solutions(
+        dict_sols_per_eq, parts_groups, C, partitions_involved_for_C, parity_indices, lines_of_C_already_satisfied
+    )
+    assert result_S_groups == expected_S_groups
+    assert result_lines_of_C_already_satisfied == expected_lines_of_C_already_satisfied
+
+
+def test_solution_of_one_group():
+    dict_sols_per_eq = {(2,): [[-1, -1, 1]]}
+    C = np.array([[-1, 0, 1], [-1, 1, 0], [0, -1, -1]])
+    partitions_involved_for_C = {0: (0, 2), 1: (0, 1), 2: (1, 2)}
+    parity_indices = [2]
+    lines_of_C_already_satisfied = set()
+    result_S_group, result_lines_of_C_already_satisfied = solution_of_one_group(
+        dict_sols_per_eq, C, partitions_involved_for_C, parity_indices, lines_of_C_already_satisfied
+    )
+    expected_S_group = [[np.int64(-1), np.int64(-1), np.int64(1)]]
+    expected_lines_of_C_already_satisfied = set()
+    assert result_S_group == expected_S_group
+    assert result_lines_of_C_already_satisfied == expected_lines_of_C_already_satisfied
+
+
+def test_solutions_of_P():
+    P = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1], [0, 1, 0], [0, 0, 1], [1, 0, 0]])
+    morgan = [1, 1, 1, 1, 1, 1]
+    C = np.array([[-1, 0, 1], [-1, 1, 0], [0, -1, -1]])
+    parity_indices = [2]
+    partitions_involved_for_C = {0: (0, 2), 1: (0, 1), 2: (1, 2)}
+    lines_of_C_already_satisfied = set()
+    result_dict_sols, result_lines_of_C_already_satisfied, result_bool_threshold_reached = solutions_of_P(
+        P, morgan, C, parity_indices, partitions_involved_for_C, lines_of_C_already_satisfied
+    )
+    expected_dict_sols = {
+        (0,): [[np.int64(1), np.int64(-1), np.int64(-1)]],
+        (1,): [[np.int64(-1), np.int64(1), np.int64(-1)]],
+        (2,): [[np.int64(-1), np.int64(-1), np.int64(1)]],
+    }
+    expected_lines_of_C_already_satisfied = set()
+    expected_bool_threshold_reached = False
+    assert result_dict_sols == expected_dict_sols
+    assert result_lines_of_C_already_satisfied == expected_lines_of_C_already_satisfied
+    assert result_bool_threshold_reached == expected_bool_threshold_reached
+
+
+def test_is_vector_inferior_or_equal():
+    # Test case 1: All elements of vector1 are less than or equal to vector2
+    vector1 = [1, 2, 3]
+    vector2 = [3, 2, 3]
+    assert is_vector_inferior_or_equal(vector1, vector2) == True
+
+    # Test case 2: An element in vector1 is greater than the corresponding element in vector2
+    vector1 = [1, 4, 3]
+    vector2 = [3, 2, 3]
+    assert is_vector_inferior_or_equal(vector1, vector2) == False
+
+    # Test case 3: Both vectors are identical
+    vector1 = [5, 5, 5]
+    vector2 = [5, 5, 5]
+    assert is_vector_inferior_or_equal(vector1, vector2) == True
+
+    # Test case 4: vector1 is empty
+    vector1 = []
+    vector2 = []
+    assert is_vector_inferior_or_equal(vector1, vector2) == True
+
+
+def test_sol_max():
+    # Test case 1: Simple matrix with valid morgan values
+    P = np.array([[1, 0, 1], [1, 1, 0], [0, 1, 1]])
+    morgan = [4, 9, 3]
+    expected_sol_max = [4, 3, 3]
+    result_sol_max = sol_max(P, morgan)
+    assert result_sol_max == expected_sol_max
+
+
+def test_clean_solutions_by_sol_max():
+    # Test case 1: Basic filtering
+    sol_max = [3, 2, 4]
+    dict_sols = {
+        "group1": [[1, 2, 3], [4, 1, 3], [3, 2, 4]],
+        "group2": [[2, 1, 4], [3, 2, 5], [0, 0, 0]],
+    }
+    expected_dict_sols = {
+        "group1": [[1, 2, 3], [3, 2, 4]],
+        "group2": [[2, 1, 4], [0, 0, 0]],
+    }
+    result_dict_sols = clean_solutions_by_sol_max(sol_max, dict_sols)
+    assert result_dict_sols == expected_dict_sols
 
 
 def test_solve_by_partitions():
-    A = np.array(
-        [
-            [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0],
-            [0, 0, 0, -1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 1, 0, 0, 0],
-            [0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0, 0, 0],
-            [0, -1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0, 0, 0],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0],
-            [0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 1, 0, 0, 0, 0],
-            [-1, -1, -1, -1, 1, 1, -1, 1, 1, -1, 1, 0, 1, 0, -1, -1, 2, -2],
-            [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0],
-        ]
-    )
-    b = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2])
-    S, bool_timeout = solve_by_partitions(A, b)
-    expected_S = np.array([[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]])
-    assert np.array_equal(S, expected_S)
-    assert bool_timeout is False
+    P = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1], [0, 1, 0], [0, 0, 1], [1, 0, 0]])
+    morgan = [1, 1, 1, 1, 1, 1]
+    C = np.array([[-1, 0, 1, 0, 0], [-1, 1, 0, 0, 0], [0, -1, -1, 2, -2]])
+    expected_S = [[1, 1, 1]]
+    expected_bool_threshold_reached = False
+    result_S, result_bool_threshold_reached = solve_by_partitions(P, morgan, C)
+    assert result_S == expected_S
+    assert result_bool_threshold_reached == expected_bool_threshold_reached
