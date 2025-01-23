@@ -30,6 +30,7 @@ Authors:
   - Thomas Duigou <thomas.duigou@inrae.fr>
   - Philippe Meyer <philippe.meyer@inrae.fr>
 """
+
 import logging
 import re
 from typing import List, Tuple
@@ -76,11 +77,14 @@ class AtomSignature:
         boundary_bonds : bool
             Whether to add bonds at the boundary of the radius.
         use_smarts : bool
-            Whether to use SMARTS syntax for the signature (otherwise, use SMILES syntax).
+            Whether to use SMARTS syntax for the signature (otherwise, use
+            SMILES syntax).
         map_root : bool
-            Whether to map the root atom in the signature. If yes, the root atom is labeled as 1.
+            Whether to map the root atom in the signature. If yes, the root atom
+            is labeled as 1.
         rooted_smiles : bool
-            Whether to use rooted SMILES syntax for the signature. If yes, the SMILES is rooted at the root atom.
+            Whether to use rooted SMILES syntax for the signature. If yes, the
+            SMILES is rooted at the root atom.
         morgan_bits : None | list[int]
             The Morgan bit(s) of the atom.
         **kwargs
@@ -176,7 +180,9 @@ class AtomSignature:
             raise NotImplementedError("Morgan bits must be 'None' or a list of integers")
         if neighbors:
             _ += f"{self._root_minus}{self._NEIG_SEP}"
-            _ += self._NEIG_SEP.join([f"{bond}{self._BOND_SEP}{sig}" for bond, sig in self.neighbors])  # noqa
+            _ += self._NEIG_SEP.join(
+                [f"{bond}{self._BOND_SEP}{sig}" for bond, sig in self.neighbors]
+            )
         else:
             _ += self._root
         return _
@@ -276,23 +282,29 @@ class AtomSignature:
     ) -> str:
         """Generate a signature for an atom
 
-        This function generates a signature for an atom based on its environment up to a given radius. The signature is
-        either represented as a SMARTS string (smarts=True) or a SMILES string (smarts=False). The atom is labeled as 1.
+        This function generates a signature for an atom based on its environment
+        up to a given radius. The signature is either represented as a SMARTS
+        string (smarts=True) or a SMILES string (smarts=False). The atom is
+        labeled as 1.
 
         Parameters
         ----------
         atom : Chem.Atom
             The atom to generate the signature for.
         radius : int
-            The radius of the environment to consider. If negative, the whole molecule is considered.
+            The radius of the environment to consider. If negative, the whole
+            molecule is considered.
         use_smarts : bool
             Whether to use SMARTS syntax for the signature.
         boundary_bonds : bool
-            Whether to use boundary bonds at the border of the radius. This option is only available for SMILES syntax.
+            Whether to use boundary bonds at the border of the radius. This
+            option is only available for SMILES syntax.
         map_root : bool
-            Whether to map the root atom in the signature. If yes, the root atom is labeled as 1.
+            Whether to map the root atom in the signature. If yes, the root atom
+            is labeled as 1.
         rooted_smiles : bool
-            Whether to use rooted SMILES syntax for the signature. If yes, the SMILES is rooted at the root atom.
+            Whether to use rooted SMILES syntax for the signature. If yes, the
+            SMILES is rooted at the root atom.
         **kwargs
             Additional arguments to pass to Chem.MolFragmentToSmiles calls.
 
@@ -347,7 +359,9 @@ class AtomSignature:
             if atom.GetIdx() in frag_to_mol_atom_mapping[_frag_idx]:
                 fragment = _fragment
                 frag_to_mol_atom_mapping = frag_to_mol_atom_mapping[_frag_idx]  # Dirty..
-                atom_in_frag_index = frag_to_mol_atom_mapping.index(atom.GetIdx())  # Atom index in the fragment
+                atom_in_frag_index = frag_to_mol_atom_mapping.index(
+                    atom.GetIdx()
+                )  # Atom index in the fragment
                 break
 
         if use_smarts:  # Get the SMARTS
@@ -376,7 +390,9 @@ class AtomSignature:
                     preserveProps=False,
                 )
                 # Restore properties
-                _fragment.GetAtomWithIdx(_atom_idx).SetProp("atom_symbol", _atom_symbol)  # Restore the atom symbol
+                _fragment.GetAtomWithIdx(_atom_idx).SetProp(
+                    "atom_symbol", _atom_symbol
+                )  # Restore the atom symbol
             fragment = _fragment.GetMol()
 
             if fragment.NeedsUpdatePropertyCache():
@@ -420,7 +436,9 @@ class AtomSignature:
             if boundary_bonds:
                 _atoms_to_use = list(range(fragment.GetNumAtoms()))
             else:
-                _atoms_to_use = [atom.GetIdx() for atom in fragment.GetAtoms() if atom.GetAtomicNum() != 0]
+                _atoms_to_use = [
+                    atom.GetIdx() for atom in fragment.GetAtoms() if atom.GetAtomicNum() != 0
+                ]
 
             return Chem.MolFragmentToSmiles(
                 fragment,
@@ -472,9 +490,7 @@ class AtomSignature:
             assert neighbor_sig != "", "Empty signature for neighbor"
 
             bond = atom.GetOwningMol().GetBondBetweenAtoms(atom.GetIdx(), neighbor_atom.GetIdx())
-            neighbors.append(
-                (str(bond.GetBondType()), neighbor_sig)
-            )
+            neighbors.append((str(bond.GetBondType()), neighbor_sig))
         neighbors.sort()
 
         return neighbors
@@ -512,6 +528,7 @@ class AtomSignature:
             radius - 1,
         )
 
+
 # =================================================================================================
 # Atom Signature Helper Functions
 # =================================================================================================
@@ -525,7 +542,8 @@ def get_smarts_features(qatom: Chem.Atom, wish_list=None) -> dict:
     qatom : Chem.Atom
         The SMARTS query atom
     wish_list : list
-        The list of features to extract. If None, all features are extracted. The list of features is:
+        The list of features to extract. If None, all features are extracted.
+        The list of features is:
         - # : Atomic number
         - A : Aliphatic
         - a : Aromatic
@@ -648,10 +666,10 @@ def atom_to_smarts(atom: Chem.Atom, atom_map: int = 0) -> str:
         # _is_aromatic = feats.get("a", 0)
     else:
         _symbol = atom.GetSymbol()
-        _H_count = atom.GetTotalNumHs()  # Total number of Hs, including implicit Hs
-        _h_count = atom.GetNumImplicitHs()  # Number of implicit Hs
-        _connectivity = atom.GetTotalDegree()  # Total number of connections, including H
-        _degree = atom.GetDegree()  # Number of explicit connections, hence excluding H if Hs are implicits
+        _H_count = atom.GetTotalNumHs()  # Total Hs, including implicit Hs
+        _h_count = atom.GetNumImplicitHs()  # Implicit Hs
+        _connectivity = atom.GetTotalDegree()  # Connections, including H
+        _degree = atom.GetDegree()  # Explicit connections, excluding implict Hs
         _formal_charge = atom.GetFormalCharge()
         # _is_aromatic = atom.GetIsAromatic()
 
@@ -764,15 +782,12 @@ def canonical_map_fragment(
     """
     ranks = list(
         Chem.CanonicalRankAtomsInFragment(
-            mol,
-            atomsToUse=atoms_to_use,
-            atomSymbols=atoms_symbols,
-            includeAtomMaps=False
+            mol, atomsToUse=atoms_to_use, atomSymbols=atoms_symbols, includeAtomMaps=False
         )
     )
     for j, i in enumerate(ranks):
         if j in atoms_to_use:
-            mol.GetAtomWithIdx(j).SetIntProp('molAtomMapNumber', i+1)
+            mol.GetAtomWithIdx(j).SetIntProp("molAtomMapNumber", i + 1)
 
 
 # =================================================================================================
@@ -809,17 +824,21 @@ class MoleculeSignature:
         radius : int
             The radius of the environment to consider.
         nbits : int
-            The number of bits to use for the Morgan fingerprint. If 0, no Morgan fingerprint is computed.
+            The number of bits to use for the Morgan fingerprint. If 0, no
+            Morgan fingerprint is computed.
         use_stereo : bool
             Whether to use and express stereochemistry information.
         use_smarts : bool
-            Whether to use SMARTS syntax for the signature (otherwise, use SMILES syntax).
+            Whether to use SMARTS syntax for the signature (otherwise, use
+            SMILES syntax).
         boundary_bonds : bool
             Whether to add bonds at the boundary of the radius.
         map_root : bool
-            Whether to map root atoms in atom signatures. If yes, root atoms are labeled as 1.
+            Whether to map root atoms in atom signatures. If yes, root atoms are
+            labeled as 1.
         rooted_smiles : bool
-            Whether to use rooted SMILES syntax within atom signatures. If yes, SMILES are rooted at the root atoms.
+            Whether to use rooted SMILES syntax within atom signatures. If yes,
+            SMILES are rooted at the root atoms.
         **kwargs
             Additional arguments to pass to Chem.MolFragmentToSmiles calls.
         """
@@ -1040,7 +1059,7 @@ def flat_molecule_copy(mol: Chem.Mol) -> Chem.Mol:
     Chem.Mol
         The flat copy of the molecule.
     """
-    _mol = Chem.Mol(mol)              # Work on a copy
+    _mol = Chem.Mol(mol)  # Work on a copy
     Chem.RemoveStereochemistry(_mol)  # Remove stereochemistry
     # _mol = Chem.RemoveHs(_mol)        # Remove Hs not being useful anymore
     # Go back and forth with SMILES to get rid of explicit Hs
@@ -1088,7 +1107,8 @@ def get_index_mapping(mol1: Chem.Mol, mol2: Chem.Mol, includeChirality: bool = F
 def clean_kwargs(kwargs: dict) -> dict:
     """Check the kwargs dictionary for valid arguments
 
-    This function checks the kwargs dictionary for valid arguments and returns a cleaned version of the dictionary.
+    This function checks the kwargs dictionary for valid arguments and returns a
+    cleaned version of the dictionary.
 
     Parameters
     ----------
