@@ -10,7 +10,7 @@ Below are format examples for the oxygen atom in phenol with radius=2
   - Default (nbits=0)
     C:C(:C)[OH:1]
     here the root is the oxygen atom labeled 1: [OH:1]
-  - nBits=2048
+  - nbits=2048
     91,C:C(:C)[OH:1]
     91 is the Morgan bit of oxygen computed at radius 2
 

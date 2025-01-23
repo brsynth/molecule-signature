@@ -1,3 +1,13 @@
+# -*- coding: utf-8 -*-
+"""
+Tests for the 'Signature' class.
+
+Authors:
+  - Jean-loup Faulon <jfaulon@gmail.com>
+  - Thomas Duigou <thomas.duigou@inrae.fr>
+  - Philippe Meyer <philippe.meyer@inrae.fr>
+"""
+
 import pytest
 from rdkit import Chem
 from rdkit.Chem import AllChem

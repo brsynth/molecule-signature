@@ -1,7 +1,10 @@
 # =================================================================================================
-# This file provide utilities
-# Authors: Jean-loup Faulon jfaulon@gmail.com
-# Jan 2023
+# Utilities to sanitize and filter molecular structures, as well as read and write data.
+#
+# Authors:
+#   - Jean-loup Faulon <jfaulon@gmail.com>
+#   - Thomas Duigou <thomas.duigou@inrae.fr>
+#   - Philippe Meyer <philippe.meyer@inrae.fr>
 # =================================================================================================
 
 
