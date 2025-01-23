@@ -1,8 +1,8 @@
-########################################################################################################################
+###################################################################################################
 # This file provide utilities
 # Authors: Jean-loup Faulon jfaulon@gmail.com
 # Jan 2023
-########################################################################################################################
+###################################################################################################
 
 
 import csv
@@ -10,20 +10,19 @@ import csv
 import numpy as np
 import pandas as pd
 from rdkit import Chem
-from rdkit.Chem import Descriptors
 
 
-########################################################################################################################
+###################################################################################################
 # Sanitize and inspect molecular structures
-########################################################################################################################
+###################################################################################################
 
 
 def mol_from_smiles(
-        smiles: str,
-        clear_stereo: bool = False,
-        clear_aam: bool = True,
-        clear_isotope: bool = True,
-        clear_hs: bool = True
+    smiles: str,
+    clear_stereo: bool = False,
+    clear_aam: bool = True,
+    clear_isotope: bool = True,
+    clear_hs: bool = True,
 ) -> Chem.Mol:
     """Sanitize a molecule
 
@@ -52,7 +51,7 @@ def mol_from_smiles(
             return
         if "." in smiles:  # Reject molecules
             return
-        if "*" in smiles:   # Reject generic molecules
+        if "*" in smiles:  # Reject generic molecules
             return
 
         if clear_stereo:  # Wild but effective
@@ -83,11 +82,8 @@ def mol_from_smiles(
 
 
 def mol_filter(
-        mol: Chem.Mol,
-        max_mw: int = 500,
-        exclude_radical: bool = True,
-        exclude_dative: bool = True
-    ) -> Chem.Mol:
+    mol: Chem.Mol, max_mw: int = 500, exclude_radical: bool = True, exclude_dative: bool = True
+) -> Chem.Mol:
     """Filter a molecule
 
     Parameters
@@ -119,9 +115,9 @@ def mol_filter(
     return mol
 
 
-########################################################################################################################
+###################################################################################################
 # Read and write txt file where Data is a list
-########################################################################################################################
+###################################################################################################
 
 
 def read_txt(filename):
@@ -166,9 +162,9 @@ def write_txt(filename, Data):
             fp.write("%s\n" % Data[i])
 
 
-########################################################################################################################
+###################################################################################################
 # read write csv file with panda where Data is a np array
-########################################################################################################################
+###################################################################################################
 
 
 def read_csv(filename):
