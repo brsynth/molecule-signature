@@ -73,7 +73,7 @@ development purposes.
 ### Build a signature from SMILES
 
 Here a simple example showing how to build a signature from a SMILES string. For
-more example, one can refer to the `notebooks/signature-basic` notebook.
+more example, one can refer to the `notebooks/signature-basics.ipynb` notebook.
 
 ```python
 from rdkit import Chem
