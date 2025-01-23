@@ -182,32 +182,6 @@ class AtomSignature:
             _ += self._root
         return _
 
-    def as_deprecated_string(self, morgan=True, root=True, neighbors=True) -> str:
-        """Return the signature in the deprecated string format
-
-        Parameters
-        ----------
-        morgan : bool
-            Whether to include the Morgan bit in the string.
-        neighbors : bool
-            Whether to include the neighbors in the string.
-
-        Returns
-        -------
-        str
-            The signature in the deprecated string format.
-        """
-        s = ""
-        if morgan:
-            s += f"{self.morgans},"
-        if root:
-            s += f"{self.root}&"
-        if neighbors:
-            s += self.root_minus
-            for bond, sig in self._neighbors:
-                s += f".{bond}|{sig}"
-        return s
-
     @classmethod
     def from_string(cls, signature: str) -> None:
         """Initialize the AtomSignature object from a string
