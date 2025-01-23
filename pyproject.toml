@@ -19,4 +19,4 @@ version_provider = "pep621"
 pythonpath = ["src"]
 
 [tool.black]
-line-length = 120
+line-length = 100
