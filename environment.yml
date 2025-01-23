@@ -3,9 +3,10 @@ channels:
   - conda-forge
   - nodefaults
 dependencies:
-  - python
-  - rdkit
+  - networkx
   - numpy
   - pandas
+  - python
+  - rdkit
+  - scipy
   - sympy
-  - networkx
