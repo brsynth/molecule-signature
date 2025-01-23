@@ -1,6 +1,7 @@
 name: sig
 channels:
   - conda-forge
+  - nodefaults
 dependencies:
   - python
   - rdkit
