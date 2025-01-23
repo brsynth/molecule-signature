@@ -911,23 +911,6 @@ class MoleculeSignature:
             and self.morgans == other.morgans
         )
 
-    def as_deprecated_string(self, morgan=True, root=True, neighbors=True) -> str:
-        """Return the signature in the deprecated string format.
-
-        Parameters
-        ----------
-        morgan : bool
-            Whether to include the Morgan bits in the string.
-        neighbors : bool
-            Whether to include the neighbors in the string.
-
-        Returns
-        -------
-        str
-            The signature in the deprecated string format.
-        """
-        return " ".join(sorted(atom.as_deprecated_string(morgan, root, neighbors) for atom in self._atoms))
-
     @property
     def atoms(self) -> list:
         return [atom for atom in self._atoms]
