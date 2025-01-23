@@ -60,7 +60,6 @@ class AtomSignature:
         atom: Chem.Atom = None,
         radius: int = 2,
         morgan_bits: None | list[int] = None,
-        use_smarts: bool = True,
         boundary_bonds: bool = False,
         map_root: bool = True,
         rooted_smiles: bool = False,
@@ -76,9 +75,6 @@ class AtomSignature:
             The radius of the environment to consider.
         boundary_bonds : bool
             Whether to add bonds at the boundary of the radius.
-        use_smarts : bool
-            Whether to use SMARTS syntax for the signature (otherwise, use
-            SMILES syntax).
         map_root : bool
             Whether to map the root atom in the signature. If yes, the root atom
             is labeled as 1.
@@ -113,7 +109,6 @@ class AtomSignature:
         self._root = self.atom_signature(
             atom,
             radius,
-            use_smarts,
             boundary_bonds,
             map_root,
             rooted_smiles,
@@ -274,7 +269,6 @@ class AtomSignature:
         cls,
         atom: Chem.Atom,
         radius: int = 2,
-        use_smarts: bool = True,
         boundary_bonds: bool = False,
         map_root: bool = True,
         rooted_smiles: bool = False,
@@ -294,8 +288,6 @@ class AtomSignature:
         radius : int
             The radius of the environment to consider. If negative, the whole
             molecule is considered.
-        use_smarts : bool
-            Whether to use SMARTS syntax for the signature.
         boundary_bonds : bool
             Whether to use boundary bonds at the border of the radius. This
             option is only available for SMILES syntax.
@@ -321,13 +313,10 @@ class AtomSignature:
             radius = mol.GetNumAtoms()
 
         # Generate atom symbols
-        if use_smarts:
-            for _atom in mol.GetAtoms():
-                _atom_map = 1 if _atom.GetIdx() == atom.GetIdx() and map_root else 0
-                _atom_symbol = atom_to_smarts(_atom, _atom_map)
-                _atom.SetProp("atom_symbol", _atom_symbol)
-        else:
-            raise NotImplementedError("SMILES syntax not implemented yet.")
+        for _atom in mol.GetAtoms():
+            _atom_map = 1 if _atom.GetIdx() == atom.GetIdx() and map_root else 0
+            _atom_symbol = atom_to_smarts(_atom, _atom_map)
+            _atom.SetProp("atom_symbol", _atom_symbol)
 
         # Get the bonds at the border of the radius
         bonds_radius = Chem.FindAtomEnvironmentOfRadiusN(mol, radius, atom.GetIdx())
@@ -364,99 +353,73 @@ class AtomSignature:
                 )  # Atom index in the fragment
                 break
 
-        if use_smarts:  # Get the SMARTS
-            # Set a canonical atom mapping
-            if fragment.NeedsUpdatePropertyCache():
-                fragment.UpdatePropertyCache(strict=False)
+        # Set a canonical atom mapping
+        if fragment.NeedsUpdatePropertyCache():
+            fragment.UpdatePropertyCache(strict=False)
 
-            # Collect SMARTS elements
-            _atoms_to_use = list(range(fragment.GetNumAtoms()))
-            _atoms_symbols = [atom.GetProp("atom_symbol") for atom in fragment.GetAtoms()]
+        # Collect SMARTS elements
+        _atoms_to_use = list(range(fragment.GetNumAtoms()))
+        _atoms_symbols = [atom.GetProp("atom_symbol") for atom in fragment.GetAtoms()]
 
-            # Set a canonical atom mapping
-            if fragment.NeedsUpdatePropertyCache():
-                fragment.UpdatePropertyCache(strict=False)
-            canonical_map_fragment(fragment, _atoms_to_use, _atoms_symbols)
+        # Set a canonical atom mapping
+        if fragment.NeedsUpdatePropertyCache():
+            fragment.UpdatePropertyCache(strict=False)
+        canonical_map_fragment(fragment, _atoms_to_use, _atoms_symbols)
 
-            # Rebuild the fragment using the computed atom symbols
-            _fragment = Chem.RWMol(fragment)
-            for _atom_idx in range(_fragment.GetNumAtoms()):
-                _atom = _fragment.GetAtomWithIdx(_atom_idx)
-                _atom_symbol = _atom.GetProp("atom_symbol")
-                _fragment.ReplaceAtom(
-                    _atom_idx,
-                    Chem.AtomFromSmarts(_atom_symbol),
-                    updateLabel=False,
-                    preserveProps=False,
-                )
-                # Restore properties
-                _fragment.GetAtomWithIdx(_atom_idx).SetProp(
-                    "atom_symbol", _atom_symbol
-                )  # Restore the atom symbol
-            fragment = _fragment.GetMol()
-
-            if fragment.NeedsUpdatePropertyCache():
-                fragment.UpdatePropertyCache(strict=False)
-
-            # DEBUG
-            # for idx in range(fragment.GetNumAtoms()):
-            #     _atom = fragment.GetAtomWithIdx(idx)
-            #     logging.debug(
-            #         f"idx: {_atom.GetIdx():2} "
-            #         f"symbol: {_atom.GetSymbol():2} "
-            #         f"map: {_atom.GetAtomMapNum():2} "
-            #         f"degree: {_atom.GetDegree():1} "
-            #         f"connec: {_atom.GetTotalDegree():1} "
-            #         f"arom: {_atom.GetIsAromatic():1} "
-            #         f"smarts: {_atom.GetSmarts():20} "
-            #         f"stored smarts: {_atom.GetProp('atom_symbol'):20}"
-            #     )
-
-            smarts = Chem.MolFragmentToSmiles(
-                fragment,
-                atomsToUse=_atoms_to_use,
-                atomSymbols=_atoms_symbols,
-                isomericSmiles=kwargs.get("isomericSmiles", True),
-                allBondsExplicit=kwargs.get("allBondsExplicit", True),
-                allHsExplicit=kwargs.get("allHsExplicit", False),
-                kekuleSmiles=kwargs.get("kekuleSmiles", False),
-                canonical=True,
-                rootedAtAtom=atom_in_frag_index if rooted_smiles else -1,
+        # Rebuild the fragment using the computed atom symbols
+        _fragment = Chem.RWMol(fragment)
+        for _atom_idx in range(_fragment.GetNumAtoms()):
+            _atom = _fragment.GetAtomWithIdx(_atom_idx)
+            _atom_symbol = _atom.GetProp("atom_symbol")
+            _fragment.ReplaceAtom(
+                _atom_idx,
+                Chem.AtomFromSmarts(_atom_symbol),
+                updateLabel=False,
+                preserveProps=False,
             )
+            # Restore properties
+            _fragment.GetAtomWithIdx(_atom_idx).SetProp(
+                "atom_symbol", _atom_symbol
+            )  # Restore the atom symbol
+        fragment = _fragment.GetMol()
 
-            # Return the SMARTS
-            return smarts
+        if fragment.NeedsUpdatePropertyCache():
+            fragment.UpdatePropertyCache(strict=False)
 
-        else:  # Get the SMILES
+        # DEBUG
+        # for idx in range(fragment.GetNumAtoms()):
+        #     _atom = fragment.GetAtomWithIdx(idx)
+        #     logging.debug(
+        #         f"idx: {_atom.GetIdx():2} "
+        #         f"symbol: {_atom.GetSymbol():2} "
+        #         f"map: {_atom.GetAtomMapNum():2} "
+        #         f"degree: {_atom.GetDegree():1} "
+        #         f"connec: {_atom.GetTotalDegree():1} "
+        #         f"arom: {_atom.GetIsAromatic():1} "
+        #         f"smarts: {_atom.GetSmarts():20} "
+        #         f"stored smarts: {_atom.GetProp('atom_symbol'):20}"
+        #     )
 
-            if map_root:  # Map the root atom
-                fragment.GetAtomWithIdx(atom_in_frag_index).SetAtomMapNum(1)
+        smarts = Chem.MolFragmentToSmiles(
+            fragment,
+            atomsToUse=_atoms_to_use,
+            atomSymbols=_atoms_symbols,
+            isomericSmiles=kwargs.get("isomericSmiles", True),
+            allBondsExplicit=kwargs.get("allBondsExplicit", True),
+            allHsExplicit=kwargs.get("allHsExplicit", False),
+            kekuleSmiles=kwargs.get("kekuleSmiles", False),
+            canonical=True,
+            rootedAtAtom=atom_in_frag_index if rooted_smiles else -1,
+        )
 
-            # Build with / without the dummies
-            if boundary_bonds:
-                _atoms_to_use = list(range(fragment.GetNumAtoms()))
-            else:
-                _atoms_to_use = [
-                    atom.GetIdx() for atom in fragment.GetAtoms() if atom.GetAtomicNum() != 0
-                ]
-
-            return Chem.MolFragmentToSmiles(
-                fragment,
-                atomsToUse=_atoms_to_use,
-                isomericSmiles=kwargs.get("isomericSmiles", True),
-                allBondsExplicit=kwargs.get("allBondsExplicit", True),
-                allHsExplicit=kwargs.get("allHsExplicit", False),
-                kekuleSmiles=kwargs.get("kekuleSmiles", False),
-                canonical=True,
-                rootedAtAtom=atom_in_frag_index if rooted_smiles else -1,
-            )
+        # Return the SMARTS
+        return smarts
 
     @classmethod
     def atom_signature_neighbors(
         cls,
         atom: Chem.Atom,
         radius: int = 1,
-        use_smarts: bool = True,
         boundary_bonds: bool = False,
         map_root: bool = True,
         rooted_smiles: bool = False,
@@ -480,7 +443,6 @@ class AtomSignature:
             neighbor_sig = cls.atom_signature(
                 neighbor_atom,
                 radius,
-                use_smarts,
                 boundary_bonds,
                 map_root,
                 rooted_smiles,
@@ -809,7 +771,6 @@ class MoleculeSignature:
         radius: int = 2,
         nbits: int = 2048,
         use_stereo: bool = True,
-        use_smarts: bool = True,
         boundary_bonds: bool = False,
         map_root: bool = True,
         rooted_smiles: bool = False,
@@ -828,9 +789,6 @@ class MoleculeSignature:
             Morgan fingerprint is computed.
         use_stereo : bool
             Whether to use and express stereochemistry information.
-        use_smarts : bool
-            Whether to use SMARTS syntax for the signature (otherwise, use
-            SMILES syntax).
         boundary_bonds : bool
             Whether to add bonds at the boundary of the radius.
         map_root : bool
@@ -894,7 +852,6 @@ class MoleculeSignature:
                 atom,
                 radius,
                 _morgan_bits,
-                use_smarts,
                 boundary_bonds,
                 map_root,
                 rooted_smiles,

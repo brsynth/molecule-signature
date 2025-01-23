@@ -179,12 +179,6 @@ def test_molecule_signature_from_string_with_neighbors(caffeine):
     assert sig.neighbors == new_sig.neighbors, "Neighbors should be equal"
 
 
-def test_molecule_signature_not_smarts(benzene):
-    # Test molecule signature without SMARTS
-    with pytest.raises(NotImplementedError):
-        MoleculeSignature(benzene, radius=2, use_smarts=False)
-
-
 def test_molecule_signature_charged_molecules(pos_charged_molecule, neg_charged_molecule):
     # Test molecule signature with charged molecule
     pos_sig = MoleculeSignature(pos_charged_molecule, radius=2)
