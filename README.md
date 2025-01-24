@@ -1,7 +1,7 @@
 # Molecule Signature
 
 [![Github Version](https://img.shields.io/github/v/release/brsynth/molecule-signature?display_name=tag&sort=semver)](version)
-[![Github Licence](https://img.shields.io/github/license/brsynth/molecule-signature)](License.md)
+[![Github Licence](https://img.shields.io/github/license/brsynth/molecule-signature)](LICENSE.md)
 
 Signature-based enumeration of molecules from morgan fingerprints.
 
