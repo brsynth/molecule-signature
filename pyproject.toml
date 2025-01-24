@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "signature"
+name = "molecule-signature"
 version = "1.6.0"
 description = "Signature based molecule enumeration from morgan fingerprints"
 readme = "README.md"
