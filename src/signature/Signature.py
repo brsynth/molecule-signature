@@ -62,7 +62,7 @@ class AtomSignature:
         morgan_bits: None | list[int] = None,
         boundary_bonds: bool = False,
         map_root: bool = True,
-        rooted_smiles: bool = False,
+        rooted: bool = False,
         **kwargs: dict,
     ) -> None:
         """Initialize the AtomSignature object
@@ -78,9 +78,9 @@ class AtomSignature:
         map_root : bool
             Whether to map the root atom in the signature. If yes, the root atom
             is labeled as 1.
-        rooted_smiles : bool
-            Whether to use rooted SMILES syntax for the signature. If yes, the
-            SMILES is rooted at the root atom.
+        rooted : bool
+            Whether to use rooted SMARTS/SMILES syntax for the signature. If
+            yes, the signature is rooted at the root atom.
         morgan_bits : None | list[int]
             The Morgan bit(s) of the atom.
         **kwargs
@@ -111,7 +111,7 @@ class AtomSignature:
             radius,
             boundary_bonds,
             map_root,
-            rooted_smiles,
+            rooted,
             **self.kwargs,
         )
 
@@ -245,7 +245,7 @@ class AtomSignature:
         radius: int = 2,
         boundary_bonds: bool = False,
         map_root: bool = True,
-        rooted_smiles: bool = False,
+        rooted: bool = False,
         **kwargs: dict,
     ) -> str:
         """Generate a signature for an atom
@@ -268,9 +268,9 @@ class AtomSignature:
         map_root : bool
             Whether to map the root atom in the signature. If yes, the root atom
             is labeled as 1.
-        rooted_smiles : bool
-            Whether to use rooted SMILES syntax for the signature. If yes, the
-            SMILES is rooted at the root atom.
+        rooted : bool
+            Whether to use rooted SMARTS/SMILES syntax for the signature. If yes, the
+            signature is rooted at the root atom.
         **kwargs
             Additional arguments to pass to Chem.MolFragmentToSmiles calls.
 
@@ -383,7 +383,7 @@ class AtomSignature:
             allHsExplicit=kwargs.get("allHsExplicit", False),
             kekuleSmiles=kwargs.get("kekuleSmiles", False),
             canonical=True,
-            rootedAtAtom=atom_in_frag_index if rooted_smiles else -1,
+            rootedAtAtom=atom_in_frag_index if rooted else -1,
         )
 
         # Return the SMARTS
@@ -396,7 +396,7 @@ class AtomSignature:
         radius: int = 1,
         boundary_bonds: bool = False,
         map_root: bool = True,
-        rooted_smiles: bool = False,
+        rooted: bool = False,
         **kwargs: dict,
     ) -> List[Tuple[str, str]]:
         """Compute the « with neighbors » signature flavor fo an atom
@@ -419,7 +419,7 @@ class AtomSignature:
                 radius,
                 boundary_bonds,
                 map_root,
-                rooted_smiles,
+                rooted,
                 **kwargs,
             )
 
@@ -747,7 +747,7 @@ class MoleculeSignature:
         use_stereo: bool = True,
         boundary_bonds: bool = False,
         map_root: bool = True,
-        rooted_smiles: bool = False,
+        rooted: bool = False,
         **kwargs: dict,
     ) -> None:
         """Initialize the MoleculeSignature object
@@ -768,9 +768,9 @@ class MoleculeSignature:
         map_root : bool
             Whether to map root atoms in atom signatures. If yes, root atoms are
             labeled as 1.
-        rooted_smiles : bool
-            Whether to use rooted SMILES syntax within atom signatures. If yes,
-            SMILES are rooted at the root atoms.
+        rooted : bool
+            Whether to use rooted SMARTS/SMILES syntax within atom signatures. If yes,
+            signatures are rooted at the root atoms.
         **kwargs
             Additional arguments to pass to Chem.MolFragmentToSmiles calls.
         """
@@ -828,7 +828,7 @@ class MoleculeSignature:
                 _morgan_bits,
                 boundary_bonds,
                 map_root,
-                rooted_smiles,
+                rooted,
                 **self.kwargs,
             )
             if _sig != "":  # only collect non-empty signatures
