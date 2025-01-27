@@ -11,7 +11,7 @@ Authors:
 import pytest
 from rdkit import Chem
 from rdkit.Chem import AllChem
-from signature.Signature import AtomSignature, MoleculeSignature
+from molsig.Signature import AtomSignature, MoleculeSignature
 
 
 @pytest.fixture

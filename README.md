@@ -79,7 +79,7 @@ more example, one can refer to the `notebooks/signature-basics.ipynb` notebook.
 
 ```python
 from rdkit import Chem
-from signature.Signature import MoleculeSignature
+from molsig.Signature import MoleculeSignature
 
 mol = Chem.MolFromSmiles("CCO")
 mol_sig = MoleculeSignature(mol)

@@ -2,7 +2,7 @@ import numpy as np
 from rdkit import Chem
 from rdkit.rdBase import BlockLogs
 
-from signature.utils import (
+from molsig.utils import (
     mol_from_smiles,
     mol_filter,
     read_txt,
