@@ -44,6 +44,12 @@ jobs:
               run: |
                   coverage report --format markdown > coverage.md
 
+            - name: Extract coverage percentage
+              if: matrix.os == 'ubuntu'
+              run: |
+                  export COV_PERCENT=$(coverage report --format total)
+                  echo "COV_PERCENT=$COV_PERCENT" >> $GITHUB_ENV
+
             - name: Create Coverage Badge
               if: matrix.os == 'ubuntu'
               uses: schneegans/dynamic-badges-action@v1.7.0
@@ -52,8 +58,8 @@ jobs:
                 gistID: 056fdf29a6c0ab5b61a62f21468be178
                 filename: molecule-signature-coverage.json
                 label: coverage
-                message: echo $(coverage report --format total)
-                valColorRange: echo $COV_PERCENT
+                message: ${{ env.COV_PERCENT }}
+                valColorRange: ${{ env.COV_PERCENT }}
                 minColorRange: 50
                 maxColorRange: 90
 
