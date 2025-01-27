@@ -35,22 +35,29 @@ jobs:
               run: |
                   conda env update -n test-env --file environment-dev.yml
 
-            - name: Run tests with pytest
-              run: |
-                  pytest -xs --junit-xml=pytest.xml
-            
-            - name: Publish test results
-              uses: dorny/test-reporter@v1
-              if: always()
-              with:
-                name: Tests
-                path: pytest.xml
-                reporter: java-junit
-
             - name: Run tests with coverage
               run: |
                   coverage run -m pytest -xs
+            
+            - name: Generate coverage report
+              run: |
                   coverage report --format markdown > coverage.md
+            
+            - name: Store coverage percentage
+              run: |
+                  echo "COV_PERCENT=$(coverage report --format total) " >> $GITHUB_ENV  # Export the coverage percentage
+
+            - name: Create Coverage Badge
+              uses: schneegans/dynamic-badges-action@v1.7.0
+              with:
+                auth: ${{ secrets.GIST_SECRET }}
+                gistID: <gist-ID>
+                filename: coverage.json
+                label: coverage
+                message: "${COV_PERCENT}%"
+                valColorRange: $COV_PERCENT
+                minColorRange: 50
+                maxColorRange: 90
 
             - name: Upload coverage report
               if: matrix.os == 'ubuntu'
