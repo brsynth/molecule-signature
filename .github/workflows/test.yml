@@ -40,22 +40,20 @@ jobs:
                   coverage run -m pytest -xs
             
             - name: Generate coverage report
+              if: matrix.os == 'ubuntu'
               run: |
                   coverage report --format markdown > coverage.md
-            
-            - name: Store coverage percentage
-              run: |
-                  echo "COV_PERCENT=$(coverage report --format total) " >> $GITHUB_ENV  # Export the coverage percentage
 
             - name: Create Coverage Badge
+              if: matrix.os == 'ubuntu'
               uses: schneegans/dynamic-badges-action@v1.7.0
               with:
                 auth: ${{ secrets.GIST_SECRET }}
                 gistID: 056fdf29a6c0ab5b61a62f21468be178
-                filename: coverage.json
+                filename: molecule-signature-coverage.json
                 label: coverage
-                message: "${COV_PERCENT}%"
-                valColorRange: $COV_PERCENT
+                message: echo $(coverage report --format total)
+                valColorRange: echo $COV_PERCENT
                 minColorRange: 50
                 maxColorRange: 90
 

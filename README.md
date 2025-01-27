@@ -2,6 +2,7 @@
 
 [![Github Version](https://img.shields.io/github/v/release/brsynth/molecule-signature?display_name=tag&sort=semver)](version)
 [![Github Licence](https://img.shields.io/github/license/brsynth/molecule-signature)](LICENSE.md)
+![Unit Test Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/tduigou/056fdf29a6c0ab5b61a62f21468be178/raw/molecule-signature-coverage.json)
 
 Signature-based enumeration of molecules from morgan fingerprints.
 
@@ -65,7 +66,8 @@ development purposes.
 3. **Add development dependencies:**
 
     ```bash
-    pip install -e .[dev]
+    conda activate sig
+    conda env update -n sig -f environment-dev.yml
     ```
 
 ## Usage
