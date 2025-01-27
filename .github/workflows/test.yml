@@ -35,6 +35,18 @@ jobs:
               run: |
                   conda env update -n test-env --file environment-dev.yml
 
+            - name: Run tests with pytest
+              run: |
+                  pytest -xs --junit-xml=pytest.xml
+            
+            - name: Publish test results
+              uses: dorny/test-reporter@v1
+              if: always()
+              with:
+                name: Tests
+                path: pytest.xml
+                reporter: java-junit
+
             - name: Run tests with coverage
               run: |
                   coverage run -m pytest -xs
