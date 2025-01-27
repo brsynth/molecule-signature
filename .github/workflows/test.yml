@@ -58,7 +58,7 @@ jobs:
                 gistID: 056fdf29a6c0ab5b61a62f21468be178
                 filename: molecule-signature-coverage.json
                 label: coverage
-                message: ${{ env.COV_PERCENT }}
+                message: ${{ env.COV_PERCENT }}%
                 valColorRange: ${{ env.COV_PERCENT }}
                 minColorRange: 50
                 maxColorRange: 90
