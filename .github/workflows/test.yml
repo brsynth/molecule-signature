@@ -4,7 +4,7 @@ on:
 
     push:
         branches: [ '*' ]
-        paths: [ '**.py' ]
+        # paths: [ '**.py' ]
 
 jobs:
 
