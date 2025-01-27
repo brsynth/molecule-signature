@@ -6,8 +6,26 @@ build-backend = "setuptools.build_meta"
 name = "molecule-signature"
 version = "1.6.0"
 description = "Signature based molecule enumeration from morgan fingerprints"
+keywords = ["molecule", "signature", "fingerprint", "enumeration"]
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
+license-files = ["LICEN[CS]E.*"]
+requires-python = ">= 3.10"
+authors = [
+  {name = "Thomas Duigou", email = "thomas.duigou@inrae.fr"},
+  {name = "Philippe Meyer", email = "philippe.meyer@inrae.fr"},
+  {name = "Jean-Loup Faulon", email = "jean-loup.faulon@inrae.fr"},
+]
+maintainers = [
+  {name = "Thomas Duigou", email = "thomas.duigou@inrae.fr"},
+]
+
+[project.urls]
+Homepage = "https://github.com/brsynth/molecule-signature"
+Repository = "https://github.com/brsynth/molecule-signature.git"
+Issues = "https://github.com/brsynth/molecule-signature/issues"
+Changelog = "https://github.com/brsynth/molecule-signature/blob/main/CHANGELOG.md"
+
 
 [tool.commitizen]
 name = "cz_conventional_commits"

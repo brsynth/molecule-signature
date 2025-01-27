@@ -1,0 +1,8 @@
+name: sig
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - pytest
+  - coverage
+  - jupyterlab
