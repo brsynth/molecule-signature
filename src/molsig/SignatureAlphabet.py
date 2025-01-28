@@ -17,7 +17,7 @@ import numpy as np
 from itertools import chain
 from rdkit import Chem
 
-from signature.Signature import MoleculeSignature
+from molsig.Signature import MoleculeSignature
 
 
 # =================================================================================================
