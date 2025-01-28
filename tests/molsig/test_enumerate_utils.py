@@ -11,7 +11,7 @@ Authors:
 import numpy as np
 from rdkit import Chem
 
-from signature.enumerate_utils import (bond_matrices, bond_signature_occurence,
+from molsig.enumerate_utils import (bond_matrices, bond_signature_occurence,
                                        constraint_matrix,
                                        generate_stereoisomers,
                                        get_constraint_matrices,

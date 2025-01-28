@@ -10,7 +10,7 @@ Authors:
 
 import numpy as np
 
-from signature.solve_partitions import (clean_solutions_by_sol_max,
+from molsig.solve_partitions import (clean_solutions_by_sol_max,
                                         compatibility, groups_of_solutions,
                                         intersection_of_lists_of_lists,
                                         intersection_of_solutions,

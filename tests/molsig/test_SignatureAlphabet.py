@@ -10,10 +10,10 @@ Authors:
 
 import numpy as np
 
-from signature.signature_alphabet import (SignatureAlphabet,
-                                          compatible_alphabets,
-                                          merge_alphabets,
-                                          signature_sorted_array)
+from molsig.SignatureAlphabet import (SignatureAlphabet,
+                                      compatible_alphabets,
+                                      merge_alphabets,
+                                      signature_sorted_array)
 
 
 def test_compatible_alphabets():

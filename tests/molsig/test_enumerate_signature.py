@@ -11,7 +11,7 @@ Authors:
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
-from signature.enumerate_signature import (atom_sig_to_root,
+from molsig.enumerate_signature import (atom_sig_to_root,
                                            atomic_sig_to_smiles,
                                            custom_sort_with_dependent,
                                            enumerate_molecule_from_morgan,
@@ -21,7 +21,7 @@ from signature.enumerate_signature import (atom_sig_to_root,
                                            extract_formal_charge,
                                            get_H_h_x_d_value_regex,
                                            is_counted_subset)
-from signature.signature_alphabet import SignatureAlphabet
+from molsig.SignatureAlphabet import SignatureAlphabet
 
 
 def test_atom_sig_to_root():
