@@ -1,9 +1,16 @@
 # =================================================================================================
-# This library enumerate molecules from signatures or morgan vector.
-# Signatures must be computed using neighbor = True.
-# cf. signature.py for signature format.
-# Authors: Jean-loup Faulon jfaulon@gmail.com
-# Apr. 2023
+# This library enumerate molecules from a molecular signature or an ECFP vector.
+# The enumeration requires a SignatureAlphabet object that associates Morgan bits with atomic
+# signatures, see SignatureAlphabet.py.
+# From an ECFP, atomic signature candidates are selected from the Alphabet and molecular signatures
+# enumerated by solving a linear Diophantine system using the functions from solve_partitions.py.
+# Then, molecules are enumerated in SMILES format using a recursive algorithm from a null graph and
+# constraints extracted from the molecular signature.
+#
+# Authors:
+#  - Jean-loup Faulon <jfaulon@gmail.com>
+#  - Thomas Duigou <thomas.duigou@inrae.fr>
+#  - Philippe Meyer <philippe.meyer@inrae.fr>
 # =================================================================================================
 
 
@@ -17,21 +24,21 @@ import numpy as np
 from rdkit import Chem
 
 from molsig.enumerate_utils import (generate_stereoisomers,
-                                       get_constraint_matrices,
-                                       signature_bond_type,
-                                       smiles_ecfp_same_ecfp_or_not,
-                                       update_constraint_matrices)
+                                    get_constraint_matrices,
+                                    signature_bond_type,
+                                    smiles_ecfp_same_ecfp_or_not,
+                                    update_constraint_matrices)
 from molsig.Signature import AtomSignature, MoleculeSignature
 from molsig.solve_partitions import solve_by_partitions
 
 # =================================================================================================
-# MolecularGraph class used for smiles enumeration from signature.
+# MolecularGraph class used for SMILES enumeration from signature.
 # =================================================================================================
 
 
 class MolecularGraph:
     """
-    This class is used used to enumerate molecular graphs for atom signatures or molecules.
+    This class is used used to enumerate molecular graphs from a molecular signature.
     It provides methods for manipulating the molecular graph and obtaining SMILES representations.
 
     Attributes
@@ -65,7 +72,7 @@ class MolecularGraph:
         Add a bond between atoms i and j.
     remove_bond(i, j)
         Remove a bond between atoms i and j.
-    smiles(verbose=False)
+    smiles()
         Get the SMILES representation of the molecule.
     end(i, enum_graph_dict, node_current, j_current, verbose)
         Check if the enumeration ends and get the SMILES representation of the molecular graph.
@@ -267,11 +274,6 @@ class MolecularGraph:
         """
         Get the SMILES representation of the molecule.
 
-        Parameters
-        ----------
-        verbose : bool, optional
-            If True, print verbose output (default is False).
-
         Returns
         -------
         set
@@ -283,7 +285,7 @@ class MolecularGraph:
         smi = Chem.MolToSmiles(mol)
         return set([smi])
 
-    def end(self, i, enum_graph_dict, node_current, j_current, verbose):
+    def end(self, i, enum_graph_dict, node_current, j_current, verbose=False):
         """
         Check if the enumeration ends and get the SMILES representation of the molecular graph.
         Making sure all atoms are connected.
@@ -403,7 +405,9 @@ def extract_atomic_num(sa_root):
 
     atomic_symbol = sa_root.split(";")[0][1:]
     if atomic_symbol[0].islower():
-        atomic_symbol = atomic_symbol[0].upper() + atomic_symbol[1:]  # Use uppercase to get atomic number
+        atomic_symbol = (
+            atomic_symbol[0].upper() + atomic_symbol[1:]
+        )  # Use uppercase to get atomic number
     if atomic_symbol == "#1":
         atomic_symbol = "H"
     atomic_num = Chem.PeriodicTable.GetAtomicNumber(Chem.GetPeriodicTable(), atomic_symbol)
@@ -422,11 +426,13 @@ def get_H_h_x_d_value_regex(sa_root):
     Returns
     -------
     int
-        Explicit H.
+        Total number of hydrogens (implicit + explicit).
     int
-        Implcit H.
+        Number of implicit hydrogens.
     int
-        Valency.
+        Degree.
+    int
+        Connectivity.
     """
 
     # Use regex to find the pattern
@@ -475,7 +481,7 @@ def atom_initialization_from_atomic_signature(sa):
 
 
 # =================================================================================================
-# Enumerate molecule(s) (smiles) from signature.
+# Enumerate molecule(s) (SMILES) from signature.
 # =================================================================================================
 
 
@@ -512,7 +518,15 @@ def save_mol_plot(mol, name):
 
 
 def enumeration(
-    MG, index, enum_graph, enum_graph_dict, node_previous, j_current, verbose=False, plot_mol=False, len_J=1
+    MG,
+    index,
+    enum_graph,
+    enum_graph_dict,
+    node_previous,
+    j_current,
+    verbose=False,
+    plot_mol=False,
+    len_J=1,
 ):
     """
     Local function that build a requested number of molecules matching the matrices in the molecular graph MG.
@@ -556,7 +570,9 @@ def enumeration(
     # check if the enumeration has already gone through this graph branch
     nodes_connected = [link[1] for link in enum_graph.edges(node_previous)]
     if j_current in [enum_graph_dict[node][0] for node in nodes_connected]:
-        node_current = int([node for node in nodes_connected if enum_graph_dict[node][0] == j_current][0])
+        node_current = int(
+            [node for node in nodes_connected if enum_graph_dict[node][0] == j_current][0]
+        )
         if enum_graph_dict[node_current][1]:
             return set()
     else:
@@ -571,7 +587,15 @@ def enumeration(
     J = MG.candidate_bond(index)
     if len(J) == 0:
         Sol2 = enumeration(
-            MG, index + 1, enum_graph, enum_graph_dict, node_current, -1, verbose, plot_mol=plot_mol, len_J=0
+            MG,
+            index + 1,
+            enum_graph,
+            enum_graph_dict,
+            node_current,
+            -1,
+            verbose,
+            plot_mol=plot_mol,
+            len_J=0,
         )
         tmp = []
         for node in [link[1] for link in enum_graph.edges(node_current)]:
@@ -584,7 +608,15 @@ def enumeration(
     for j in J:
         MG.add_bond(index, j)
         sol2 = enumeration(
-            MG, index + 1, enum_graph, enum_graph_dict, node_current, j, verbose=verbose, plot_mol=plot_mol, len_J=1
+            MG,
+            index + 1,
+            enum_graph,
+            enum_graph_dict,
+            node_current,
+            j,
+            verbose=verbose,
+            plot_mol=plot_mol,
+            len_J=1,
         )
         sol = sol | sol2
         if MG.nbr_recursion > MG.max_nbr_recursion:
@@ -672,6 +704,8 @@ def enumerate_molecule_from_signature(
         The set of smiles representing the molecules matching the provided signature.
     recursion_threshold_reached : bool
         True if max_nbr_recursion occurred, False otherwise.
+    ct_total : float
+        Computational time.
     """
 
     st = time.time()
@@ -706,7 +740,9 @@ def enumerate_molecule_from_signature(
         )
         MG.nbr_component = float("inf")
         MG.nbr_recursion = r * max_nbr_recursion
-        SMI = enumeration(MG, -1, enum_graph, enum_graph_dict, 0, -1, verbose=verbose, plot_mol=plot_mol)
+        SMI = enumeration(
+            MG, -1, enum_graph, enum_graph_dict, 0, -1, verbose=verbose, plot_mol=plot_mol
+        )
         recursion_threshold_reached = MG.recursion_threshold_reached
         S = S | set(SMI)
         n_nS = n_nS + 1 if len(S) == nS else 0
@@ -721,7 +757,9 @@ def enumerate_molecule_from_signature(
         S_cleaned = set()
         for smi in S:
             mol = Chem.MolFromSmiles(smi)
-            ms = MoleculeSignature(mol, radius=Alphabet.radius, nbits=0, map_root=True, use_stereo=False)
+            ms = MoleculeSignature(
+                mol, radius=Alphabet.radius, nbits=0, map_root=True, use_stereo=False
+            )
             ms.post_compute_neighbors()
             sig_local = sorted([atom.to_string(neighbors=True) for atom in ms.atoms])
             if sig_local == sig:
@@ -813,7 +851,8 @@ def custom_sort_with_dependent(primary_list, dependent_lists):
     primary_list = [sorted(sublist) for sublist in primary_list]
     # Create a list of indices based on the custom sorting criteria
     sorted_indices = sorted(
-        range(len(primary_list)), key=lambda idx: [x if x != 0 else float("-inf") for x in primary_list[idx]]
+        range(len(primary_list)),
+        key=lambda idx: [x if x != 0 else float("-inf") for x in primary_list[idx]],
     )
     # Sort both the primary and dependent lists using the sorted indices
     sorted_primary = [primary_list[i] for i in sorted_indices]
@@ -846,8 +885,10 @@ def enumerate_signature_from_morgan(morgan, Alphabet, max_nbr_partition=int(1e5)
         The set of signature strings matching the Morgan vector.
     threshold_reached : bool
         True if partition threshold has been reaching during solving, False otherwise.
+    ct_total : float
+        Total computational time.
     ct_solve : float
-        Time taken to solve the problem.
+        Time taken to solve the linear Diophantine system.
     """
 
     st_total = time.time()
@@ -984,7 +1025,12 @@ def enumerate_molecule_from_morgan(
             print(f"      ...enumeratemolecule:  signature {i}")
         sig = Ssig[i]
         Smol_loc, recursion_threshold_reached_loc, _ = enumerate_molecule_from_signature(
-            sig, Alphabet, max_nbr_recursion=max_nbr_recursion, repeat=repeat, clean_by_sig=False, verbose=verbose
+            sig,
+            Alphabet,
+            max_nbr_recursion=max_nbr_recursion,
+            repeat=repeat,
+            clean_by_sig=False,
+            verbose=verbose,
         )
         list_recursion_threshold_reached.append(recursion_threshold_reached_loc)
         # Enumeration molecule(s) => stereoisomer(s)
@@ -1001,13 +1047,17 @@ def enumerate_molecule_from_morgan(
             print("S after stereoisomers", len(Smol_loc_stereo))
         # We select molecules with the correct ECFP
         Smol_loc_stereo_cleaned_ecfp = [
-            smi for smi in Smol_loc_stereo if smiles_ecfp_same_ecfp_or_not(morgan, smi, Alphabet=Alphabet)
+            smi
+            for smi in Smol_loc_stereo
+            if smiles_ecfp_same_ecfp_or_not(morgan, smi, Alphabet=Alphabet)
         ]
         # We select molecules with the correct molecular signature
         Smol_loc_stereo_cleaned_sig = set()
         for smi in Smol_loc_stereo_cleaned_ecfp:
             mol = Chem.MolFromSmiles(smi)
-            ms = MoleculeSignature(mol, radius=Alphabet.radius, nbits=0, map_root=True, use_stereo=False)
+            ms = MoleculeSignature(
+                mol, radius=Alphabet.radius, nbits=0, map_root=True, use_stereo=False
+            )
             ms.post_compute_neighbors()
             sig_local = sorted([atom.to_string(neighbors=True) for atom in ms.atoms])
             if sig_local == sig:
@@ -1015,13 +1065,19 @@ def enumerate_molecule_from_morgan(
         if len(Smol_loc_stereo_cleaned_sig) > 0:
             Nsig += 1
             if verbose:
-                print(f"      ...enumeratemolecule:  signature {i} nbr molecule(s) {len(Smol_loc_stereo_cleaned_sig)}")
+                print(
+                    f"      ...enumeratemolecule:  signature {i} nbr molecule(s) {len(Smol_loc_stereo_cleaned_sig)}"
+                )
         Smol = Smol.union(Smol_loc_stereo_cleaned_sig)
     recursion_threshold_reached = True in list_recursion_threshold_reached
     stereoisomer_threshold_reached = True in list_stereoisomer_threshold_reached
     # Computational times
     ct_sig_mol = time.time() - st_sig_mol
     ct_total = time.time() - st_total
-    thresholds_reached = [partition_threshold_reached, recursion_threshold_reached, stereoisomer_threshold_reached]
+    thresholds_reached = [
+        partition_threshold_reached,
+        recursion_threshold_reached,
+        stereoisomer_threshold_reached,
+    ]
     computational_times = [ct_morgan_sig, ct_sig_mol, ct_total, ct_solve]
     return Ssig, Smol, Nsig, thresholds_reached, computational_times
