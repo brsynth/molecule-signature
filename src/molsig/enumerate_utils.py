@@ -13,7 +13,7 @@ from rdkit.Chem import AllChem
 from rdkit.Chem.EnumerateStereoisomers import (EnumerateStereoisomers,
                                                StereoEnumerationOptions)
 
-from signature.signature_alphabet import signature_sorted_array
+from molsig.SignatureAlphabet import signature_sorted_array
 
 # =================================================================================================
 # Local functions
