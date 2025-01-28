@@ -16,13 +16,13 @@ import networkx as nx
 import numpy as np
 from rdkit import Chem
 
-from signature.enumerate_utils import (generate_stereoisomers,
+from molsig.enumerate_utils import (generate_stereoisomers,
                                        get_constraint_matrices,
                                        signature_bond_type,
                                        smiles_ecfp_same_ecfp_or_not,
                                        update_constraint_matrices)
-from signature.Signature import AtomSignature, MoleculeSignature
-from signature.solve_partitions import solve_by_partitions
+from molsig.Signature import AtomSignature, MoleculeSignature
+from molsig.solve_partitions import solve_by_partitions
 
 # =================================================================================================
 # MolecularGraph class used for smiles enumeration from signature.
