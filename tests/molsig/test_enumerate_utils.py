@@ -17,6 +17,7 @@ from molsig.enumerate_utils import (bond_matrices, bond_signature_occurence,
                                        get_constraint_matrices,
                                        get_first_stereoisomer, remove_isotopes,
                                        signature_bond_type,
+                                       signature_sorted_array,
                                        smiles_ecfp_same_ecfp_or_not,
                                        smiles_same_ecfp_or_not,
                                        update_constraint_matrices)
@@ -869,3 +870,24 @@ def test_remove_isotopes():
     expected_no_change = "CCO"
     result_no_change = remove_isotopes(smi_no_isotopes)
     assert result_no_change == expected_no_change
+
+
+def test_signature_sorted_array():
+    LAS = [
+        "[C;H2;h2;D2;X4]-[C;H3;h3;D1;X4:1] && SINGLE <> [C;H3;h3;D1;X4]-[C;H2;h2;D2;X4:1]-[O;H1;h1;D1;X2]",
+        "[C;H2;h2;D2;X4]-[O;H1;h1;D1;X2:1] && SINGLE <> [C;H3;h3;D1;X4]-[C;H2;h2;D2;X4:1]-[O;H1;h1;D1;X2]",
+        "[C;H3;h3;D1;X4]-[C;H2;h2;D2;X4:1]-[O;H1;h1;D1;X2] && SINGLE <> [C;H2;h2;D2;X4]-[C;H3;h3;D1;X4:1] && SINGLE <> [C;H2;h2;D2;X4]-[O;H1;h1;D1;X2:1]",
+    ]
+    result_AS, result_NAS, result_deg = signature_sorted_array(LAS, unique=False)
+    expected_AS = np.array(
+        [
+            "[C;H2;h2;D2;X4]-[C;H3;h3;D1;X4:1] && SINGLE <> [C;H3;h3;D1;X4]-[C;H2;h2;D2;X4:1]-[O;H1;h1;D1;X2]",
+            "[C;H2;h2;D2;X4]-[O;H1;h1;D1;X2:1] && SINGLE <> [C;H3;h3;D1;X4]-[C;H2;h2;D2;X4:1]-[O;H1;h1;D1;X2]",
+            "[C;H3;h3;D1;X4]-[C;H2;h2;D2;X4:1]-[O;H1;h1;D1;X2] && SINGLE <> [C;H2;h2;D2;X4]-[C;H3;h3;D1;X4:1] && SINGLE <> [C;H2;h2;D2;X4]-[O;H1;h1;D1;X2:1]",
+        ]
+    )
+    expected_NAS = np.array([1, 1, 1])
+    expected_deg = np.array([1, 1, 2])
+    assert np.array_equal(result_AS, expected_AS)
+    assert np.array_equal(result_NAS, expected_NAS)
+    assert np.array_equal(result_deg, expected_deg)
