@@ -1,31 +1,58 @@
 # =================================================================================================
-# This library compute save and load Alphabet of atom signatures
-# The library also provides functions to compute a molecule signature as a
-# vector of occurence numbers over an Alphabet, and a Morgan Fingerprint
-# from a molecule signature string.
-# Note that when molecules have several connected components
-# the individual molecular signatures string are separated by ' . '
-# Authors: Jean-loup Faulon jfaulon@gmail.com
-# March 2023, Updated Jan 2024
+# This library compute save and load Alphabets of atomic signatures associated with Morgan bits.
+# The Alphabet is a central step to enumerate molecules from ECFP vectors.
+#
+# Authors:
+#  - Jean-loup Faulon <jfaulon@gmail.com>
+#  - Thomas Duigou <thomas.duigou@inrae.fr>
+#  - Philippe Meyer <philippe.meyer@inrae.fr>
 # =================================================================================================
 
 import copy
-import sys
 import time
+from itertools import chain
 
 import numpy as np
-from itertools import chain
 from rdkit import Chem
 
 from molsig.Signature import MoleculeSignature
 
-
 # =================================================================================================
-# Alphabet callable class
+# Alphabet class
 # =================================================================================================
 
 
 class SignatureAlphabet:
+    """
+    This class represents an Alphabet of atomic signatures associated with Morgan bits.
+
+    Attributes
+    ----------
+    filename : str
+        The name of the file used for saving or loading the alphabet (default is an empty string).
+    radius : int
+        The radius used for computing molecular signatures.
+    nBits : int
+        The number of bits in the Morgan fingerprint vector (default is 0, indicating no vector is used).
+    use_stereo : bool
+        Whether stereochemistry information is included in the molecular signatures.
+    Dict : set
+        A set containing the atomic or molecular signatures.
+
+    Methods
+    -------
+    get_attributes()
+        Retrieve the attributes of the object as a dictionary.
+    fill(Smiles, verbose=False)
+        Populate the signature dictionary from a list of SMILES strings.
+    fill_from_signatures(signatures, atomic=False, verbose=False)
+        Populate the alphabet from a set of atomic or molecular signature strings.
+    save(filename)
+        Save the SignatureAlphabet object to a compressed numpy file (.npz).
+    print_out()
+        Print the attributes of the SignatureAlphabet object.
+    """
+
     def __init__(
         self,
         radius=2,
@@ -36,7 +63,7 @@ class SignatureAlphabet:
         self.filename = ""
         self.radius = radius  # radius signatures are computed
         self.nBits = nBits  # the number of bits in Morgan vector (defaut 0 = no vector)
-        self.use_stereo = use_stereo # include information about stereochemistry
+        self.use_stereo = use_stereo  # include information about stereochemistry
         self.Dict = Dict  # the set of atomic signatures
 
     def get_attributes(self):
@@ -80,7 +107,9 @@ class SignatureAlphabet:
         for i in range(len(Smiles)):
             smi = Smiles[i]
             if i % 1000 == 0:
-                print(f"... processing alphabet iteration: {i} size: {len(self.Dict)} time: {(time.time() - start_time):2f}")
+                print(
+                    f"... processing alphabet iteration: {i} size: {len(self.Dict)} time: {(time.time() - start_time):2f}"
+                )
                 start_time = time.time()
             if "*" in smi:  # no wild card allowed
                 continue
@@ -247,56 +276,3 @@ def load_alphabet(filename, verbose=False):
     if verbose:
         Alphabet.print_out()
     return Alphabet
-
-
-# =================================================================================================
-# Signature utilities
-# =================================================================================================
-
-
-def signature_sorted_array(LAS, unique=False, verbose=False):
-    """
-    Convert a signature into a sorted array of atom signatures along with occurrence numbers and degrees.
-
-    Parameters
-    ----------
-    LAS : str
-        A signature string.
-    unique : bool, optional
-        A flag indicating if the atom signature list must contain only unique atom signatures (default is False).
-    verbose : bool, optional
-        If True, enable verbose output (default is False).
-
-    Returns
-    -------
-    AS : numpy.ndarray
-        An array of atom signatures.
-    NAS : numpy.ndarray
-        An array of occurrence numbers (degree) of each atom signature.
-    deg : numpy.ndarray
-        An array of degrees of each atom signature.
-    """
-
-    # LAS.sort()
-    # AS = list(set(LAS)) if unique else LAS
-    # AS.sort()
-    AS = np.asarray(LAS)
-    N = AS.shape[0]  # nbr of atoms
-    NAS, deg, M = {}, {}, 0
-    for i in range(N):
-        NAS[i] = LAS.count(AS[i]) if unique else 1
-        deg[i] = len(AS[i].split(" && ")) - 1
-        M = M + deg[i]
-    Ncycle = int(M / 2 - N + 1)
-    NAS = np.asarray(list(NAS.values()))
-    deg = np.asarray(list(deg.values()))
-
-    if verbose:
-        print(f"Nbr atoms, bonds, Cycle, {N}, {int(M/2)}, {Ncycle}")
-        print(f"LAS, {len(AS)}")
-        for i in range(len(LAS)):
-            print(f"- {i}: {LAS[i]}")
-        print(f"Deg {deg}, {len(deg)}")
-        print(f"NAS, {NAS}, {len(NAS)}")
-
-    return AS, NAS, deg
