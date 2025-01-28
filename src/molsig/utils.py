@@ -2,9 +2,9 @@
 # Utilities to sanitize and filter molecular structures, as well as read and write data.
 #
 # Authors:
-#   - Jean-loup Faulon <jfaulon@gmail.com>
-#   - Thomas Duigou <thomas.duigou@inrae.fr>
-#   - Philippe Meyer <philippe.meyer@inrae.fr>
+#  - Jean-loup Faulon <jfaulon@gmail.com>
+#  - Thomas Duigou <thomas.duigou@inrae.fr>
+#  - Philippe Meyer <philippe.meyer@inrae.fr>
 # =================================================================================================
 
 
@@ -14,7 +14,6 @@ import numpy as np
 import pandas as pd
 from rdkit import Chem
 from rdkit.Chem import Descriptors  # Required
-
 
 # =================================================================================================
 # Sanitize and inspect molecular structures
