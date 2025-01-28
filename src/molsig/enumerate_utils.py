@@ -1,9 +1,11 @@
 # =================================================================================================
-# This library compute the matrices necessary the enumeration function
-# Signatures must be computed using neighbor = True
-# cf. signature.py for signature format
-# Authors: Jean-loup Faulon jfaulon@gmail.com
-# May 2023
+# This library compute the constraint matrices necessary to the enumeration algorithms and provide
+# stereoisomer and isotopic related functions.
+#
+# Authors:
+#  - Jean-loup Faulon <jfaulon@gmail.com>
+#  - Thomas Duigou <thomas.duigou@inrae.fr>
+#  - Philippe Meyer <philippe.meyer@inrae.fr>
 # =================================================================================================
 
 
@@ -13,10 +15,8 @@ from rdkit.Chem import AllChem
 from rdkit.Chem.EnumerateStereoisomers import (EnumerateStereoisomers,
                                                StereoEnumerationOptions)
 
-from molsig.SignatureAlphabet import signature_sorted_array
-
 # =================================================================================================
-# Local functions
+# Constraint matrix functions.
 # =================================================================================================
 
 
@@ -118,7 +118,8 @@ def constraint_matrix(AS, BS, deg, verbose=False):
 
 def bond_matrices(AS, NAS, deg, unique=True, verbose=False):
     """
-    Generate bond matrices based on the provided atom signatures and the degree of each atom signature.
+    Generate bond matrices based on the provided atom signatures and the degree of each
+    atom signature.
 
     Parameters
     ----------
@@ -185,11 +186,6 @@ def bond_matrices(AS, NAS, deg, unique=True, verbose=False):
     return B, BS
 
 
-# =================================================================================================
-# Callable functions
-# =================================================================================================
-
-
 def get_constraint_matrices(sig, unique=True, verbose=False):
     """
     Generate constraint matrices based on the provided molecule signature.
@@ -214,8 +210,8 @@ def get_constraint_matrices(sig, unique=True, verbose=False):
     A : numpy.ndarray
         An empty adjacency matrix between the atoms of the molecule with diagonal = atom degree.
     B : numpy.ndarray
-        An adjacency matrix between the bond candidates of the molecule. The last row indicate is used during
-        enumeration and filled with 0 at initialization.
+        An adjacency matrix between the bond candidates of the molecule. The last row indicate is
+        used during enumeration and filled with 0 at initialization.
     C : numpy.ndarray
         A constraint matrix between bond signature (row) and atom signature (columns).
     """
@@ -305,21 +301,23 @@ def update_constraint_matrices(AS, IDX, MAX, deg, verbose=False):
 
 
 # =================================================================================================
-# Function to test if a set of smiles has the same ECFP representation.
+# Function to test if a set of SMILES has the same ECFP representation.
 # =================================================================================================
 
 
 def smiles_same_ecfp_or_not(smis, Alphabet):
     """
-    Generate Extended-Connectivity Fingerprints (ECFP) for a list of SMILES strings and check if all generated fingerprints are identical.
+    Generate Extended-Connectivity Fingerprints (ECFP) for a list of SMILES strings and check if all
+    generated fingerprints are identical.
 
     Parameters
     ----------
     smis : list of str
-        A list of SMILES (Simplified Molecular Input Line Entry System) strings representing the molecules.
+        A list of SMILES strings representing the molecules.
     Alphabet : object
-        An object with attributes 'radius' and 'nBits' which specify the parameters for the Morgan fingerprint generator.
-        'radius' determines the radius of the atom environments considered, and 'nBits' specifies the size of the fingerprint bit vector.
+        An object with attributes 'radius' and 'nBits' which specify the parameters for the Morgan
+        fingerprint generator. 'radius' determines the radius of the atom environments considered, and
+        'nBits' specifies the size of the fingerprint bit vector.
 
     Returns
     -------
@@ -341,22 +339,25 @@ def smiles_same_ecfp_or_not(smis, Alphabet):
 
 
 # =================================================================================================
-# Function to test if a smiles has the same ECFP representation that a given ECFP.
+# Function to test if a SMILES has the same ECFP representation that a given ECFP.
 # =================================================================================================
 
 
 def smiles_ecfp_same_ecfp_or_not(morgan, smi, Alphabet):
     """
-    Generate the Extended-Connectivity Fingerprints (ECFP) for the input SMILES string smi and check if it is equal to the input morgan ECFP vector.
+    Generate the Extended-Connectivity Fingerprints (ECFP) for the input SMILES string smi and
+    check if it is equal to the input morgan ECFP vector.
 
     Parameters
     ----------
     morgan : list of int
-        A counted ECFP having radius, fpSize and includeChirality parameters defined by the parameters of the Alphabet.
+        A counted ECFP having radius, fpSize and includeChirality parameters defined by the
+        parameters of the Alphabet.
     smi : str
-        A SMILES (Simplified Molecular Input Line Entry System) string representing a molecule.
+        A SMILES string representing a molecule.
     Alphabet : object
-        An object with attributes 'radius', 'nBits' and 'use_stereo' which specify the parameters for the Morgan fingerprint generator.
+        An object with attributes 'radius', 'nBits' and 'use_stereo' which specify the parameters
+        for the Morgan fingerprint generator.
 
     Returns
     -------
@@ -381,7 +382,7 @@ def smiles_ecfp_same_ecfp_or_not(morgan, smi, Alphabet):
 
 def signature_bond_type(bt="UNSPECIFIED"):
     """
-    Convert a bond type string to its corresponding RDKit BondType object (Must be updated with new RDKit release).
+    Convert a bond type string to its corresponding RDKit BondType object.
 
     Parameters
     ----------
@@ -394,6 +395,56 @@ def signature_bond_type(bt="UNSPECIFIED"):
         The corresponding RDKit BondType object.
     """
     return Chem.BondType.names[bt]
+
+
+def signature_sorted_array(LAS, unique=False, verbose=False):
+    """
+    Convert a signature into a sorted array of atom signatures along with occurrence numbers and
+    degrees.
+
+    Parameters
+    ----------
+    LAS : str
+        A signature string.
+    unique : bool, optional
+        A flag indicating if the atom signature list must contain only unique atom signatures
+        (default is False).
+    verbose : bool, optional
+        If True, enable verbose output (default is False).
+
+    Returns
+    -------
+    AS : numpy.ndarray
+        An array of atom signatures.
+    NAS : numpy.ndarray
+        An array of occurrence numbers (degree) of each atom signature.
+    deg : numpy.ndarray
+        An array of degrees of each atom signature.
+    """
+
+    # LAS.sort()
+    # AS = list(set(LAS)) if unique else LAS
+    # AS.sort()
+    AS = np.asarray(LAS)
+    N = AS.shape[0]  # nbr of atoms
+    NAS, deg, M = {}, {}, 0
+    for i in range(N):
+        NAS[i] = LAS.count(AS[i]) if unique else 1
+        deg[i] = len(AS[i].split(" && ")) - 1
+        M = M + deg[i]
+    Ncycle = int(M / 2 - N + 1)
+    NAS = np.asarray(list(NAS.values()))
+    deg = np.asarray(list(deg.values()))
+
+    if verbose:
+        print(f"Nbr atoms, bonds, Cycle, {N}, {int(M/2)}, {Ncycle}")
+        print(f"LAS, {len(AS)}")
+        for i in range(len(LAS)):
+            print(f"- {i}: {LAS[i]}")
+        print(f"Deg {deg}, {len(deg)}")
+        print(f"NAS, {NAS}, {len(NAS)}")
+
+    return AS, NAS, deg
 
 
 # =================================================================================================
@@ -417,7 +468,9 @@ def generate_stereoisomers(smi, max_nb_stereoisomers=2048):
     """
 
     mol = Chem.MolFromSmiles(smi)
-    options = StereoEnumerationOptions(onlyUnassigned=True, unique=True, maxIsomers=max_nb_stereoisomers)
+    options = StereoEnumerationOptions(
+        onlyUnassigned=True, unique=True, maxIsomers=max_nb_stereoisomers
+    )
     stereoisomers = list(EnumerateStereoisomers(mol, options=options))
     return [Chem.MolToSmiles(isomer, isomericSmiles=True) for isomer in stereoisomers]
 
