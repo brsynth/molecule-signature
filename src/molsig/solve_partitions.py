@@ -1,7 +1,11 @@
 # =================================================================================================
 # This library solve a diophantine system associated to the enumeration
 # of signatures from a Morgan vector via a partition method
-# Oct. 2023
+#
+# Authors:
+#  - Jean-loup Faulon <jfaulon@gmail.com>
+#  - Thomas Duigou <thomas.duigou@inrae.fr>
+#  - Philippe Meyer <philippe.meyer@inrae.fr>
 # =================================================================================================
 
 
@@ -9,13 +13,10 @@ import collections
 import itertools
 import math
 from collections import Counter
-from functools import reduce
-from operator import mul
 
 import numpy as np
 import scipy.linalg.blas as blas
 from sympy.utilities.iterables import multiset_permutations
-
 
 # =================================================================================================
 # Local functions
@@ -157,7 +158,9 @@ def intersection_of_solutions(S1, S2, test_compatibility):
     """
 
     if test_compatibility:
-        S_inter = [list(np.maximum(sol1, sol2)) for sol1 in S1 for sol2 in S2 if compatibility(sol1, sol2)]
+        S_inter = [
+            list(np.maximum(sol1, sol2)) for sol1 in S1 for sol2 in S2 if compatibility(sol1, sol2)
+        ]
     else:
         S_inter = [list(np.maximum(sol1, sol2)) for sol1 in S1 for sol2 in S2]
     return S_inter
@@ -270,7 +273,9 @@ def update_C(C, nb_col, graph=False):
             - graph_index (int): The index of the graphicality row in the original matrix.
     """
 
-    parity_indices = [i for i in range(C.shape[0]) if all(x == 0 for x in list(C[i, nb_col:])) == False]
+    parity_indices = [
+        i for i in range(C.shape[0]) if all(x == 0 for x in list(C[i, nb_col:])) == False
+    ]
     C = C[:, :nb_col]
     if graph:
         graph_line = C[-1:, :]
@@ -318,7 +323,13 @@ def restrict_sol_by_one_line_of_C(S, C, i, parity_indices):
 
 
 def restrict_sol_by_C(
-    S, part_P, C, parity_indices, partitions_involved_for_C, lines_of_C_already_satisfied, verbose=False
+    S,
+    part_P,
+    C,
+    parity_indices,
+    partitions_involved_for_C,
+    lines_of_C_already_satisfied,
+    verbose=False,
 ):
     """
     Restrict the solution set by applying constraints based on specific partitions.
@@ -523,7 +534,12 @@ def groups_of_solutions(
 
 
 def solution_of_one_group(
-    dict_sols_per_eq, C, partitions_involved_for_C, parity_indices, lines_of_C_already_satisfied, verbose=False
+    dict_sols_per_eq,
+    C,
+    partitions_involved_for_C,
+    parity_indices,
+    lines_of_C_already_satisfied,
+    verbose=False,
 ):
     """
     Merge and filter solutions for a group based on compatibility and constraints.
@@ -576,7 +592,9 @@ def solution_of_one_group(
             elif value == min_value:
                 min_keys.append(key)
         # Step 2: Calculate the length of the union of sets for the keys with the minimum value
-        d_tmp = {min_key_tmp: len(set(min_key_tmp[0]) | set(min_key_tmp[1])) for min_key_tmp in min_keys}
+        d_tmp = {
+            min_key_tmp: len(set(min_key_tmp[0]) | set(min_key_tmp[1])) for min_key_tmp in min_keys
+        }
         # Step 3: Find the key with the minimum value in d_tmp
         min_key = min(d_tmp, key=d_tmp.get)
 
@@ -701,9 +719,18 @@ def solutions_of_P(
                         multiset_permutations(x + [0] * (k - len(x)))
                     )
         if bool_threshold_reached_local and verbose:
-            print("Threshold reached! part of P", part_line_of_P, "P values", counts, "morgan", morgan[i])
+            print(
+                "Threshold reached! part of P",
+                part_line_of_P,
+                "P values",
+                counts,
+                "morgan",
+                morgan[i],
+            )
         # We complete the solutions with -1 for all zeros in the line
-        local_sols = [partition_to_local_sol(part, part_line_of_P, nb_col) for part in All_parts_morgan_in_k2]
+        local_sols = [
+            partition_to_local_sol(part, part_line_of_P, nb_col) for part in All_parts_morgan_in_k2
+        ]
         # We restrict the solutions to C when it is possible
         local_sols, lines_of_C_already_satisfied = restrict_sol_by_C(
             local_sols,
