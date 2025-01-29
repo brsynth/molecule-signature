@@ -15,10 +15,10 @@ import pandas as pd
 from rdkit import Chem
 from rdkit.Chem import Descriptors  # Required
 
+
 # =================================================================================================
 # Sanitize and inspect molecular structures
 # =================================================================================================
-
 
 def mol_from_smiles(
     smiles: str,
@@ -122,7 +122,6 @@ def mol_filter(
 # Read and write txt file where Data is a list
 # =================================================================================================
 
-
 def read_txt(filename):
     """
     Read lines from a text file and return them as a list.
@@ -168,7 +167,6 @@ def write_txt(filename, Data):
 # =================================================================================================
 # read write csv file with panda where Data is a np array
 # =================================================================================================
-
 
 def read_csv(filename):
     """
