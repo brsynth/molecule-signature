@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "molecule-signature"
-version = "2.0.0"
+version = "2.0.1"
 description = "Signature based molecule enumeration from morgan fingerprints"
 keywords = ["molecule", "signature", "fingerprint", "enumeration"]
 readme = "README.md"
