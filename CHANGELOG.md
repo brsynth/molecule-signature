@@ -1,4 +1,103 @@
-## Unreleased
+## 2.0.0 (2025-01-29)
+
+### Feat
+
+- **enumerate_utils**: new function to compare ecfp with ecfp of a smiles
+- **enumerate_signature**: new function to handle automatically enum ecfp to mols
+- **fill_from_signatures**: possibility to fill the alphabet from precomputed atomic or molecular signatures
+- **generate_stereoisomers**: limit number of stereoisomers
+- **enumerate_molecule_from_signature**: limit number of stereoisomers
+- **enumerate_signature**: implicit Hs count in SMARTS
+- **MoleculeSignature**: use stereo by default
+- **Signature**: implicit Hs count in SMARTS
+- **signature_alphabet**: add stereochemistry
+- **enumerate_utils**: add utilities about stereochemistry and isotopic information
+- **custom_sort_with_dependent**: new function to sorted lists
+- **enumerate_molecule_from_signature**: chirality addition
+- **Signature**: includes stereo in neighbors
+- **utils::mol_filter**: additional filters based on dative bonds and radicals
+- **utils::mol_from_smiles**: change option from 'keep_stereo' to 'clear_stereo'
+- **Signature**: add 'use_stereo' argument to switch on stereo in Signatures
+- **enumerate_molecule_from_signature**: possibility to save the molecule in SVG at each reconstruction step
+
+### Fix
+
+- **utils**: put back missing import
+- **enumerate_molecule_from_signature**: default value of repeat
+- **enumerate_signature_from_morgan**: single atom morgan
+- **SignatureAlphabet**: try except on signature computation
+- **test_sol_ECFP**: use_stereo and test mol is none
+- **load_alphabet**: use_stereo argument
+- **flat_molecule_copy**: pass though SMILES to update implicit Hs count
+- **flat_molecule_copy**: use RemoveHs to get rid of explicit Hs
+- **mol_from_smiles**: remove superfluous Hs
+- **MoleculeSignature**: update morgan bits index when flattening molecules
+- **AtomSignature**: morgans bit always considered as a tuple
+- **generate_stereoisomers**: high number of possible stereoisomers
+- **mol_from_smiles**: keep stereo by default
+- **Signature**: stereo for FP but fragments remain flat
+- **enumerate_signature_from_morgan**: sort fragments by morgan bits
+- **MolecularGraph**: simplification of the smiles computation
+- **MolecularGraph**: better atom initialization
+- **Signature**: only cis/trans stereo when the environment is big enough
+- **Signature**: fix old attribute name 'morgan'
+- **enumerate_signature_from_morgan**: sorting of the morgan bits
+- **enumerate_signature_from_morgan**: single atom atomic signature
+- **enumerate_molecule_from_signature**: single atom atomic signature
+- **enumerate_signature**: formal charge, explicit H, implicit H, degree, valency
+- **atomic_num_charge**: new sig version
+
+### Refactor
+
+- change the location of test_signature_sorted_array
+- **enumerate_utils**: move a function + docstrings
+- signature to molsig and metanetx alphabet as bonus only
+- molsig to signature and signature_alphabet to SignatureAlphabet
+- **enumerate_utils**: signature to molsig and signature_alphabet to SignatureAlphabet
+- **enumerate_signature**: from signature to from molsig
+- **SignatureAlphabet**: from signature to from molsig
+- **test_SignatureAlphabet**: change script name
+- **SignatureAlphabet**: change script name
+- **tests**: rename module name
+- rename module as molsig
+- **Signature**: change 'rooted_smiles' arts to 'rooted‘
+- **Signature**: remove deprecated signature str
+- **Signature**: remove use_smarts arg
+- **notebooks**: sweep
+- **Signature**: remove deprecated function
+- **signature**: sweep old code
+- **signature_alphabet**: suppress useless functions
+- **signature_sorted_array**: suppress useless parameter
+- **enumerate_signature**: rename functions
+- **enumerate_utils**: rename functions
+- **Signature**: sweep unused method
+- **Signature**: clean unused code
+- **datasets**: remove old data
+- **enumerate_utils**: black the code and sort packages
+- **enumerate_signature**: black the code and sort packages
+- **solve_partitions**: change timeout vocabulary to threshold
+- **enumerate_signature**: change timeout vocabulary to threshold
+- **enumerate_signature_from_morgan**: total ct in function
+- **enumerate_signature**: suppress useless max_nbr_solution argument
+- **utils**: suppress useless vector-dict conversion functions
+- **signature_alphabet**: suppress useless vector-dict conversion functions
+- **signature_alphabet**: suppress map_root parameter
+- **enumerate_signature_from_morgan**: alphabet dictionary structure changed to a set
+- **signature_alphabet**: alphabet dictionary structure changed to a set
+- **enumerate_signature_from_morgan**: change useless dictionary structures to lists
+- **enumerate_utils**: suppress useless MIN set
+- **enumerate_signature_from_morgan**: suppress useless MIN set
+- **signature_alphabet**: remove unnecessary or outdated functions
+- **SignatureAlphabet**: remove unuseful parameters
+- **signature_alphabet**: remove unnecessary or outdated functions
+- **enumerate_utils**: remove unnecessary or outdated functions
+- **enumerate_utils**: unification of smiles notation
+- **enumerate_utils**: remove unnecessary or outdated functions
+- **Signature**: morgan_bit renamed to morgan bits and does not accept interger anymore
+- **Signature**: remove unused import
+- **Signature**: remove 'all_bits' option as we always use all bits
+
+## 1.6.0 (2024-11-06)
 
 ### Feat
 
@@ -8,6 +107,7 @@
 ### Fix
 
 - **Signature**: debug messages
+- **solve_partitions**: part_C zero length
 
 ## 1.5.0 (2024-10-01)
 

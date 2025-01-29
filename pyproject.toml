@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "molecule-signature"
-version = "1.6.0"
+version = "2.0.0"
 description = "Signature based molecule enumeration from morgan fingerprints"
 keywords = ["molecule", "signature", "fingerprint", "enumeration"]
 readme = "README.md"
@@ -32,6 +32,7 @@ name = "cz_conventional_commits"
 tag_format = "$version"
 version_type = "semver2"
 version_provider = "pep621"
+update_changelog_on_bump = true
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
