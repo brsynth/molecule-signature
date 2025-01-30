@@ -104,7 +104,9 @@ See the [enumeration-basics](notebooks/enumeration-basics.ipynb) notebook.
 
 ## Citation
 
-...
+If you use this software, please cite it as below.
+
+Meyer, P., Duigou, T., Gricourt, G., & Faulon, J.-L. Reverse Engineering Molecules from Fingerprints through Deterministic Enumeration and Generative Models. in preparation.
 
 ## License
 

@@ -1,19 +1,19 @@
 cff-version: 1.2.0
 message: If you use this software, please cite it as below.
 authors:
-  - family-names: "Philippe"
-    given-names: "Meyer"
+  - family-names: "Meyer"
+    given-names: "Philippe"
     orcid: "https://orcid.org/0000-0002-0618-2947"
-  - family-names: "Thomas"
-    given-names: "Duigou"
+  - family-names: "Duigou"
+    given-names: "Thomas"
     orcid: "https://orcid.org/0000-0002-2649-2950"
-  - family-names: "Guillaume"
-    given-names: "Gricourt"
+  - family-names: "Gricourt"
+    given-names: "Guillaume"
     orcid: "https://orcid.org/0000-0003-0143-5535"
-  - family-names: "Jean-Loup"
-    given-names: "Faulon"
+  - family-names: "Faulon"
+    given-names: "Jean-Loup"
     orcid: "https://orcid.org/0000-0003-4274-2953"
-title: "The Molecule Signature package: Signature-based enumeration of molecules from morgan fingerprints"
+title: "The Molecule Signature package: Signature-based enumeration of molecules from morgan fingerprints."
 version: 2.0.1
 doi: TO DEFINE
 date-released: 2025-01-30
@@ -21,24 +21,24 @@ url: "https://github.com/brsynth/molecule-signature"
 preferred-citation:
   type: article
   authors:
-  - family-names: "Philippe"
-    given-names: "Meyer"
+  - family-names: "Meyer"
+    given-names: "Philippe"
     orcid: "https://orcid.org/0000-0002-0618-2947"
-  - family-names: "Thomas"
-    given-names: "Duigou"
+  - family-names: "Duigou"
+    given-names: "Thomas"
     orcid: "https://orcid.org/0000-0002-2649-2950"
-  - family-names: "Guillaume"
-    given-names: "Gricourt"
+  - family-names: "Gricourt"
+    given-names: "Guillaume"
     orcid: "https://orcid.org/0000-0003-0143-5535"
-  - family-names: "Jean-Loup"
-    given-names: "Faulon"
+  - family-names: "Faulon"
+    given-names: "Jean-Loup"
     orcid: "https://orcid.org/0000-0003-4274-2953"
   doi:
   journal: in preparation
   month:
   start:
   end:
-  title: "Reverse Engineering Molecules from Fingerprints through Deterministic Enumeration and Generative Models"
+  title: "Reverse Engineering Molecules from Fingerprints through Deterministic Enumeration and Generative Models."
   issue:
   volume:
   year:
