@@ -1,3 +1,9 @@
+## 2.0.2 (2025-01-31)
+
+### Refactor
+
+- **notebooks**: refactor imports
+
 ## 2.0.1 (2025-01-29)
 
 ### Refactor
