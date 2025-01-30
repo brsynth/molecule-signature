@@ -15,7 +15,8 @@ Signature-based enumeration of molecules from morgan fingerprints.
     - [From source code](#from-source-code)
   - [Usage](#usage)
     - [Build a signature from SMILES](#build-a-signature-from-smiles)
-  - [Build an alphabet](#build-an-alphabet)
+    - [Build an alphabet](#build-an-alphabet)
+    - [Enumerate molecules from a ECFP fingerprint](#enumerate-molecules-from-a-ecfp-fingerprint)
   - [Citation](#citation)
   - [License](#license)
 
@@ -75,7 +76,7 @@ development purposes.
 ### Build a signature from SMILES
 
 Here a simple example showing how to build a signature from a SMILES string. For
-more example, one can refer to the `notebooks/signature-basics.ipynb` notebook.
+more example, one can refer to the [signature-basics](notebooks/signature-basics.ipynb) notebook.
 
 ```python
 from rdkit import Chem
@@ -91,9 +92,15 @@ mol_sig.to_list()
 # ]
 ```
 
-## Build an alphabet
+### Build an alphabet
 
-...
+Alphabet makes use of signatures to create a collection of *morgan bits*-to-*atom signature* mappings.
+
+See the [creating-alphabet-basics](notebooks/creating-alphabet-basics.ipynb) notebook.
+
+### Enumerate molecules from a ECFP fingerprint
+
+See the [enumeration-basics](notebooks/enumeration-basics.ipynb) notebook.
 
 ## Citation
 
