@@ -6,26 +6,32 @@ build-backend = "setuptools.build_meta"
 name = "molecule-signature"
 version = "2.0.2"
 description = "Signature based molecule enumeration from morgan fingerprints"
-keywords = ["molecule", "signature", "fingerprint", "enumeration"]
-readme = "README.md"
-license = {text = "MIT License"}
-# license-files = ["LICEN[CS]E.*"]
-requires-python = ">= 3.10"
+keywords = [
+    "chemoinformatics",
+    "molecule fingerprint",
+    "molecule enumeration",
+    "molecule generation",
+    "reverse engineering",
+    "signature",
+]
 authors = [
-  {name = "Thomas Duigou", email = "thomas.duigou@inrae.fr"},
-  {name = "Philippe Meyer", email = "philippe.meyer@inrae.fr"},
-  {name = "Jean-Loup Faulon", email = "jean-loup.faulon@inrae.fr"},
+    {name = "Thomas Duigou", email = "thomas.duigou@inrae.fr"},
+    {name = "Jean-Loup Faulon", email = "jean-loup.faulon@inrae.fr"},
+    {name = "Guillaume Gricourt", email = "guillaume.gricourt@inrae.fr"},
+    {name = "Philippe Meyer", email = "philippe.meyer@inrae.fr"},
 ]
 maintainers = [
-  {name = "Thomas Duigou", email = "thomas.duigou@inrae.fr"},
+    {name = "Thomas Duigou", email = "thomas.duigou@inrae.fr"},
 ]
+readme = "README.md"
+license = {text = "MIT License"}
+requires-python = ">= 3.10"
 
 [project.urls]
 Homepage = "https://github.com/brsynth/molecule-signature"
 Repository = "https://github.com/brsynth/molecule-signature.git"
 Issues = "https://github.com/brsynth/molecule-signature/issues"
 Changelog = "https://github.com/brsynth/molecule-signature/blob/main/CHANGELOG.md"
-
 
 [tool.commitizen]
 name = "cz_conventional_commits"
