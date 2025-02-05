@@ -34,7 +34,7 @@ jobs:
             - name: Install dev dependencies
               run: |
                   conda env update -n test-env --file environment-dev.yml
-                  pip install -e .
+                  pip install --no-deps -e .
 
             - name: Run tests with coverage
               run: |
