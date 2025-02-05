@@ -118,7 +118,7 @@ def _cmd_alphabet(args):
     with open(args.input_smiles_txt) as fd:
         smiles = fd.read().splitlines()
 
-    if len(smiles) > 0:
+    if len(smiles) < 1:
         logging.info("Input file is empty")
         AP.exit(1)
 
