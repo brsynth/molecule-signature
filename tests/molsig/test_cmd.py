@@ -35,10 +35,6 @@ class TestCmd:
             os.remove(temp_path)
 
     def test_alphabet_enumerate(self, use_shell):
-        input_fd, input_path = tempfile.mkstemp(suffix=".txt")
-        alphabet_fd, alphabet_path = tempfile.mkstemp(suffix=".npz")
-        output_fd, output_path = tempfile.mkstemp(suffix=".tsv")
-
         # Build alphabet
         smiles = [
             "O=C(O)[C@@H]1O[C@H](Oc2cccc3c(=O)oc(/C=C/CCO)cc23)[C@H](O)[C@H](O)[C@@H]1O",
@@ -63,32 +59,43 @@ class TestCmd:
             "O=C[C@@H]1[C@H](O)[C@](O)(C(=O)[O-])[C@@H]2[C@]3(Cl)C(Cl)=C(Cl)[C@](Cl)([C@@H]3Cl)[C@]12O",
         ]
 
-        with os.fdopen(input_fd, "w") as fd:
+        path_smiles, path_alphabet, path_enumerate = "", "", ""
+
+        with tempfile.NamedTemporaryFile(
+            mode="w+", delete=False
+        ) as temp_smiles, tempfile.NamedTemporaryFile(
+            delete=False
+        ) as temp_alphabet, tempfile.NamedTemporaryFile(
+            delete=False
+        ) as temp_enumerate:
+            path_smiles = temp_smiles.name
+            path_alphabet = temp_alphabet.name
+            path_enumerate = temp_enumerate.name
+
             for smi in smiles:
                 value = f"{smi}\n"
-                fd.write(value)
+                temp_smiles.write(value)
+            temp_smiles.flush()
 
-        args = ["molsig", "alphabet"]
-        args += ["--input-smiles-txt", input_path]
-        args += ["--output-alphabet-npz", alphabet_path]
-        ret = subprocess.run(args, capture_output=True, shell=use_shell)
-        assert ret.returncode < 1, f"stdout: {ret.stdout}\nstderr: {ret.stderr}"
+            args = ["molsig", "alphabet"]
+            args += ["--input-smiles-txt", path_smiles]
+            args += ["--output-alphabet-npz", path_alphabet]
+            ret = subprocess.run(args, capture_output=True, shell=use_shell)
+            assert ret.returncode < 1, f"stdout: {ret.stdout}\nstderr: {ret.stderr}"
 
-        # Enumerate
-        args = ["molsig", "enumerate"]
-        args += ["--input-smiles-str", "CCO"]
-        args += ["--input-alphabet-npz", alphabet_path]
-        args += ["--output-data-tsv", output_path]
-        ret = subprocess.run(args, capture_output=True, shell=use_shell)
-        assert ret.returncode < 1, f"stdout: {ret.stdout}\nstderr: {ret.stderr}"
+            # Enumerate
+            args = ["molsig", "enumerate"]
+            args += ["--input-smiles-str", "CCO"]
+            args += ["--input-alphabet-npz", path_alphabet]
+            args += ["--output-data-tsv", path_enumerate]
+            ret = subprocess.run(args, capture_output=True, shell=use_shell)
+            assert ret.returncode < 1, f"stdout: {ret.stdout}\nstderr: {ret.stderr}"
 
-        with open(output_path) as fd:
-            lines = fd.read().splitlines()
-        assert lines == ["SMILES"]
+            with open(path_enumerate) as fd:
+                lines = fd.read().splitlines()
+            assert lines == ["SMILES"]
 
         # Clean up
-        for filename in [input_path, alphabet_path, output_path]:
-            try:
+        for filename in [path_smiles, path_alphabet, path_enumerate]:
+            if os.path.exists(filename):
                 os.remove(filename)
-            except:
-                pass
