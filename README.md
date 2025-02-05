@@ -71,7 +71,7 @@ development purposes.
     conda env update -n sig -f environment-dev.yml
     ```
 
-## Usage
+## Usage with the python library
 
 ### Build a signature from SMILES
 
@@ -101,6 +101,35 @@ See the [creating-alphabet-basics](notebooks/creating-alphabet-basics.ipynb) not
 ### Enumerate molecules from a ECFP fingerprint
 
 See the [enumeration-basics](notebooks/enumeration-basics.ipynb) notebook.
+
+## Usage with the command line
+
+### Build a signature from SMILES
+
+```sh
+molsig signature
+    --input-smiles-str <SMILES>
+    --output-data-tsv <Output file, tsv>
+```
+
+### Build an alphabet
+
+```sh
+molsig alphabet
+  --input-smiles-txt <SMILES>
+  --parameter-radius-int [2]
+  --parameter-nbits-int [2048]
+  --output-alphabet-npz <Output file, npz>
+```
+
+### Enumerate molecules from a ECFP fingerprint
+
+```sh
+molsig enumerate
+  --input-smiles-str <SMILES>
+  --input-alphabet-npz <Input alphabet file, npz>
+  --output-data-tsv <Output file, tsv>
+```
 
 ## Citation
 

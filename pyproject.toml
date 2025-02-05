@@ -27,6 +27,9 @@ readme = "README.md"
 license = {text = "MIT License"}
 requires-python = ">= 3.10"
 
+[project.scripts]
+molsig = "molsig.__main__:main"
+
 [project.urls]
 Homepage = "https://github.com/brsynth/molecule-signature"
 Repository = "https://github.com/brsynth/molecule-signature.git"
