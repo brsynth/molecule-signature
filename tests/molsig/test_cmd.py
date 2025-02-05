@@ -6,22 +6,30 @@ import tempfile
 class TestCmd:
     def test_signature(self):
 
-        output_data = tempfile.NamedTemporaryFile()
+        output_data = tempfile.mkstemp(
+            suffix=".tsv"
+        )  # no usage of TemporaryFile to prevent "Permission denied" windows error
 
         args = ["molsig", "signature"]
         args += ["--input-smiles-str", "CCO"]
-        args += ["--output-data-tsv", output_data.name]
+        args += ["--output-data-tsv", output_data[1]]
         ret = subprocess.run(args)
         assert ret.returncode < 1
 
-        with open(output_data.name) as fd:
+        with open(output_data[1]) as fd:
             lines = fd.read().splitlines()
         assert lines == [
             "SMILES\tsignature",
             "CCO\t['80-1410 ## [C;H3;h3;D1;X4]-[C;H2;h2;D2;X4:1]-[O;H1;h1;D1;X2]', '807-222 ## [C;H3;h3;D1;X4]-[C;H2;h2;D2;X4]-[O;H1;h1;D1;X2:1]', '1057-294 ## [O;H1;h1;D1;X2]-[C;H2;h2;D2;X4]-[C;H3;h3;D1;X4:1]']",
         ]
+        # clean up
+        os.remove(output_data[1])
 
     def test_alphabet_enumerate(self):
+        input_fd, input_path = tempfile.mkstemp(suffix=".txt")
+        alphabet_fd, alphabet_path = tempfile.mkstemp(suffix=".npz")
+        output_fd, output_path = tempfile.mkstemp(suffix=".tsv")
+
         # Build alphabet
         smiles = [
             "O=C(O)[C@@H]1O[C@H](Oc2cccc3c(=O)oc(/C=C/CCO)cc23)[C@H](O)[C@H](O)[C@@H]1O",
@@ -45,29 +53,30 @@ class TestCmd:
             "CCC[C@H](O)C(=O)NCC(=O)[O-]",
             "O=C[C@@H]1[C@H](O)[C@](O)(C(=O)[O-])[C@@H]2[C@]3(Cl)C(Cl)=C(Cl)[C@](Cl)([C@@H]3Cl)[C@]12O",
         ]
-        input_tmp = tempfile.NamedTemporaryFile(mode="w+")
 
-        for smi in smiles:
-            value = f"{smi}\n"
-            input_tmp.write(value)
-
-        alphabet_tmp = tempfile.NamedTemporaryFile()
+        with os.fdopen(input_fd, "w") as fd:
+            for smi in smiles:
+                value = f"{smi}\n"
+                fd.write(value)
 
         args = ["molsig", "alphabet"]
-        args += ["--input-smiles-txt", input_tmp.name]
-        args += ["--output-alphabet-npz", alphabet_tmp.name]
-        ret = subprocess.run(args)
-        assert ret.returncode < 1
+        args += ["--input-smiles-txt", input_path]
+        args += ["--output-alphabet-npz", alphabet_path]
+        ret = subprocess.run(args, capture_output=True, text=True)
+        assert ret.returncode < 1, f"stdout: {ret.stdout}\nstderr: {ret.stderr}"
 
         # Enumerate
-        output_tmp = tempfile.NamedTemporaryFile()
         args = ["molsig", "enumerate"]
         args += ["--input-smiles-str", "CCO"]
-        args += ["--input-alphabet-npz", alphabet_tmp.name]
-        args += ["--output-data-tsv", output_tmp.name]
+        args += ["--input-alphabet-npz", alphabet_path]
+        args += ["--output-data-tsv", output_path]
         ret = subprocess.run(args)
         assert ret.returncode < 1
 
-        with open(output_tmp.name) as fd:
+        with open(output_path) as fd:
             lines = fd.read().splitlines()
         assert lines == ["SMILES"]
+
+        # Clean up
+        for filename in [input_path, alphabet_path, output_path]:
+            os.remove(filename)
