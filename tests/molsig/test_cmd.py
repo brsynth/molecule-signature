@@ -1,34 +1,40 @@
 import os
 import subprocess
+import sys
 import tempfile
+
+import pytest
+
+
+@pytest.fixture(scope="session")
+def use_shell():
+    return True if sys.platform.startswith("win") else False
 
 
 class TestCmd:
-    def test_signature(self):
 
-        output_fd, output_path = tempfile.mkstemp(
-            suffix=".tsv"
-        )  # no usage of TemporaryFile to prevent "Permission denied" windows error
+    def test_signature(self, use_shell):
 
-        args = ["molsig", "signature"]
-        args += ["--input-smiles-str", "CCO"]
-        args += ["--output-data-tsv", output_path]
-        ret = subprocess.run(args, capture_output=True)
-        assert ret.returncode < 1, f"stdout: {ret.stdout}\nstderr: {ret.stderr}"
+        temp_path = ""
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            temp_path = temp_file.name
+            args = ["molsig", "signature"]
+            args += ["--input-smiles-str", "CCO"]
+            args += ["--output-data-tsv", temp_path]
+            ret = subprocess.run(args, capture_output=True, shell=use_shell)
+            assert ret.returncode < 1, f"stdout: {ret.stdout}\nstderr: {ret.stderr}"
 
-        with open(output_path) as fd:
+        with open(temp_path) as fd:
             lines = fd.read().splitlines()
         assert lines == [
             "SMILES\tsignature",
             "CCO\t['80-1410 ## [C;H3;h3;D1;X4]-[C;H2;h2;D2;X4:1]-[O;H1;h1;D1;X2]', '807-222 ## [C;H3;h3;D1;X4]-[C;H2;h2;D2;X4]-[O;H1;h1;D1;X2:1]', '1057-294 ## [O;H1;h1;D1;X2]-[C;H2;h2;D2;X4]-[C;H3;h3;D1;X4:1]']",
         ]
         # clean up
-        try:
-            os.remove(output_path)
-        except:
-            pass
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
 
-    def test_alphabet_enumerate(self):
+    def test_alphabet_enumerate(self, use_shell):
         input_fd, input_path = tempfile.mkstemp(suffix=".txt")
         alphabet_fd, alphabet_path = tempfile.mkstemp(suffix=".npz")
         output_fd, output_path = tempfile.mkstemp(suffix=".tsv")
@@ -65,7 +71,7 @@ class TestCmd:
         args = ["molsig", "alphabet"]
         args += ["--input-smiles-txt", input_path]
         args += ["--output-alphabet-npz", alphabet_path]
-        ret = subprocess.run(args, capture_output=True)
+        ret = subprocess.run(args, capture_output=True, shell=use_shell)
         assert ret.returncode < 1, f"stdout: {ret.stdout}\nstderr: {ret.stderr}"
 
         # Enumerate
@@ -73,7 +79,7 @@ class TestCmd:
         args += ["--input-smiles-str", "CCO"]
         args += ["--input-alphabet-npz", alphabet_path]
         args += ["--output-data-tsv", output_path]
-        ret = subprocess.run(args, capture_output=True, text=True)
+        ret = subprocess.run(args, capture_output=True, shell=use_shell)
         assert ret.returncode < 1, f"stdout: {ret.stdout}\nstderr: {ret.stderr}"
 
         with open(output_path) as fd:
