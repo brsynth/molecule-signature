@@ -6,24 +6,27 @@ import tempfile
 class TestCmd:
     def test_signature(self):
 
-        output_data = tempfile.mkstemp(
+        output_fd, output_path = tempfile.mkstemp(
             suffix=".tsv"
         )  # no usage of TemporaryFile to prevent "Permission denied" windows error
 
         args = ["molsig", "signature"]
         args += ["--input-smiles-str", "CCO"]
-        args += ["--output-data-tsv", output_data[1]]
-        ret = subprocess.run(args)
-        assert ret.returncode < 1
+        args += ["--output-data-tsv", output_path]
+        ret = subprocess.run(args, capture_output=True)
+        assert ret.returncode < 1, f"stdout: {ret.stdout}\nstderr: {ret.stderr}"
 
-        with open(output_data[1]) as fd:
+        with open(output_path) as fd:
             lines = fd.read().splitlines()
         assert lines == [
             "SMILES\tsignature",
             "CCO\t['80-1410 ## [C;H3;h3;D1;X4]-[C;H2;h2;D2;X4:1]-[O;H1;h1;D1;X2]', '807-222 ## [C;H3;h3;D1;X4]-[C;H2;h2;D2;X4]-[O;H1;h1;D1;X2:1]', '1057-294 ## [O;H1;h1;D1;X2]-[C;H2;h2;D2;X4]-[C;H3;h3;D1;X4:1]']",
         ]
         # clean up
-        os.remove(output_data[1])
+        try:
+            os.remove(output_path)
+        except:
+            pass
 
     def test_alphabet_enumerate(self):
         input_fd, input_path = tempfile.mkstemp(suffix=".txt")
@@ -62,7 +65,7 @@ class TestCmd:
         args = ["molsig", "alphabet"]
         args += ["--input-smiles-txt", input_path]
         args += ["--output-alphabet-npz", alphabet_path]
-        ret = subprocess.run(args, capture_output=True, text=True)
+        ret = subprocess.run(args, capture_output=True)
         assert ret.returncode < 1, f"stdout: {ret.stdout}\nstderr: {ret.stderr}"
 
         # Enumerate
@@ -70,8 +73,8 @@ class TestCmd:
         args += ["--input-smiles-str", "CCO"]
         args += ["--input-alphabet-npz", alphabet_path]
         args += ["--output-data-tsv", output_path]
-        ret = subprocess.run(args)
-        assert ret.returncode < 1
+        ret = subprocess.run(args, capture_output=True, text=True)
+        assert ret.returncode < 1, f"stdout: {ret.stdout}\nstderr: {ret.stderr}"
 
         with open(output_path) as fd:
             lines = fd.read().splitlines()
@@ -79,4 +82,7 @@ class TestCmd:
 
         # Clean up
         for filename in [input_path, alphabet_path, output_path]:
-            os.remove(filename)
+            try:
+                os.remove(filename)
+            except:
+                pass
