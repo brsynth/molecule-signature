@@ -1,25 +1,17 @@
 name: Test code
 
-on:
-
-    push:
-        branches: [ '*' ]
-        # paths: [ '**.py' ]
+on: [push, pull_request]
 
 jobs:
 
     Test:
 
-        runs-on: ${{ matrix.os }}-latest
-        strategy:
-            matrix:
-                os: ["ubuntu", "macos", "windows"]
+        runs-on: ubuntu-latest
         defaults:
             run:
                 shell: bash -l {0}
         
         steps:
-
             - name: Checkout code
               uses: actions/checkout@v4
 
@@ -31,46 +23,21 @@ jobs:
                 activate-environment: test-env
                 conda-remove-defaults: "true"
 
-            - name: Install dev dependencies with conda
-              run: |
-                  conda env update -n test-env --file environment-dev.yml
-              
             - name: Install as package
               run: |
-                  pip -v install --no-deps --editable .
+                    pip -v install --no-deps --editable .
 
-            - name: Run tests with coverage
+            - name: Install dependencies for testing
               run: |
-                  coverage run -m pytest -xs
-            
-            - name: Generate coverage report
-              if: matrix.os == 'ubuntu'
+                    conda install --channel conda-forge pytest
+                    pip install coveralls
+
+            - name: Run tests
               run: |
-                  coverage report --format markdown > coverage.md
+                    coverage run -m pytest tests
 
-            - name: Extract coverage percentage
-              if: matrix.os == 'ubuntu'
+            - name: Report using coveralls
               run: |
-                  export COV_PERCENT=$(coverage report --format total)
-                  echo "COV_PERCENT=$COV_PERCENT" >> $GITHUB_ENV
-
-            - name: Create Coverage Badge
-              if: matrix.os == 'ubuntu'
-              uses: schneegans/dynamic-badges-action@v1.7.0
-              with:
-                auth: ${{ secrets.GIST_SECRET }}
-                gistID: 056fdf29a6c0ab5b61a62f21468be178
-                filename: molecule-signature-coverage.json
-                label: coverage
-                message: ${{ env.COV_PERCENT }}%
-                valColorRange: ${{ env.COV_PERCENT }}
-                minColorRange: 50
-                maxColorRange: 90
-
-            - name: Upload coverage report
-              if: matrix.os == 'ubuntu'
-              uses: actions/upload-artifact@v4
-              with:
-                name: coverage
-                path: coverage.md
-                compression-level: 0
+                    coveralls
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
