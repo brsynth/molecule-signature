@@ -1,7 +1,17 @@
-## 2.0.2 (2025-01-31)
+## 2.1.0 (2025-02-06)
+
+### Feat
+
+- enable entrypoint for command line usage
+
+### Fix
+
+- hack rm file for windows
+- parsing entry
 
 ### Refactor
 
+- **cmd**: shorten arguments name
 - **notebooks**: refactor imports
 
 ## 2.0.1 (2025-01-29)
