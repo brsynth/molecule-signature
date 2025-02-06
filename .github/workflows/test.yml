@@ -31,10 +31,13 @@ jobs:
                 activate-environment: test-env
                 conda-remove-defaults: "true"
 
-            - name: Install dev dependencies
+            - name: Install dev dependencies with conda
               run: |
                   conda env update -n test-env --file environment-dev.yml
-                  pip install --no-deps -e .
+              
+            - name: Install as package
+              run: |
+                  pip install --no-deps --editable -v .
 
             - name: Run tests with coverage
               run: |
