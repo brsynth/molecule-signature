@@ -18,7 +18,6 @@ Signature-based enumeration of molecules from morgan fingerprints.
     - [Build an alphabet](#build-an-alphabet)
     - [Enumerate molecules from a ECFP fingerprint](#enumerate-molecules-from-a-ecfp-fingerprint)
   - [Citation](#citation)
-  - [License](#license)
 
 ## Installation
 
