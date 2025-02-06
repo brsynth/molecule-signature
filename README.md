@@ -8,16 +8,14 @@ Signature-based enumeration of molecules from morgan fingerprints.
 
 ## Table of Contents
 
-- [Molecule Signature](#molecule-signature)
-  - [Table of Contents](#table-of-contents)
-  - [Installation](#installation)
-    - [From conda package](#from-conda-package)
-    - [From source code](#from-source-code)
-  - [Usage](#usage)
-    - [Build a signature from SMILES](#build-a-signature-from-smiles)
-    - [Build an alphabet](#build-an-alphabet)
-    - [Enumerate molecules from a ECFP fingerprint](#enumerate-molecules-from-a-ecfp-fingerprint)
-  - [Citation](#citation)
+- [Installation](#installation)
+  - [From conda package](#from-conda-package)
+  - [From source code](#from-source-code)
+- [Usage](#usage)
+  - [Build a signature from SMILES](#build-a-signature-from-smiles)
+  - [Build an alphabet from a set of SMILES](#build-an-alphabet-from-a-set-of-smiles)
+  - [Enumerate molecules from a ECFP fingerprint](#enumerate-molecules-from-a-ecfp-fingerprint)
+- [Citation](#citation)
 
 ## Installation
 
@@ -74,56 +72,87 @@ development purposes.
 
 ### Build a signature from SMILES
 
-Here a simple example showing how to build a signature from a SMILES string. For
-more example, one can refer to the [signature-basics](notebooks/signature-basics.ipynb) notebook.
+- **From Python**
 
-```python
-from rdkit import Chem
-from molsig.Signature import MoleculeSignature
+    Below a simple example showing how to build a signature from a SMILES string. For
+    more example, one can refer to the [signature-basics](notebooks/signature-basics.ipynb) notebook.
 
-mol = Chem.MolFromSmiles("CCO")
-mol_sig = MoleculeSignature(mol)
-mol_sig.to_list()
-# [
-#  '80-1410 ## [C;H3;h3;D1;X4]-[C;H2;h2;D2;X4:1]-[O;H1;h1;D1;X2]',
-#  '807-222 ## [C;H3;h3;D1;X4]-[C;H2;h2;D2;X4]-[O;H1;h1;D1;X2:1]',
-#  '1057-294 ## [O;H1;h1;D1;X2]-[C;H2;h2;D2;X4]-[C;H3;h3;D1;X4:1]'
-# ]
-```
+    ```python
+    from rdkit import Chem
+    from molsig.Signature import MoleculeSignature
 
-With the command line:
-```sh
-molsig signature
-    --input-smiles-str <SMILES>
-    --output-data-tsv <Output file, tsv>
-```
+    mol = Chem.MolFromSmiles("CCO")
+    mol_sig = MoleculeSignature(mol)
+    mol_sig.to_list()
+    # [
+    #  '80-1410 ## [C;H3;h3;D1;X4]-[C;H2;h2;D2;X4:1]-[O;H1;h1;D1;X2]',
+    #  '807-222 ## [C;H3;h3;D1;X4]-[C;H2;h2;D2;X4]-[O;H1;h1;D1;X2:1]',
+    #  '1057-294 ## [O;H1;h1;D1;X2]-[C;H2;h2;D2;X4]-[C;H3;h3;D1;X4:1]'
+    # ]
+    ```
 
-### Build an alphabet
+- **From the command line**
 
-Alphabet makes use of signatures to create a collection of *morgan bits*-to-*atom signature* mappings.
+    Getting help:
 
-See the [creating-alphabet-basics](notebooks/creating-alphabet-basics.ipynb) notebook.
+    ```sh
+    molsig signature --help
+    ```
 
-With the command line:
-```sh
-molsig alphabet
-  --input-smiles-txt <SMILES>
-  --parameter-radius-int [2]
-  --parameter-nbits-int [2048]
-  --output-alphabet-npz <Output file, npz>
-```
+    Run:
+
+    ```sh
+    molsig signature
+        --smiles <SMILES>
+        --output <Output file, tsv>
+    ```
+
+### Build an alphabet from a set of SMILES
+
+- **From Python**
+
+    Alphabet makes use of signatures to create a collection of *morgan bits*-to-*atom signature* mappings.
+
+    See the [creating-alphabet-basics](notebooks/creating-alphabet-basics.ipynb) notebook.
+
+- **From the command line**
+
+    Getting help:
+
+    ```sh
+    molsig alphabet --help
+    ```
+
+    Run:
+
+    ```sh
+    molsig alphabet
+      --smiles <Input file, txt>
+      --output <Output file, npz>
+    ```
 
 ### Enumerate molecules from a ECFP fingerprint
 
-See the [enumeration-basics](notebooks/enumeration-basics.ipynb) notebook.
+- **From Python**:
 
-With the command line:
-```sh
-molsig enumerate
-  --input-smiles-str <SMILES>
-  --input-alphabet-npz <Input alphabet file, npz>
-  --output-data-tsv <Output file, tsv>
-```
+    See the [enumeration-basics](notebooks/enumeration-basics.ipynb) notebook.
+
+- **From the command line**:
+
+    Getting help:
+
+    ```sh
+    molsig enumerate --help
+    ```
+
+    Run:
+
+    ```sh
+    molsig enumerate
+      --smiles <SMILES>
+      --alphabet <Input alphabet file, npz>
+      --output <Output file, tsv>
+    ```
 
 ## Citation
 
