@@ -71,7 +71,7 @@ development purposes.
     conda env update -n sig -f environment-dev.yml
     ```
 
-## Usage with the python library
+## Usage
 
 ### Build a signature from SMILES
 
@@ -92,20 +92,7 @@ mol_sig.to_list()
 # ]
 ```
 
-### Build an alphabet
-
-Alphabet makes use of signatures to create a collection of *morgan bits*-to-*atom signature* mappings.
-
-See the [creating-alphabet-basics](notebooks/creating-alphabet-basics.ipynb) notebook.
-
-### Enumerate molecules from a ECFP fingerprint
-
-See the [enumeration-basics](notebooks/enumeration-basics.ipynb) notebook.
-
-## Usage with the command line
-
-### Build a signature from SMILES
-
+With the command line:
 ```sh
 molsig signature
     --input-smiles-str <SMILES>
@@ -114,6 +101,11 @@ molsig signature
 
 ### Build an alphabet
 
+Alphabet makes use of signatures to create a collection of *morgan bits*-to-*atom signature* mappings.
+
+See the [creating-alphabet-basics](notebooks/creating-alphabet-basics.ipynb) notebook.
+
+With the command line:
 ```sh
 molsig alphabet
   --input-smiles-txt <SMILES>
@@ -124,6 +116,9 @@ molsig alphabet
 
 ### Enumerate molecules from a ECFP fingerprint
 
+See the [enumeration-basics](notebooks/enumeration-basics.ipynb) notebook.
+
+With the command line:
 ```sh
 molsig enumerate
   --input-smiles-str <SMILES>
@@ -136,7 +131,3 @@ molsig enumerate
 If you use this software, please cite it as below.
 
 Meyer, P., Duigou, T., Gricourt, G., & Faulon, J.-L. Reverse Engineering Molecules from Fingerprints through Deterministic Enumeration and Generative Models. In preparation.
-
-## License
-
-This project is licensed under the MIT License. See the LICENSE file for details.
