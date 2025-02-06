@@ -12,24 +12,26 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 
 
-AP = argparse.ArgumentParser(description="")
-AP_subparsers = AP.add_subparsers(help="Sub-commnands (use with -h for more info)")
+PARSER = argparse.ArgumentParser(description="")
+subparsers = PARSER.add_subparsers(help="Sub-commnands (use with -h for more info)")
 
+
+# Enumerate ---------------------------------------------------------------------------------------
 
 def _cmd_enumerate(args):
     logging.info("Start - enumerate")
 
     # Load Alphabet
     logging.info("Load alphabet")
-    Alphabet = load_alphabet(args.input_alphabet_npz, verbose=True)
+    Alphabet = load_alphabet(args.alphabet, verbose=True)
 
     # Create ECFP
     logging.info("Create ECFP")
-    smiles = args.input_smiles_str
+    smiles = args.smiles
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         logging.error(f"SMILES is not validated by rdkit: {smiles}")
-        AP.exit(1)
+        PARSER.exit(1)
     fpgen = AllChem.GetMorganGenerator(
         radius=Alphabet.radius,
         fpSize=Alphabet.nBits,
@@ -39,7 +41,7 @@ def _cmd_enumerate(args):
 
     logging.info("Enumerate molecules - start")
     start = time.time()
-    Ssig, Smol, Nsig, thresholds_reached, computational_times = enumerate_molecule_from_morgan(
+    (Ssig, Smol, Nsig, thresholds_reached, computational_times) = enumerate_molecule_from_morgan(
         morgan, Alphabet
     )
     end = round(time.time() - start, 2)
@@ -53,18 +55,20 @@ def _cmd_enumerate(args):
     logging.info(f"Computational times: {scomputational_times}")
 
     df = pd.DataFrame(list(Smol), columns=["SMILES"])
-    df.to_csv(args.output_data_tsv, sep="\t", index=False)
+    df.to_csv(args.output, sep="\t", index=False)
 
     logging.info("End - enumerate")
     return 0
 
 
-P_enumerate = AP_subparsers.add_parser("enumerate", help=_cmd_enumerate.__doc__)
-P_enumerate.add_argument("--input-smiles-str", required=True, help="SMILES string")
-P_enumerate.add_argument("--input-alphabet-npz", required=True, help="Alphabet file")
-P_enumerate.add_argument("--output-data-tsv", required=True, help="Output file")
-P_enumerate.set_defaults(func=_cmd_enumerate)
+parser_enumerate = subparsers.add_parser("enumerate", help=_cmd_enumerate.__doc__)
+parser_enumerate.add_argument("--smiles", metavar="STR", required=True, help="Input SMILES string")
+parser_enumerate.add_argument("--alphabet", metavar="FILE", required=True, help="Alphabet file (.npz)")  # noqa
+parser_enumerate.add_argument("--output", metavar="FILE", required=True, help="Output file (.tsv)")
+parser_enumerate.set_defaults(func=_cmd_enumerate)
 
+
+# Signature ---------------------------------------------------------------------------------------
 
 def _cmd_signature(args):
     # Check arguments.
@@ -72,95 +76,104 @@ def _cmd_signature(args):
 
     # Build signature
     logging.info("Load SMILES into rdkit")
-    smiles = args.input_smiles_str
+    smiles = args.smiles
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         logging.error(f"SMILES is not validated by rdkit: {smiles}")
-        AP.exit(1)
+        PARSER.exit(1)
 
     logging.info("Build signature")
     mol_sig = MoleculeSignature(mol)
 
-    data = dict(SMILES=args.input_smiles_str, signature=mol_sig.to_list())
+    # Output
+    data = dict(SMILES=args.smiles, signature=mol_sig.to_string())
     df = pd.DataFrame([data])
-    logging.info(f"Save signature to: {args.output_data_tsv}")
-    df.to_csv(args.output_data_tsv, sep="\t", index=False)
-
+    logging.info(f"Save signature to: {args.output}")
+    df.to_csv(args.output, sep="\t", index=False)
     logging.info("End - signature")
     return 0
 
 
-P_signature = AP_subparsers.add_parser("signature", help=_cmd_signature.__doc__)
-P_signature.add_argument("--input-smiles-str", required=True, help="SMILES string")
-P_signature.add_argument("--output-data-tsv", required=True, help="Output file")
-P_signature.set_defaults(func=_cmd_signature)
+parser_signature = subparsers.add_parser("signature", help=_cmd_signature.__doc__)
+parser_signature.add_argument("--smiles", metavar="STR", required=True, help="Input SMILES string")
+parser_signature.add_argument("--output", metavar="FILE", required=True, help="Output file (.tsv)")
+parser_signature.set_defaults(func=_cmd_signature)
 
+
+# Alphabet ----------------------------------------------------------------------------------------
 
 def _cmd_alphabet(args):
     logging.info("Start - alphabet")
-    if not os.path.isfile(args.input_smiles_txt):
-        logging.error(f"Input file does not exist: {args.input_smiles_txt}")
-        AP.exit(1)
-    if not os.path.isdir(os.path.dirname(args.output_alphabet_npz)):
-        logging.error(f"Directory of the alphabet does not exsit: {args.output_alphabet_npz}")
-        AP.exit(1)
+    if not os.path.isfile(args.smiles):
+        logging.error(f"Input file does not exist: {args.smiles}")
+        PARSER.exit(1)
+    if not os.path.isdir(os.path.dirname(os.path.abspath(args.output))):
+        logging.error(f"Directory of the alphabet does not exist: {args.output}")
+        PARSER.exit(1)
 
-    use_stereo = True
-    if args.parameter_no_stereo_bool:
-        use_stereo = False
-
-    logging.info(f"Radius: {args.parameter_radius_int}")
-    logging.info(f"NBits: {args.parameter_nbits_int}")
-    logging.info(f"Use stereo: {use_stereo}")
+    logging.info(f"Radius: {args.radius}")
+    logging.info(f"NBits: {args.nbits}")
+    logging.info(f"Use stereo: {args.stereo}")
 
     logging.info("Parse SMILES")
-    smiles = []
-    with open(args.input_smiles_txt) as fd:
-        smiles = fd.read().splitlines()
+    smiles_list = []
+    with open(args.smiles) as fd:
+        smiles_list = fd.read().splitlines()
 
-    if len(smiles) < 1:
+    if len(smiles_list) < 1:
         logging.info("Input file is empty")
-        AP.exit(1)
+        PARSER.exit(1)
 
     logging.info("Build Alphabet")
-    Alphabet = SignatureAlphabet(
-        radius=args.parameter_radius_int, nBits=args.parameter_nbits_int, use_stereo=use_stereo
-    )
-    Alphabet.fill(smiles, verbose=True)
+    Alphabet = SignatureAlphabet(radius=args.radius, nBits=args.nbits, use_stereo=args.stereo)
+    Alphabet.fill(smiles_list, verbose=True)
 
     logging.info("Save Alphabet")
-    Alphabet.save(args.output_alphabet_npz)
+    Alphabet.save(args.output)
 
     logging.info("End - alphabet")
     return 0
 
 
-P_alphabet = AP_subparsers.add_parser("alphabet", help=_cmd_alphabet.__doc__)
-P_alphabet.add_argument(
-    "--input-smiles-txt", required=True, help="Files containing SMILES, one entry per line"
+parser_alphabet = subparsers.add_parser("alphabet", help=_cmd_alphabet.__doc__)
+parser_alphabet.add_argument(
+    "--smiles",
+    metavar="FILE",
+    required=True,
+    help="Files containing SMILES, one entry per line (.txt, .smi)",
 )
-P_alphabet.add_argument("--parameter-radius-int", type=int, default=2, help="Radius")
-P_alphabet.add_argument("--parameter-nbits-int", type=int, default=2048, help="Number of bits")
-P_alphabet.add_argument(
-    "--parameter-no-stereo-bool",
-    action="store_false",
-    help="If set, no use stereochemistry information",
+parser_alphabet.add_argument(
+    "--radius", metavar="INT", type=int, default=2, help="Radius. Default: %(default)s"
 )
-P_alphabet.add_argument("--output-alphabet-npz", required=True, help="Output Alphabet")
-P_alphabet.set_defaults(func=_cmd_alphabet)
+parser_alphabet.add_argument(
+    "--nbits", metavar="INT", type=int, default=2048, help="Number of bits. Default: %(default)s"
+)
+parser_alphabet.add_argument(
+    "--stereo",
+    metavar="BOOL",
+    type=lambda x: (str(x).lower() in ["true", "1", "yes"]),
+    default=True,
+    help="Weither to use stereochemistry in fingerprints. Default: %(default)s",
+)
+parser_alphabet.add_argument(
+    "--output", metavar="FILE", required=True, help="Output Alphabet (.npz)"
+)
+parser_alphabet.set_defaults(func=_cmd_alphabet)
 
 
-# Help.
+# Help --------------------------------------------------------------------------------------------
+
 def print_help():
     """Display this program"s help"""
-    print(AP_subparsers.help)
-    AP.exit()
+    print(subparsers.help)
+    PARSER.exit()
 
 
-# Main.
+# Main --------------------------------------------------------------------------------------------
+
 def parse_args(args=None):
     """Parse the command line"""
-    return AP.parse_args(args=args)
+    return PARSER.parse_args(args=args)
 
 
 def main():
@@ -170,7 +183,7 @@ def main():
         format="%(asctime)s - %(levelname)s - %(message)s",
         datefmt="%d-%m-%Y %H:%M",
     )
-    args = AP.parse_args()
+    args = PARSER.parse_args()
     # No arguments or subcommands were given.
     if len(args.__dict__) < 1:
         print_help()
