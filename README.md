@@ -1,8 +1,9 @@
 # Molecule Signature
 
-[![Github Version](https://img.shields.io/github/v/release/brsynth/molecule-signature?display_name=tag&sort=semver)](version)
-[![Github Licence](https://img.shields.io/github/license/brsynth/molecule-signature)](LICENSE.md)
-![Unit Test Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/tduigou/056fdf29a6c0ab5b61a62f21468be178/raw/molecule-signature-coverage.json)
+[![Github Version](https://img.shields.io/github/v/release/brsynth/molecule-signature?display_name=tag&sort=semver&logo=github)](version)
+[![Github Licence](https://img.shields.io/github/license/brsynth/molecule-signature?logo=github)](LICENSE.md)
+[![Coveralls](https://img.shields.io/coverallsCoverage/github/brsynth/molecule-signature?logo=coveralls&color=green)](https://coveralls.io/github/brsynth/molecule-signature)
+[![Conda Downloads](https://img.shields.io/conda/dn/conda-forge/molecule-signature?logo=condaforge&color=green)](https://anaconda.org/conda-forge/molecule-signature)
 
 Signature-based enumeration of molecules from morgan fingerprints.
 
