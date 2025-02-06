@@ -37,7 +37,7 @@ jobs:
               
             - name: Install as package
               run: |
-                  pip install --no-deps --editable -v .
+                  pip -v install --no-deps --editable .
 
             - name: Run tests with coverage
               run: |
