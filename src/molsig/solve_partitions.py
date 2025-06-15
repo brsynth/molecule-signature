@@ -690,10 +690,11 @@ def solutions_of_P(
         part_line_of_P = tuple([j for j in range(nb_col) if P[i, j] != 0])
         counts = [P[i, j] for j in part_line_of_P]
         if len(set(counts)) != 1 or (morgan[i] / counts[0]).is_integer() == False:
-            All_parts_morgan_in_k2, bool_threshold_reached = partitions_on_non_constant(
+            All_parts_morgan_in_k2, bool_threshold_reached_local = partitions_on_non_constant(
                 counts, morgan[i], max_nbr_partition_non_constant=local_bound
             )
-            bool_threshold_reached_local = bool_threshold_reached
+            if bool_threshold_reached_local:
+                bool_threshold_reached = True
         else:
             k = len(part_line_of_P)
             morgan_normed = int(morgan[i] / counts[0])
