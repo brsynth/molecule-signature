@@ -1,3 +1,9 @@
+## 2.1.1 (2025-06-17)
+
+### Fix
+
+- **solutions_of_P**: non constant timeout
+
 ## 2.1.0 (2025-02-06)
 
 ### Feat
