@@ -159,4 +159,4 @@ development purposes.
 
 If you use this software, please cite it as below.
 
-> Meyer, P., Duigou, T., Gricourt, G., & Faulon, J.-L. Reverse Engineering Molecules from Fingerprints through Deterministic Enumeration and Generative Models. In preparation.
+> Meyer, P., Duigou, T., Gricourt, G., Faulon, J. L. (2025). Reverse engineering molecules from fingerprints through deterministic enumeration and generative models. Journal of Cheminformatics, 17(1), 157. https://doi.org/10.1186/s13321-025-01074-5
